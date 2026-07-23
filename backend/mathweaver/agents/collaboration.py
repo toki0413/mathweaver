@@ -1,7 +1,15 @@
 """Collaboration Agent: Socratic guide that synthesizes discovery-oriented responses.
 
-Design principle (新数学运动):
-- Never give the answer directly; guide the student to discover it
+Design principle — response to the New Math movement (1958-1975):
+The New Math imposed abstract structures from above, assuming students would
+construct understanding through exposure to formal axioms. This agent takes
+the opposite approach: it uses Socratic questioning to help the student
+discover structures from within their own experience. It never gives the
+answer directly, but guides through graduated hints that respect the
+learner's cognitive readiness. The New Math's failure showed that
+"understanding what you're doing" cannot be imposed — it must be grown.
+See: docs/new-math-reflection.md
+
 - Use graduated hints: hint_level 0 = question, 1 = hint, 2 = bigger hint, 3 = near-answer
 - Adapt tone based on pedagogical decision:
   - reduce_abstraction → simplify language, fewer concepts per sentence

@@ -426,6 +426,31 @@ _HISTORY_DB: dict[str, str] = {
     "矩阵的逆": (
         "矩阵的逆和群的逆元概念一致。可逆矩阵构成一般线性群 GL(n)。"
     ),
+    "新数学运动": (
+        "新数学运动 (New Math) 是 1950 年代末至 1970 年代初的数学教育改革运动，"
+        "由苏联 Sputnik 卫星上天 (1957) 触发。美国组建学校数学研究小组 (SMSG)，"
+        "将集合论、抽象代数、不同进制等大学内容引入中小学课堂。"
+        "运动深受 Bourbaki 学派的结构主义影响，强调理解数学结构而非计算技能。"
+        "但因过于抽象、脱离实际、教师准备不足而失败。"
+        "Morris Kline 在《为什么约翰不会加法》(1973) 中批评其颠倒了"
+        "数学的历史发展顺序——从应用到抽象，而非反过来。"
+    ),
+    "Bourbaki学派": (
+        "Nicolas Bourbaki 是一群法国数学家的集体笔名，从 1930 年代起"
+        "试图用公理化方法统一全部纯数学。他们的《数学原本》从集合论出发，"
+        "依次构建代数、拓扑、分析，坚信数学的本质是结构。"
+        "Bourbaki 的影响深远：他们的结构主义方法不仅塑造了 20 世纪的"
+        "数学研究，也通过新数学运动影响了数学教育。然而，"
+        "将成年数学家的工作方法直接搬入课堂被证明是灾难性的。"
+    ),
+    "什么是新数学": (
+        "新数学运动的核心主张：理解比计算更重要，结构是数学的本质，"
+        "学生应像数学家一样思考。它引入集合论到小学，教不同进制的运算，"
+        "强调函数与关系。这些理念本身并非错误，但执行方式——"
+        "一刀切地施加抽象、忽视认知准备度、切断与日常经验的联系——"
+        "导致了失败。Tom Lehrer 的讽刺歌曲《New Math》(1965) 精准捕捉了"
+        "家长面对孩子八进制减法作业时的困惑。"
+    ),
 }
 
 
@@ -927,5 +952,129 @@ def _additional_entries() -> list[KnowledgeEntry]:
             keywords=["Lagrange", "subgroup", "order", "coset", "index",
                        "prime", "cyclic", "divisor"],
             source="supplementary",
+        ),
+        # --- New Math movement and education philosophy ---
+        KnowledgeEntry(
+            id="new_math_movement",
+            title="The New Math Movement (1958-1975)",
+            content=(
+                "The New Math movement was a sweeping reform of mathematics "
+                "education that originated in the United States in the late "
+                "1950s, triggered by the Soviet launch of Sputnik in 1957. "
+                "The American Mathematical Society established the School "
+                "Mathematics Study Group (SMSG) in 1958, led by Edward Begle "
+                "of Yale University, to redesign the K-12 mathematics "
+                "curriculum. The movement introduced set theory, abstract "
+                "algebra, different number bases, and formal logic into "
+                "elementary and secondary education. It was deeply influenced "
+                "by the Bourbaki school's structuralist approach to "
+                "mathematics. The movement failed by the mid-1970s due to "
+                "excessive abstraction, inadequate teacher preparation, "
+                "parental alienation, and disconnection from practical "
+                "computation. Morris Kline's 1973 critique 'Why Johnny "
+                "Can't Add' argued that the movement reversed the historical "
+                "order of mathematical development: mathematics grows from "
+                "applications to abstractions, not the reverse. Tom Lehrer's "
+                "satirical song 'New Math' (1965) captured the public's "
+                "frustration with the reform. Despite its failure, the New "
+                "Math left a lasting legacy: the emphasis on understanding "
+                "over rote calculation, the introduction of set notation, "
+                "and the idea that mathematics is about structures."
+            ),
+            keywords=["New Math", "SMSG", "Sputnik", "Begle", "Bourbaki",
+                       "Kline", "set theory", "education reform", "Tom Lehrer",
+                       "structuralism", "curriculum", "failure"],
+            source="education_history",
+        ),
+        KnowledgeEntry(
+            id="bourbaki_influence",
+            title="Bourbaki's Influence on Mathematics Education",
+            content=(
+                "The Bourbaki group, writing under the collective pseudonym "
+                "Nicolas Bourbaki, attempted from the 1930s onward to unify "
+                "all of pure mathematics through an axiomatic, structural "
+                "approach. Their 'Éléments de mathématique' began with set "
+                "theory and proceeded through algebra, topology, and analysis. "
+                "Bourbaki's philosophy—that mathematics is fundamentally about "
+                "structures (algebraic, topological, ordered)—directly "
+                "inspired the New Math movement. The SMSG curriculum mirrored "
+                "Bourbaki's approach: start with sets, build up to algebraic "
+                "structures, emphasize axiomatics. However, what worked for "
+                "professional mathematicians proved disastrous for children. "
+                "The Bourbaki approach assumes years of mathematical maturity "
+                "and intuition; imposing it on elementary students bypassed "
+                "the cognitive development that makes abstraction meaningful. "
+                "Vladimir Arnold later recalled that Soviet mathematics "
+                "education, under Kolmogorov's influence, avoided the "
+                "extreme upheavals seen elsewhere while still incorporating "
+                "modern mathematical ideas. The lesson: structural elegance "
+                "is a destination, not a starting point."
+            ),
+            keywords=["Bourbaki", "structure", "axiomatic", "Éléments",
+                       "education", "Kolmogorov", "Arnold", "set theory",
+                       "New Math", "structuralism"],
+            source="education_history",
+        ),
+        KnowledgeEntry(
+            id="morris_kline_critique",
+            title="Morris Kline's Critique: Why Johnny Can't Add",
+            content=(
+                "Morris Kline (1908-1992), a mathematician at NYU, published "
+                "'Why Johnny Can't Add: The Failure of the New Math' in 1973. "
+                "His central argument was not that mathematical structure is "
+                "unimportant, but that the New Math reversed the natural order "
+                "of learning. Mathematics historically develops from "
+                "applications to abstractions: counting precedes number "
+                "theory, surveying precedes geometry, ballistics precedes "
+                "calculus. Kline argued that education should follow this "
+                "path—start with concrete problems, then abstract. He also "
+                "criticized the New Math for: (1) ignoring the role of "
+                "intuition in mathematical discovery, (2) treating "
+                "mathematics as a static body of knowledge rather than a "
+                "living tradition, (3) disconnecting mathematics from "
+                "science and engineering, (4) using excessive formalism that "
+                "obscured rather than illuminated. Kline advocated for a "
+                "curriculum that integrates mathematics with its applications "
+                "and historical development. His critique contributed to the "
+                "'Back to Basics' movement of the 1980s, though the pendulum "
+                "never fully returned to pure rote learning."
+            ),
+            keywords=["Kline", "Why Johnny Can't Add", "critique",
+                       "intuition", "applications", "Back to Basics",
+                       "formalism", "New Math", "failure"],
+            source="education_history",
+        ),
+        KnowledgeEntry(
+            id="mathweaver_new_math_response",
+            title="MathWeaver's Response to the New Math Legacy",
+            content=(
+                "MathWeaver is designed as a conscious response to the "
+                "lessons of the New Math movement. It shares the New Math's "
+                "core intuition—that mathematics is about structure, not "
+                "just computation—but addresses each of its failures: "
+                "(1) Structure before intuition: MathWeaver uses a concept "
+                "DAG (Directed Acyclic Graph) with 193 nodes, ensuring "
+                "abstraction is introduced only after prerequisite "
+                "intuition is established. The four-field cognitive state "
+                "(perception, abstraction, epistemic, collaboration) tracks "
+                "readiness in real time. (2) One-size-fits-all abstraction: "
+                "the Grill mode adapts difficulty based on mastery, "
+                "response time, and emotional state. Abstract concepts enter "
+                "only when the learner's mastery exceeds threshold. "
+                "(3) Emotional neglect: an Encouragement Engine detects "
+                "frustration and provides growth-mindset support, reframing "
+                "errors as discoveries. (4) Historical amnesia: the "
+                "Historical Agent weaves the stories of Galois, Abel, "
+                "Cayley, and others into the learning process, connecting "
+                "learners to the human tradition behind the formulas. "
+                "MathWeaver's guiding principle: structure is the "
+                "destination, not the starting point. Abstraction should "
+                "grow from within the learner's experience, not be imposed "
+                "from above."
+            ),
+            keywords=["MathWeaver", "New Math", "DAG", "adaptive",
+                       "encouragement", "historical", "structure",
+                       "intuition", "cognitive state", "Z3"],
+            source="design_philosophy",
         ),
     ]

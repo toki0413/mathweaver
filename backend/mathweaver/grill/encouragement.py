@@ -41,11 +41,14 @@ class EncouragementContext:
 class EncouragementEngine:
     """Generates growth-mindset encouragement based on student performance.
 
-    Core philosophy (新数学运动):
-    - Mistakes are discoveries, not failures
-    - Effort is praised over innate ability
-    - Streaks are celebrated but not over-emphasized
-    - Frustration is detected and addressed with empathy
+    Core philosophy — response to the New Math movement (1958-1975):
+    The New Math assumed that understanding was inherently motivating, and
+    ignored the emotional dimension of learning. When children cried over
+    octal subtraction, "you're understanding structure" offered no comfort.
+    This engine does the opposite: it detects frustration, celebrates effort,
+    and reframes errors as discoveries. Emotional support is not a byproduct
+    of education — it is the vehicle through which abstraction becomes
+    accessible. See: docs/new-math-reflection.md
     """
 
     # Milestone thresholds

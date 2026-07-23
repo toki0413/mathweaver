@@ -4,8 +4,12 @@ When a student's conjecture is tested, the system weaves in relevant
 historical context — not as a dry fact, but as a story that connects
 the student's discovery to the mathematicians who made the same journey.
 
-This implements the "新数学运动" vision: mathematics as a living
-tradition of discovery, not a set of facts to memorize.
+Design philosophy — response to the New Math movement (1958-1975):
+The New Math treated mathematics as a static body of axioms, stripping away
+the human stories behind the formulas. This module does the opposite:
+it reconnects each conjecture to the mathematician who first grappled with
+it, making structure emerge from narrative rather than replacing it.
+See: docs/new-math-reflection.md
 """
 
 from __future__ import annotations

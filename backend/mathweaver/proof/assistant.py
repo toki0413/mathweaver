@@ -7,8 +7,13 @@ against the expected proof structure, and the assistant provides:
 - Socratic hints for what to do next
 - Overall completion assessment
 
-This implements the "新数学运动" vision: students don't just state answers,
-they construct rigorous arguments — and the system guides them through gaps.
+Design philosophy — response to the New Math movement (1958-1975):
+The New Math introduced formal proof structures to students who lacked
+the intuition to ground them, leading to alienation. This assistant takes
+the opposite approach: it activates only after the learner's mastery
+exceeds threshold, and provides Socratic guidance rather than demanding
+axiomatic formalism from the start. Structure is the destination, not
+the starting point. See: docs/new-math-reflection.md
 """
 
 from __future__ import annotations
