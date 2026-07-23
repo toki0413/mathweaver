@@ -43,14 +43,48 @@ class BackendManager {
   private isReady = false
   private retryCount = 0
   private maxRetries = 30
+  private errorMessage: string | null = null
+
+  /** Find a usable Python executable on this system. */
+  private _findPython(): string | null {
+    const candidates = process.platform === 'win32'
+      ? ['python3', 'python', 'py']
+      : ['python3', 'python', 'python3.11', 'python3.10']
+
+    for (const cmd of candidates) {
+      try {
+        // Use `which` equivalent via `where` on Windows, `which` elsewhere
+        const whichCmd = process.platform === 'win32' ? 'where' : 'which'
+        const result = require('child_process').execSync(
+          `${whichCmd} ${cmd}`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }
+        )
+        const found = result.trim().split('\n')[0].trim()
+        if (found) return cmd
+      } catch {
+        // Command not found, try next
+      }
+    }
+    return null
+  }
 
   start(): void {
-    // Try to find the Python backend
+    // 1. Find Python runtime
+    const pythonCmd = this._findPython()
+    if (!pythonCmd) {
+      this.errorMessage =
+        '未检测到 Python 环境。MathWeaver 需要 Python 3.10+ 才能运行后端服务。\n' +
+        '请访问 https://python.org/downloads/ 安装 Python，然后重新启动应用。'
+      console.error('[Backend] No Python runtime found')
+      return
+    }
+    console.log(`[Backend] Using Python: ${pythonCmd}`)
+
+    // 2. Find the Python backend source code
     const backendPaths = [
       // Development: sibling backend directory
       join(app.getAppPath(), '..', 'backend'),
       join(app.getAppPath(), '..', '..', 'backend'),
-      // Packaged: resources/backend
+      // Packaged: resources/backend (electron-builder extraResources)
       join(process.resourcesPath || '', 'backend'),
       // Current directory fallback
       join(process.cwd(), 'backend'),
@@ -65,13 +99,14 @@ class BackendManager {
     }
 
     if (!backendDir) {
+      this.errorMessage = '后端服务目录未找到。应用可能未正确安装。'
       console.error('[Backend] Python backend directory not found')
       return
     }
 
     console.log(`[Backend] Starting from ${backendDir}`)
 
-    this.process = spawn('python3', [
+    this.process = spawn(pythonCmd, [
       '-m', 'uvicorn',
       'mathweaver.api.app:app',
       '--host', BACKEND_HOST,
@@ -79,6 +114,7 @@ class BackendManager {
     ], {
       cwd: backendDir,
       env: { ...process.env, PYTHONUNBUFFERED: '1' },
+      detached: false,
     })
 
     this.process.stdout?.on('data', (data: Buffer) => {
@@ -91,6 +127,11 @@ class BackendManager {
 
     this.process.stderr?.on('data', (data: Buffer) => {
       console.error(`[Backend] ${data.toString().trim()}`)
+    })
+
+    this.process.on('error', (err) => {
+      console.error(`[Backend] Spawn error: ${err.message}`)
+      this.errorMessage = `启动后端服务失败: ${err.message}`
     })
 
     this.process.on('exit', (code) => {
@@ -336,8 +377,18 @@ app.whenReady().then(async () => {
   // Start Python backend
   console.log('[Main] Starting Python backend...')
   backend.start()
-  await backend.waitForReady()
-  console.log(`[Main] Backend ready: ${backend.ready}`)
+
+  // Show error dialog if Python is missing
+  if (backend['errorMessage']) {
+    dialog.showErrorBox(
+      'MathWeaver - 需要 Python 环境',
+      backend['errorMessage'] as string
+    )
+    // Still open the window so the user can see the UI, but backend won't work
+  } else {
+    await backend.waitForReady()
+    console.log(`[Main] Backend ready: ${backend.ready}`)
+  }
 
   // Create main window
   mainWindow = createWindow()
