@@ -37,6 +37,7 @@ nsis:
   perMachine: false
   shortcutName: MathWeaver
   uninstallDisplayName: MathWeaver
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 mac:
   target:
@@ -48,7 +49,7 @@ mac:
   category: public.app-category.education
 
 dmg:
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 linux:
   target:
@@ -59,9 +60,9 @@ linux:
   category: Education
 
 appImage:
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 publish:
   - provider: github
-    owner: mathweaver
+    owner: toki0413
     repo: mathweaver
