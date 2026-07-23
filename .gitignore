@@ -1,0 +1,62 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# --- Node ---
+node_modules/
+dist/
+out/
+.npm/
+.pnpm-store/
+
+# --- Electron / desktop build output ---
+desktop/node_modules/
+desktop/out/
+desktop/dist/
+desktop/release/
+release/
+
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# --- Logs ---
+*.log
+logs/
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Local data / databases ---
+backend/data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# --- Build artifacts ---
+*.zip
+*.tar.gz
+polish-reports/
+backend/build/

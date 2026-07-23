@@ -1,0 +1,742 @@
+[
+  {
+    "id": "set_theory_basics",
+    "name": "集合论基础",
+    "description": "集合的概念、表示方法与基本运算（并、交、补、差）",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "sets",
+    "difficulty": 0.2,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解集合的定义及列举法、描述法等表示方法",
+      "掌握集合的基本运算（并、交、补、差、对称差）",
+      "理解子集、真子集、空集与幂集的概念"
+    ],
+    "examples": [
+      "自然数集 N = {0, 1, 2, ...}",
+      "A = {1,2,3}, B = {2,3,4}：A∪B = {1,2,3,4}, A∩B = {2,3}",
+      "幂集 P({a,b}) = {∅, {a}, {b}, {a,b}}"
+    ],
+    "assessment_criteria": [
+      "能判断元素是否属于给定集合",
+      "能计算集合的并、交、补、差运算结果",
+      "能求给定集合的幂集并计算其基数"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "集合论由 Georg Cantor 在 19 世纪 70 年代创立，为现代数学提供了统一的基础语言。",
+    "related_theorems": [
+      "De Morgan 律",
+      "Cantor 定理"
+    ],
+    "common_misconceptions": [
+      "混淆元素属于（∈）与子集包含（⊆）",
+      "认为空集没有子集"
+    ]
+  },
+  {
+    "id": "relations",
+    "name": "关系",
+    "description": "笛卡尔积、二元关系的定义及关系的性质（自反、对称、传递）",
+    "prerequisites": [
+      "set_theory_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "relations",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解笛卡尔积 A × B 与二元关系 R ⊆ A × B 的定义",
+      "掌握关系的自反性、对称性、传递性与反对称性",
+      "理解关系的表示（关系矩阵与关系图）及运算（复合、逆、闭包）"
+    ],
+    "examples": [
+      "整数上的整除关系 a | b",
+      "实数上的小于等于关系 ≤",
+      "关系 R = {(1,2),(2,3)} 的复合 R∘R = {(1,3)}"
+    ],
+    "assessment_criteria": [
+      "能判断给定关系是否具有自反、对称、传递、反对称性",
+      "能计算关系的复合与逆",
+      "能用关系矩阵或关系图表示关系"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "关系的一般理论由 20 世纪的 Bourbaki 学派系统化，但其思想可追溯到 De Morgan 与 Peirce 的工作。",
+    "related_theorems": [
+      "关系性质判定定理",
+      "关系闭包定理"
+    ],
+    "common_misconceptions": [
+      "混淆自反性与对称性",
+      "认为反对称性意味着不存在 (a,b) 与 (b,a) 同时出现"
+    ]
+  },
+  {
+    "id": "equivalence_relations",
+    "name": "等价关系",
+    "description": "自反、对称、传递关系与等价类划分",
+    "prerequisites": [
+      "relations"
+    ],
+    "abstraction_level": 2,
+    "domain": "relations",
+    "difficulty": 0.45,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解等价关系的三条公理（自反、对称、传递）",
+      "掌握等价类 [a] 与商集 A/R 的概念",
+      "理解等价关系与集合划分的一一对应"
+    ],
+    "examples": [
+      "整数模 n 同余 a ≡ b (mod n)",
+      "矩阵的等价关系（行变换可互达）",
+      "平面上三角形的相似关系"
+    ],
+    "assessment_criteria": [
+      "能验证给定关系是否为等价关系",
+      "能求给定等价关系的商集",
+      "能建立等价关系与划分的对应"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "等价关系的抽象化由 20 世纪的 Bourbaki 学派系统化，同余思想可追溯到 Gauss 的《算术研究》（1801）。",
+    "related_theorems": [
+      "等价类划分定理",
+      "等价关系与划分对应定理"
+    ],
+    "common_misconceptions": [
+      "认为对称性可由自反性与传递性推出",
+      "混淆等价类的代表元与整个等价类"
+    ]
+  },
+  {
+    "id": "partial_order",
+    "name": "偏序关系",
+    "description": "自反、反对称、传递关系与偏序集、哈斯图",
+    "prerequisites": [
+      "relations"
+    ],
+    "abstraction_level": 2,
+    "domain": "relations",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解偏序与全序的区别",
+      "掌握哈斯图的绘制方法",
+      "理解极大元、极小元、最大元、最小元与上下界的概念"
+    ],
+    "examples": [
+      "整数的整除关系 (N, |) 是偏序",
+      "集合的包含关系 (P(A), ⊆) 是偏序",
+      "字典序是全序的典型例子"
+    ],
+    "assessment_criteria": [
+      "能判断给定关系是否为偏序",
+      "能绘制偏序集的哈斯图",
+      "能识别极大元、极小元与最大元、最小元"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "偏序理论由 Dedekind 与 Birkhoff 等人发展，哈斯图由 Helmut Hasse 在 1920 年代系统使用。",
+    "related_theorems": [
+      "偏序集基本定理",
+      "Zorn 引理"
+    ],
+    "common_misconceptions": [
+      "认为偏序集必有最大元",
+      "混淆极大元与最大元"
+    ]
+  },
+  {
+    "id": "functions_basics",
+    "name": "函数基础",
+    "description": "函数的定义域、陪域与单射、满射、双射的分类",
+    "prerequisites": [
+      "set_theory_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "functions",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解函数 f: A → B 的形式定义及定义域、陪域",
+      "区分单射、满射、双射并掌握判定方法",
+      "理解函数的复合与逆函数存在的充要条件"
+    ],
+    "examples": [
+      "f: R → R, f(x) = x²（非单非满）",
+      "f: R → R⁺, f(x) = e^x（双射）",
+      "f: Z → Z, f(n) = 2n（单射非满射）"
+    ],
+    "assessment_criteria": [
+      "能判断给定函数是否为单射、满射或双射",
+      "能构造双射并求其逆函数",
+      "能计算函数的复合"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "函数的现代定义由 Dirichlet 在 1837 年给出，将函数从“解析表达式”解放为任意对应关系。",
+    "related_theorems": [
+      "双射判定定理",
+      "Schröder–Bernstein 定理"
+    ],
+    "common_misconceptions": [
+      "认为满射必为单射",
+      "混淆定义域与陪域"
+    ]
+  },
+  {
+    "id": "cardinality",
+    "name": "基数",
+    "description": "集合的等势、可数与不可数及无穷的层次",
+    "prerequisites": [
+      "functions_basics"
+    ],
+    "abstraction_level": 2,
+    "domain": "sets",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解集合等势的概念及基数的定义",
+      "掌握可数集与不可数集的区分",
+      "理解 Cantor 对角线法与连续统假设"
+    ],
+    "examples": [
+      "自然数集 N 与整数集 Z 等势",
+      "实数集 R 不可数（Cantor 对角线法）",
+      "有理数集 Q 是可数集"
+    ],
+    "assessment_criteria": [
+      "能判断给定集合是否可数",
+      "能构造集合间的双射证明等势",
+      "能复述 Cantor 对角线法证明"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "基数理论由 Cantor 在 1874 年开创，他证明实数不可数，开启了集合论的深刻研究。",
+    "related_theorems": [
+      "Cantor 定理",
+      "Cantor–Bernstein 定理"
+    ],
+    "common_misconceptions": [
+      "认为有理数比自然数多",
+      "认为无穷集合无法比较大小"
+    ]
+  },
+  {
+    "id": "pigeonhole_principle",
+    "name": "鸽巢原理",
+    "description": "将 n+1 个物体放入 n 个盒子必有至少一盒含两物的计数原理",
+    "prerequisites": [
+      "set_theory_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "combinatorics",
+    "difficulty": 0.35,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解鸽巢原理的基本形式与推广形式",
+      "掌握将存在性问题转化为鸽巢模型的方法",
+      "理解鸽巢原理在证明中的应用技巧"
+    ],
+    "examples": [
+      "367 人中必有两人生日相同",
+      "从 1-2n 中任取 n+1 个数必有一个整除另一个",
+      "任给 10 个整数必能选出若干个使其和为 10 的倍数"
+    ],
+    "assessment_criteria": [
+      "能识别可应用鸽巢原理的问题",
+      "能正确构造鸽巢与物体",
+      "能应用推广形式给出数量下界"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "鸽巢原理又称抽屉原理，由 Dirichlet 在 1834 年明确提出，是组合数学中最基本的计数工具。",
+    "related_theorems": [
+      "鸽巢原理",
+      "广义鸽巢原理"
+    ],
+    "common_misconceptions": [
+      "误选鸽巢与物体的对应关系",
+      "忽略推广形式中“至少”的数量计算"
+    ]
+  },
+  {
+    "id": "permutations_combinations",
+    "name": "排列与组合",
+    "description": "排列数、组合数的定义、计算公式与基本计数原理",
+    "prerequisites": [
+      "set_theory_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "combinatorics",
+    "difficulty": 0.4,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解排列 P(n,r) 与组合 C(n,r) 的定义",
+      "掌握乘法原理与加法原理的应用",
+      "理解组合数的对称性 C(n,r) = C(n,n−r) 与递推关系"
+    ],
+    "examples": [
+      "从 5 人中选 3 人排列：P(5,3) = 60",
+      "从 5 人中选 3 人组合：C(5,3) = 10",
+      "含重复元素的排列：MISSISSIPPI 的字母排列数"
+    ],
+    "assessment_criteria": [
+      "能区分排列与组合问题并正确选择公式",
+      "能应用乘法原理与加法原理分解计数问题",
+      "能计算含重复元素的排列与组合"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "排列组合的系统研究由 Pascal 与 Fermat 在 17 世纪关于概率论的通信中奠基。",
+    "related_theorems": [
+      "排列组合公式",
+      "Pascal 恒等式"
+    ],
+    "common_misconceptions": [
+      "混淆排列与组合（忽略顺序）",
+      "在可重复选取时套用不可重复公式"
+    ]
+  },
+  {
+    "id": "binomial_theorem",
+    "name": "二项式定理",
+    "description": "(x + y)^n 的展开式与二项式系数的性质",
+    "prerequisites": [
+      "permutations_combinations"
+    ],
+    "abstraction_level": 2,
+    "domain": "combinatorics",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握二项式定理 (x+y)^n = Σ C(n,k) x^k y^(n−k)",
+      "理解二项式系数的 Pascal 三角形递推",
+      "掌握二项式系数的恒等式（如 C(n,k) = C(n,n−k)）"
+    ],
+    "examples": [
+      "(x+1)^3 = x³ + 3x² + 3x + 1",
+      "Pascal 三角形前几行：1; 1,1; 1,2,1; 1,3,3,1",
+      "Σ_{k=0}^{n} C(n,k) = 2^n"
+    ],
+    "assessment_criteria": [
+      "能用二项式定理展开二项式",
+      "能求指定项的系数",
+      "能应用二项式系数恒等式简化求和"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "二项式定理的早期形式由中国古代贾宪（11 世纪）与杨辉记载，Newton 在 1665 年推广到一般指数。",
+    "related_theorems": [
+      "二项式定理",
+      "Pascal 恒等式"
+    ],
+    "common_misconceptions": [
+      "混淆二项式系数与排列数",
+      "在展开式中错误地遗漏组合系数"
+    ]
+  },
+  {
+    "id": "inclusion_exclusion",
+    "name": "容斥原理",
+    "description": "计算多个集合并集基数的逐步容斥方法",
+    "prerequisites": [
+      "permutations_combinations"
+    ],
+    "abstraction_level": 2,
+    "domain": "combinatorics",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握容斥原理的一般形式",
+      "理解“补集思想”在计数中的应用",
+      "能应用容斥原理解决错排、欧拉函数等问题"
+    ],
+    "examples": [
+      "1-100 中不被 2、3、5 整除的数：100 − 50 − 33 − 20 + 16 + 10 + 6 − 3 = 26",
+      "错排数 D_n = n! × Σ_{k=0}^{n} (−1)^k / k!",
+      "φ(n) = n × ∏(1 − 1/p) 的容斥推导"
+    ],
+    "assessment_criteria": [
+      "能正确列出容斥公式并计算",
+      "能识别符号交替的规律",
+      "能将容斥应用于错排与欧拉函数"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "容斥原理由 Abraham de Moivre 在 1718 年系统使用，后由 Poincaré 等推广到一般形式。",
+    "related_theorems": [
+      "容斥原理",
+      "错排公式"
+    ],
+    "common_misconceptions": [
+      "在三项容斥中漏掉三重交的部分",
+      "混淆容斥中加减交替的符号"
+    ]
+  },
+  {
+    "id": "graph_basics",
+    "name": "图的基本概念",
+    "description": "图的定义、顶点、边、度数与图的分类",
+    "prerequisites": [
+      "set_theory_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "graph_theory",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解图 G = (V, E) 的定义及有向图与无向图",
+      "掌握顶点度数的概念与握手定理",
+      "理解简单图、完全图、二部图等特殊图类"
+    ],
+    "examples": [
+      "三角形 K₃ 是 3 个顶点的完全图",
+      "二部图 K_{3,3}（柯尼斯堡桥的建模）",
+      "握手定理：所有顶点度数之和等于 2|E|"
+    ],
+    "assessment_criteria": [
+      "能判断给定结构是否为图并分类",
+      "能应用握手定理验证度数序列",
+      "能识别完全图、二部图等特殊图"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "图论起源于 Euler 在 1736 年对柯尼斯堡七桥问题的研究，是离散数学的核心分支。",
+    "related_theorems": [
+      "握手定理",
+      "完全图边数定理"
+    ],
+    "common_misconceptions": [
+      "认为度数序列可以任意（忽略握手定理的约束）",
+      "混淆有向图与无向图的度数定义"
+    ]
+  },
+  {
+    "id": "graph_representations",
+    "name": "图的表示",
+    "description": "邻接矩阵、邻接表与关联矩阵等图的计算机表示",
+    "prerequisites": [
+      "graph_basics"
+    ],
+    "abstraction_level": 2,
+    "domain": "graph_theory",
+    "difficulty": 0.4,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握邻接矩阵与邻接表的构造",
+      "理解不同表示方法的时间与空间复杂度",
+      "能从表示中读出图的基本性质"
+    ],
+    "examples": [
+      "K₃ 的邻接矩阵为全 1 对角线为 0 的 3×3 矩阵",
+      "稀疏图用邻接表节省空间",
+      "邻接矩阵的幂 A^k 给出长度为 k 的路径数"
+    ],
+    "assessment_criteria": [
+      "能为给定图构造邻接矩阵与邻接表",
+      "能比较不同表示的时空效率",
+      "能利用邻接矩阵的幂计算路径数"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "图的矩阵表示方法在 20 世纪中叶随计算机科学的发展而普及，邻接矩阵由 König 等人引入。",
+    "related_theorems": [
+      "邻接矩阵幂定理",
+      "图表示等价定理"
+    ],
+    "common_misconceptions": [
+      "混淆邻接矩阵与关联矩阵",
+      "认为邻接矩阵仅适用于无向图"
+    ]
+  },
+  {
+    "id": "graph_traversal",
+    "name": "图的遍历",
+    "description": "广度优先搜索（BFS）与深度优先搜索（DFS）",
+    "prerequisites": [
+      "graph_representations"
+    ],
+    "abstraction_level": 2,
+    "domain": "graph_theory",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握 BFS 与 DFS 的算法步骤",
+      "理解遍历产生的生成树与访问顺序",
+      "能分析两种算法的时间复杂度与适用场景"
+    ],
+    "examples": [
+      "BFS 从源点出发逐层扩展，适合求最短路径",
+      "DFS 沿一条路径深入到底再回溯，适合检测环与拓扑排序",
+      "用 DFS 判断图的连通性"
+    ],
+    "assessment_criteria": [
+      "能对给定图执行 BFS 与 DFS 并写出访问序列",
+      "能构造遍历生成树",
+      "能选择恰当算法解决连通性与环检测问题"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "图遍历算法由 Tarjan、Hopcroft 等人在 1970 年代系统化，是计算机科学的基础算法。",
+    "related_theorems": [
+      "BFS 最短路径定理",
+      "DFS 环检测定理"
+    ],
+    "common_misconceptions": [
+      "混淆 BFS 与 DFS 的扩展顺序",
+      "认为遍历顺序与起点无关"
+    ]
+  },
+  {
+    "id": "trees",
+    "name": "树",
+    "description": "连通无圈图及其性质、生成树的概念",
+    "prerequisites": [
+      "graph_basics"
+    ],
+    "abstraction_level": 2,
+    "domain": "graph_theory",
+    "difficulty": 0.5,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解树的多种等价定义（连通无圈、任意两顶点间唯一路径等）",
+      "掌握 n 个顶点的树恰有 n−1 条边",
+      "理解根树、二叉树与 Huffman 树的概念"
+    ],
+    "examples": [
+      "5 个顶点的树恰有 4 条边",
+      "二叉搜索树的查找结构",
+      "Huffman 编码的最优前缀码构造"
+    ],
+    "assessment_criteria": [
+      "能判断给定图是否为树",
+      "能验证树的边数定理",
+      "能构造 Huffman 树并求编码"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "树的概念由 Cayley 在 1857 年研究化学同分异构体时引入，Huffman 编码由 Huffman 在 1952 年提出。",
+    "related_theorems": [
+      "树的等价定理",
+      "Cayley 公式（n^(n−2)）"
+    ],
+    "common_misconceptions": [
+      "认为树可以有环",
+      "混淆树与森林（不连通的树集合）"
+    ]
+  },
+  {
+    "id": "spanning_trees",
+    "name": "生成树",
+    "description": "连通图的生成树及最小生成树算法（Kruskal、Prim）",
+    "prerequisites": [
+      "trees",
+      "graph_traversal"
+    ],
+    "abstraction_level": 3,
+    "domain": "graph_theory",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解生成树与最小生成树的概念",
+      "掌握 Kruskal 算法与 Prim 算法的步骤",
+      "理解贪心策略在最小生成树中的正确性"
+    ],
+    "examples": [
+      "用 Kruskal 算法对带权图按边权排序逐步选边",
+      "用 Prim 算法从一顶点出发逐步扩展",
+      "网络布线问题中的最小成本生成树"
+    ],
+    "assessment_criteria": [
+      "能用 Kruskal 或 Prim 算法求最小生成树",
+      "能说明贪心选择的正确性",
+      "能比较两种算法的适用场景"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "最小生成树算法由 Kruskal（1956）与 Prim（1957）独立提出，是贪心算法的经典范例。",
+    "related_theorems": [
+      "最小生成树贪心定理",
+      "环性质与割性质"
+    ],
+    "common_misconceptions": [
+      "认为最小生成树唯一（带相同权值时可能不唯一）",
+      "混淆生成树与生成子图"
+    ]
+  },
+  {
+    "id": "eulerian_graphs",
+    "name": "欧拉图",
+    "description": "欧拉回路与欧拉路径的存在条件",
+    "prerequisites": [
+      "graph_basics"
+    ],
+    "abstraction_level": 3,
+    "domain": "graph_theory",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解欧拉回路与欧拉路径的定义",
+      "掌握连通图存在欧拉回路的充要条件（所有顶点度数为偶数）",
+      "理解欧拉路径的条件（恰有两个奇数度顶点）"
+    ],
+    "examples": [
+      "柯尼斯堡七桥问题：四块陆地度数均为奇数，无欧拉回路",
+      "完全图 K_n 当 n 为奇数时是欧拉图",
+      "一笔画问题与欧拉路径"
+    ],
+    "assessment_criteria": [
+      "能判断给定图是否存在欧拉回路或路径",
+      "能构造欧拉回路",
+      "能说明度数条件与连通性的必要性"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "欧拉在 1736 年解决柯尼斯堡七桥问题，奠定了图论的基础。欧拉回路以他命名。",
+    "related_theorems": [
+      "欧拉回路存在定理",
+      "欧拉路径存在定理"
+    ],
+    "common_misconceptions": [
+      "认为所有连通图都有欧拉回路",
+      "混淆欧拉回路与哈密尔顿回路"
+    ]
+  },
+  {
+    "id": "planar_graphs",
+    "name": "平面图",
+    "description": "可平面化图与 Euler 公式、Kuratowski 定理",
+    "prerequisites": [
+      "graph_basics"
+    ],
+    "abstraction_level": 3,
+    "domain": "graph_theory",
+    "difficulty": 0.65,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解平面图的定义与面的概念",
+      "掌握 Euler 公式 v − e + f = 2",
+      "理解 K₅ 与 K_{3,3} 的非平面性及 Kuratowski 定理"
+    ],
+    "examples": [
+      "正四面体的平面化满足 v − e + f = 2",
+      "K₅ 与 K_{3,3} 不可平面化",
+      "用 Euler 公式推导平面图边数上界 e ≤ 3v − 6"
+    ],
+    "assessment_criteria": [
+      "能应用 Euler 公式验证平面图",
+      "能说明 K₅ 与 K_{3,3} 的非平面性",
+      "能用 Kuratowski 定理判断非平面图"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "平面图理论由 Euler 公式（1750）奠基，Kuratowski 在 1930 年给出平面图的刻画定理。",
+    "related_theorems": [
+      "Euler 多面体公式",
+      "Kuratowski 定理"
+    ],
+    "common_misconceptions": [
+      "认为所有图都可平面化",
+      "混淆面数与边数的计算"
+    ]
+  },
+  {
+    "id": "graph_coloring",
+    "name": "图着色",
+    "description": "顶点着色、色数与四色定理",
+    "prerequisites": [
+      "planar_graphs"
+    ],
+    "abstraction_level": 3,
+    "domain": "graph_theory",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解正常着色与色数 χ(G) 的定义",
+      "掌握 Welsh–Powell 等贪心着色算法",
+      "理解四色定理与色数上下界"
+    ],
+    "examples": [
+      "完全图 K_n 的色数为 n",
+      "二部图的色数为 2",
+      "四色定理：平面图色数不超过 4"
+    ],
+    "assessment_criteria": [
+      "能求给定图的色数",
+      "能应用贪心算法进行着色",
+      "能说明四色定理的意义"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "四色猜想由 Guthrie 在 1852 年提出，1976 年由 Appel 与 Haken 借助计算机证明，是首个计算机辅助证明的重大定理。",
+    "related_theorems": [
+      "四色定理",
+      "Brooks 定理"
+    ],
+    "common_misconceptions": [
+      "认为色数等于最大度数",
+      "混淆顶点着色与边着色"
+    ]
+  },
+  {
+    "id": "recurrence_relations",
+    "name": "递推关系",
+    "description": "数列的递推定义、线性常系数递推的求解",
+    "prerequisites": [
+      "functions_basics"
+    ],
+    "abstraction_level": 2,
+    "domain": "recursion",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解递推关系的定义及初始条件",
+      "掌握线性常系数齐次递推的特征方程求解法",
+      "理解分治递推与主定理的应用"
+    ],
+    "examples": [
+      "Fibonacci 数列 F_n = F_{n−1} + F_{n−2}，F_0=0, F_1=1",
+      "Hanoi 塔：T_n = 2T_{n−1} + 1，解为 T_n = 2^n − 1",
+      "归并排序递推 T(n) = 2T(n/2) + n = O(n log n)"
+    ],
+    "assessment_criteria": [
+      "能由递推关系求通项公式",
+      "能用特征方程法解齐次递推",
+      "能用主定理分析分治算法复杂度"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "递推关系的研究由 Fibonacci（1202）引入西方数学，主定理由 Bentley 等人在分治算法分析中系统化。",
+    "related_theorems": [
+      "线性递推通解定理",
+      "主定理（Master Theorem）"
+    ],
+    "common_misconceptions": [
+      "忽略初始条件导致解不唯一",
+      "混淆齐次与非齐次递推的解法"
+    ]
+  },
+  {
+    "id": "generating_functions",
+    "name": "生成函数",
+    "description": "普通生成函数与指数生成函数及其在计数中的应用",
+    "prerequisites": [
+      "recurrence_relations",
+      "permutations_combinations"
+    ],
+    "abstraction_level": 3,
+    "domain": "combinatorics",
+    "difficulty": 0.75,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解普通生成函数的定义及与数列的对应",
+      "掌握用生成函数求解递推关系的方法",
+      "理解指数生成函数在带标号计数中的作用"
+    ],
+    "examples": [
+      "Fibonacci 数列的生成函数 G(x) = x/(1 − x − x²)",
+      "组合数 {C(n,k)} 的生成函数 (1+x)^n",
+      "用生成函数求方程 x₁+x₂+x₃ = n 的非负整数解数"
+    ],
+    "assessment_criteria": [
+      "能为给定数列构造生成函数",
+      "能用生成函数求解递推关系",
+      "能用生成函数解决组合计数问题"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "生成函数方法由 de Moivre 与 Euler 引入，由 Pólya 在 20 世纪系统化为计数的核心工具。",
+    "related_theorems": [
+      "生成函数与递推对应定理",
+      "指数生成函数定理"
+    ],
+    "common_misconceptions": [
+      "混淆普通生成函数与指数生成函数",
+      "忽略生成函数的收敛性与形式幂级数的区别"
+    ]
+  }
+]

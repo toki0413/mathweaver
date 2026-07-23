@@ -1,0 +1,969 @@
+[
+  {
+    "id": "vector_basics",
+    "name": "向量基础",
+    "description": "向量的几何与代数表示、模长与方向、向量相等",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "vector_space",
+    "difficulty": 0.2,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解向量的几何表示（有向线段）与坐标表示",
+      "掌握向量的模长、方向角与单位向量的概念",
+      "理解向量相等与零向量的定义"
+    ],
+    "examples": [
+      "平面向量 v = (3, 4)，模长为 5",
+      "空间向量 v = (1, 2, 3)",
+      "单位向量 e₁ = (1, 0), e₂ = (0, 1)"
+    ],
+    "assessment_criteria": [
+      "能用坐标表示给定向量并计算模长",
+      "能判断两个向量是否相等",
+      "能将向量单位化"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "向量概念源于 Hamilton 对复数与四元数的研究（1843），后由 Gibbs 与 Heaviside 在 19 世纪 80 年代发展为现代向量分析。",
+    "related_theorems": [
+      "向量模长三角不等式",
+      "单位向量分解定理"
+    ],
+    "common_misconceptions": [
+      "认为向量与标量可以随意相加",
+      "混淆向量的方向与坐标的符号"
+    ]
+  },
+  {
+    "id": "vector_operations",
+    "name": "向量运算",
+    "description": "向量的加法、减法、数乘及几何意义",
+    "prerequisites": [
+      "vector_basics"
+    ],
+    "abstraction_level": 0,
+    "domain": "vector_space",
+    "difficulty": 0.25,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握向量加法的平行四边形法则与三角形法则",
+      "理解数乘运算的几何意义（伸缩与反向）",
+      "掌握向量运算的运算律（交换、结合、分配）"
+    ],
+    "examples": [
+      "(1, 2) + (3, 1) = (4, 3)",
+      "2·(1, 0, 0) = (2, 0, 0)",
+      "−(a, b) = (−a, −b)"
+    ],
+    "assessment_criteria": [
+      "能进行向量的加减与数乘运算",
+      "能用向量运算表示几何关系（如中点、分点）",
+      "能验证向量运算律"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "向量加法的几何法则可追溯到 Stevin 的静力学研究，数乘的代数化由 Hamilton 在四元数理论中系统化。",
+    "related_theorems": [
+      "向量运算八条公理",
+      "三角形法则"
+    ],
+    "common_misconceptions": [
+      "混淆向量减法与加法的几何作图",
+      "认为数乘仅改变模长不改变方向"
+    ]
+  },
+  {
+    "id": "dot_product",
+    "name": "内积/点积",
+    "description": "向量点积的定义、几何意义与投影",
+    "prerequisites": [
+      "vector_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "vector_space",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握点积的代数定义 a·b = a₁b₁ + a₂b₂ + ... 与几何定义 a·b = |a||b|cosθ",
+      "理解点积与投影、正交性的关系",
+      "掌握 Cauchy–Schwarz 不等式与三角不等式的点积证明"
+    ],
+    "examples": [
+      "(1, 2)·(3, 1) = 5",
+      "非零向量正交当且仅当点积为零",
+      "力沿位移方向做功 W = F·d"
+    ],
+    "assessment_criteria": [
+      "能计算点积并求夹角",
+      "能用点积判断正交性",
+      "能求向量在另一向量上的投影"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "点积由 Gibbs 与 Heaviside 在 19 世纪 80 年代从四元数的标量部分独立出来，是现代向量分析的核心运算。",
+    "related_theorems": [
+      "Cauchy–Schwarz 不等式",
+      "余弦定理"
+    ],
+    "common_misconceptions": [
+      "认为点积结果是向量",
+      "混淆投影与投影向量"
+    ]
+  },
+  {
+    "id": "cross_product",
+    "name": "外积/叉积",
+    "description": "三维向量的叉积及其几何与代数性质",
+    "prerequisites": [
+      "vector_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "vector_space",
+    "difficulty": 0.4,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握叉积的代数定义与行列式表示",
+      "理解叉积的几何意义（模长为面积，方向由右手定则确定）",
+      "掌握混合积与平行六面体体积的关系"
+    ],
+    "examples": [
+      "i × j = k, j × k = i, k × i = j",
+      "a × b = 0 当且仅当 a 与 b 共线",
+      "三角形面积 = ½|a × b|"
+    ],
+    "assessment_criteria": [
+      "能计算叉积并确定方向",
+      "能用叉积计算平行四边形与三角形面积",
+      "能用混合积计算平行六面体体积"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "叉积由 Gibbs 与 Heaviside 从四元数的向量部分独立出来，仅对三维向量良定义，是几何与物理的重要工具。",
+    "related_theorems": [
+      "Lagrange 恒等式",
+      "Jacobi 恒等式"
+    ],
+    "common_misconceptions": [
+      "认为叉积满足交换律（实际满足反交换律）",
+      "在二维或四维中滥用叉积定义"
+    ]
+  },
+  {
+    "id": "linear_independence",
+    "name": "线性无关",
+    "description": "向量组的线性相关与线性无关及其判定",
+    "prerequisites": [
+      "vector_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "vector_space",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解线性组合与线性表示的概念",
+      "掌握线性相关与线性无关的形式定义",
+      "能用行列式或秩判定向量组的线性相关性"
+    ],
+    "examples": [
+      "e₁ = (1,0), e₂ = (0,1) 线性无关",
+      "(1,2), (2,4) 线性相关",
+      "三个二维向量必线性相关"
+    ],
+    "assessment_criteria": [
+      "能判断向量组是否线性无关",
+      "能求出线性关系式",
+      "能用线性无关性说明几何意义"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "线性无关概念由 Grassmann 在 1844 年的扩张理论中首次系统化，是线性代数的基石之一。",
+    "related_theorems": [
+      "线性无关判定定理",
+      "Steinitz 替换定理"
+    ],
+    "common_misconceptions": [
+      "认为含零向量的向量组可能线性无关",
+      "混淆线性相关与线性表示的唯一性"
+    ]
+  },
+  {
+    "id": "basis_and_dimension",
+    "name": "基与维数",
+    "description": "向量空间的基、维数与坐标表示",
+    "prerequisites": [
+      "linear_independence"
+    ],
+    "abstraction_level": 2,
+    "domain": "vector_space",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解基的定义（生成 + 线性无关）",
+      "掌握维数的不变性定理",
+      "理解坐标变换与过渡矩阵"
+    ],
+    "examples": [
+      "标准基 {(1,0), (0,1)} 是 R² 的基",
+      "多项式空间 P_n 的维数为 n+1",
+      "齐次线性方程组解空间的维数 = n − r"
+    ],
+    "assessment_criteria": [
+      "能判断给定向量组是否构成基",
+      "能求向量在给定基下的坐标",
+      "能计算向量空间的维数"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "维数概念由 Grassmann 与 Cantor 独立发展，有限维空间的维数不变性定理是线性代数的核心结果。",
+    "related_theorems": [
+      "维数不变性定理",
+      "基扩充定理"
+    ],
+    "common_misconceptions": [
+      "认为基唯一",
+      "混淆空间的维数与向量的分量个数"
+    ]
+  },
+  {
+    "id": "vector_space",
+    "name": "向量空间公理",
+    "description": "向量空间的八条公理与抽象线性结构",
+    "prerequisites": [
+      "basis_and_dimension"
+    ],
+    "abstraction_level": 3,
+    "domain": "vector_space",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握向量空间的八条公理定义",
+      "能验证给定集合在给定运算下是否构成向量空间",
+      "理解抽象向量空间（函数、多项式、矩阵）的例子"
+    ],
+    "examples": [
+      "Rⁿ 在标准加法与数乘下构成向量空间",
+      "多项式全体 P[x] 构成向量空间",
+      "连续函数全体 C[a,b] 构成向量空间"
+    ],
+    "assessment_criteria": [
+      "能从公理出发验证向量空间",
+      "能给出非平凡向量空间的例子",
+      "能证明向量空间的基本性质（零元唯一、逆元唯一）"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "向量空间的公理化定义由 Peano 在 1888 年给出，后由 Banach 与 Hahn 等人推广到无穷维情形。",
+    "related_theorems": [
+      "向量空间公理定理",
+      "零元唯一性定理"
+    ],
+    "common_misconceptions": [
+      "认为向量空间仅指数值向量",
+      "忽略数乘对标量域的依赖"
+    ]
+  },
+  {
+    "id": "subspace",
+    "name": "子空间",
+    "description": "向量空间的子集在原运算下构成向量空间",
+    "prerequisites": [
+      "vector_space"
+    ],
+    "abstraction_level": 3,
+    "domain": "vector_space",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解子空间的定义与判定准则（非空 + 封闭于加法与数乘）",
+      "掌握子空间的交与和",
+      "理解子空间维数与原空间维数的关系"
+    ],
+    "examples": [
+      "过原点的直线是 R² 的子空间",
+      "齐次方程 Ax = 0 的解集是 Rⁿ 的子空间",
+      "对称矩阵全体是 M_n 的子空间"
+    ],
+    "assessment_criteria": [
+      "能判断子集是否为子空间",
+      "能求子空间的交与和",
+      "能用维数公式 dim(U+W) = dim U + dim W − dim(U∩W)"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "子空间概念是向量空间理论的基本结构单元，由 Grassmann 在扩张理论中隐含使用，后由 Peano 公理化。",
+    "related_theorems": [
+      "子空间判定定理",
+      "子空间维数公式"
+    ],
+    "common_misconceptions": [
+      "认为不过原点的直线是子空间",
+      "认为子空间的并仍是子空间"
+    ]
+  },
+  {
+    "id": "linear_span",
+    "name": "线性生成",
+    "description": "向量组的线性生成空间与生成集",
+    "prerequisites": [
+      "subspace"
+    ],
+    "abstraction_level": 2,
+    "domain": "vector_space",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解线性生成 span{v₁, ..., vₖ} 的定义",
+      "掌握生成集与极小生成集（基）的关系",
+      "理解生成空间是包含该向量组的最小子空间"
+    ],
+    "examples": [
+      "span{(1,0), (0,1)} = R²",
+      "span{(1,1,1)} 是过原点的直线",
+      "span{(1,0,0),(0,1,0)} 是 R³ 中的 xy 平面"
+    ],
+    "assessment_criteria": [
+      "能求给定向量组的生成空间",
+      "能判断向量是否属于某生成空间",
+      "能将生成空间化为基"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "线性生成概念由 Grassmann 引入，是子空间构造的基本方法，连接了向量组与子空间。",
+    "related_theorems": [
+      "生成空间最小性定理",
+      "基与生成集关系定理"
+    ],
+    "common_misconceptions": [
+      "认为生成集必须线性无关",
+      "混淆生成空间与向量组本身"
+    ]
+  },
+  {
+    "id": "matrix_basics",
+    "name": "矩阵基础",
+    "description": "矩阵的定义、元素、特殊矩阵与几何意义",
+    "prerequisites": [
+      "vector_operations"
+    ],
+    "abstraction_level": 0,
+    "domain": "matrix",
+    "difficulty": 0.2,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解矩阵的定义、行数、列数与元素",
+      "掌握特殊矩阵（零矩阵、方阵、对角矩阵、三角矩阵）",
+      "理解矩阵与线性方程组、线性变换的联系"
+    ],
+    "examples": [
+      "2×3 矩阵 [[1,2,3],[4,5,6]]",
+      "对角矩阵 diag(1, 2, 3)",
+      "系数矩阵表示线性方程组 Ax = b"
+    ],
+    "assessment_criteria": [
+      "能识别矩阵的类型与形状",
+      "能用矩阵表示线性方程组",
+      "能读写矩阵的元素 aᵢⱼ"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "矩阵概念由 Sylvester 在 1850 年命名，Cayley 在 1858 年建立了矩阵代数理论。",
+    "related_theorems": [
+      "矩阵表示定理",
+      "线性方程组的矩阵表示"
+    ],
+    "common_misconceptions": [
+      "混淆矩阵的行与列",
+      "认为矩阵与行列式是同一概念"
+    ]
+  },
+  {
+    "id": "matrix_operations",
+    "name": "矩阵运算",
+    "description": "矩阵的加法、数乘及其运算律",
+    "prerequisites": [
+      "matrix_basics"
+    ],
+    "abstraction_level": 1,
+    "domain": "matrix",
+    "difficulty": 0.25,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握矩阵加法与数乘的定义及运算律",
+      "理解同型矩阵才能相加的条件",
+      "理解矩阵全体在加法与数乘下构成向量空间"
+    ],
+    "examples": [
+      "[[1,2],[3,4]] + [[0,1],[2,0]] = [[1,3],[5,4]]",
+      "3·[[1,0],[0,1]] = [[3,0],[0,3]]",
+      "M_{m×n}(R) 是向量空间"
+    ],
+    "assessment_criteria": [
+      "能进行矩阵加减与数乘运算",
+      "能验证矩阵运算的运算律",
+      "能说明矩阵集合构成向量空间"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "矩阵加法与数乘由 Cayley 系统定义，是矩阵代数的基本运算。",
+    "related_theorems": [
+      "矩阵运算八条公理",
+      "矩阵向量空间定理"
+    ],
+    "common_misconceptions": [
+      "对不同型矩阵强行相加",
+      "混淆矩阵加法与数乘的优先级"
+    ]
+  },
+  {
+    "id": "matrix_multiplication",
+    "name": "矩阵乘法",
+    "description": "矩阵乘法的定义、运算律与几何意义",
+    "prerequisites": [
+      "matrix_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "matrix",
+    "difficulty": 0.45,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握矩阵乘法的定义（行乘列法则）与维度匹配条件",
+      "理解矩阵乘法满足结合律但不满足交换律",
+      "理解矩阵乘法与线性变换复合的对应"
+    ],
+    "examples": [
+      "[[1,2],[3,4]]·[[5,6],[7,8]] = [[19,22],[43,50]]",
+      "AB ≠ BA 的一般情形",
+      "线性变换复合对应矩阵乘法"
+    ],
+    "assessment_criteria": [
+      "能正确计算矩阵乘积",
+      "能判断矩阵乘法是否可行",
+      "能说明矩阵乘法不满足交换律"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "矩阵乘法由 Cayley 在 1858 年定义，其设计动机正是为了表示线性变换的复合。",
+    "related_theorems": [
+      "矩阵乘法结合律",
+      "矩阵乘法与线性变换复合定理"
+    ],
+    "common_misconceptions": [
+      "认为矩阵乘法满足交换律",
+      "按对应元素相乘（Hadamard 积）代替矩阵乘法"
+    ]
+  },
+  {
+    "id": "identity_matrix",
+    "name": "单位矩阵",
+    "description": "主对角线为 1 其余为 0 的方阵及其性质",
+    "prerequisites": [
+      "matrix_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "matrix",
+    "difficulty": 0.2,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解单位矩阵 I 的定义与记法",
+      "掌握单位矩阵的乘法性质 AI = IA = A",
+      "理解单位矩阵在矩阵乘法中的“单位元”地位"
+    ],
+    "examples": [
+      "I₂ = [[1,0],[0,1]]",
+      "I₃ = [[1,0,0],[0,1,0],[0,0,1]]",
+      "恒等变换对应单位矩阵"
+    ],
+    "assessment_criteria": [
+      "能写出给定阶数的单位矩阵",
+      "能利用单位矩阵性质简化矩阵运算",
+      "能说明单位矩阵是矩阵乘法的单位元"
+    ],
+    "estimated_minutes": 25,
+    "historical_context": "单位矩阵由 Cayley 引入，对应恒等变换，是矩阵代数中乘法单位元的标准表示。",
+    "related_theorems": [
+      "单位矩阵乘法性质定理",
+      "单位元唯一性定理"
+    ],
+    "common_misconceptions": [
+      "混淆单位矩阵与全 1 矩阵",
+      "认为单位矩阵的阶可以任意"
+    ]
+  },
+  {
+    "id": "inverse_matrix",
+    "name": "逆矩阵",
+    "description": "方阵的逆矩阵定义、存在条件与求法",
+    "prerequisites": [
+      "matrix_multiplication",
+      "identity_matrix"
+    ],
+    "abstraction_level": 2,
+    "domain": "matrix",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解逆矩阵的定义 AB = BA = I 及其唯一性",
+      "掌握矩阵可逆的充要条件（行列式非零）",
+      "掌握用伴随矩阵或初等行变换求逆的方法"
+    ],
+    "examples": [
+      "[[1,2],[3,5]] 的逆为 [[−5,2],[3,−1]]",
+      "旋转矩阵的逆是其转置",
+      "对角矩阵的逆为对角元取倒数"
+    ],
+    "assessment_criteria": [
+      "能用伴随矩阵法求逆",
+      "能用初等行变换法求逆",
+      "能判断矩阵是否可逆"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "逆矩阵由 Cayley 定义，可逆性条件与行列式的深刻联系由 Sylvester 与 Frobenius 等人完善。",
+    "related_theorems": [
+      "逆矩阵存在性定理",
+      "逆矩阵唯一性定理"
+    ],
+    "common_misconceptions": [
+      "认为所有方阵都可逆",
+      "混淆 (AB)⁻¹ = B⁻¹A⁻¹ 与 (A⁻¹B⁻¹)"
+    ]
+  },
+  {
+    "id": "transpose",
+    "name": "转置",
+    "description": "矩阵转置的定义、性质与对称矩阵",
+    "prerequisites": [
+      "matrix_operations"
+    ],
+    "abstraction_level": 1,
+    "domain": "matrix",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握矩阵转置的定义 aᵢⱼᵀ = aⱼᵢ",
+      "理解转置的性质 (AB)ᵀ = BᵀAᵀ 与 (Aᵀ)ᵀ = A",
+      "理解对称矩阵、反对称矩阵的定义"
+    ],
+    "examples": [
+      "[[1,2],[3,4]]ᵀ = [[1,3],[2,4]]",
+      "对称矩阵满足 A = Aᵀ",
+      "反对称矩阵满足 Aᵀ = −A"
+    ],
+    "assessment_criteria": [
+      "能正确计算矩阵转置",
+      "能判断矩阵是否对称或反对称",
+      "能利用转置性质简化运算"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "转置运算与对称矩阵的研究由 Cauchy 与 Jacobi 在二次型理论中系统使用。",
+    "related_theorems": [
+      "转置运算性质定理",
+      "对称矩阵谱定理"
+    ],
+    "common_misconceptions": [
+      "认为 (AB)ᵀ = AᵀBᵀ",
+      "混淆对称矩阵与对角矩阵"
+    ]
+  },
+  {
+    "id": "determinant",
+    "name": "行列式",
+    "description": "方阵的行列式定义、性质与几何意义",
+    "prerequisites": [
+      "matrix_multiplication"
+    ],
+    "abstraction_level": 2,
+    "domain": "determinant",
+    "difficulty": 0.5,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握行列式的递归定义与几何意义（体积/面积伸缩因子）",
+      "掌握行列式的基本性质（线性、交换、乘法）",
+      "理解 det(AB) = det(A)det(B) 的深刻含义"
+    ],
+    "examples": [
+      "2 阶行列式 |a b; c d| = ad − bc",
+      "3 阶行列式的 Sarrus 法则",
+      "det(I) = 1"
+    ],
+    "assessment_criteria": [
+      "能计算低阶行列式",
+      "能利用行列式性质化简计算",
+      "能说明行列式与可逆性的关系"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "行列式由 Seki（1683）与 Leibniz（1693）独立发现，后由 Vandermonde、Laplace、Cauchy 系统化。",
+    "related_theorems": [
+      "行列式乘法定理",
+      "行列式线性性质定理"
+    ],
+    "common_misconceptions": [
+      "认为行列式是矩阵的模长",
+      "混淆行列式与矩阵"
+    ]
+  },
+  {
+    "id": "cofactor_expansion",
+    "name": "余子式展开",
+    "description": "按行/列的余子式与代数余子式展开",
+    "prerequisites": [
+      "determinant"
+    ],
+    "abstraction_level": 3,
+    "domain": "determinant",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解余子式 Mᵢⱼ 与代数余子式 Aᵢⱼ 的定义",
+      "掌握按任一行或列展开的拉普拉斯展开",
+      "理解伴随矩阵与逆矩阵的余子式表示"
+    ],
+    "examples": [
+      "3 阶行列式按第一行展开",
+      "伴随矩阵 adj(A) 由代数余子式构成",
+      "A⁻¹ = adj(A)/det(A)"
+    ],
+    "assessment_criteria": [
+      "能用余子式展开计算行列式",
+      "能构造给定矩阵的伴随矩阵",
+      "能用伴随矩阵法求逆"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "余子式展开由 Laplace 在 1772 年给出一般形式，是行列式计算的经典方法。",
+    "related_theorems": [
+      "Laplace 展开定理",
+      "伴随矩阵定理"
+    ],
+    "common_misconceptions": [
+      "混淆余子式与代数余子式的符号",
+      "认为只能按第一行展开"
+    ]
+  },
+  {
+    "id": "cramer_rule",
+    "name": "克拉默法则",
+    "description": "用行列式求解线性方程组的法则",
+    "prerequisites": [
+      "determinant",
+      "cofactor_expansion"
+    ],
+    "abstraction_level": 3,
+    "domain": "determinant",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握克拉默法则的陈述与适用条件",
+      "能用行列式表示线性方程组的唯一解",
+      "理解克拉默法则的几何意义（体积比）"
+    ],
+    "examples": [
+      "2×2 方程组用行列式求解",
+      "3×3 方程组的克拉默法则",
+      "系数行列式为零时无唯一解"
+    ],
+    "assessment_criteria": [
+      "能用克拉默法则求解低阶方程组",
+      "能判断克拉默法则是否适用",
+      "能说明系数行列式为零的含义"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "克拉默法则由 Cramer 在 1750 年发表，虽计算量大但理论上具有重要意义。",
+    "related_theorems": [
+      "Cramer 法则",
+      "线性方程组唯一解判定定理"
+    ],
+    "common_misconceptions": [
+      "在系数行列式为零时仍套用克拉默法则",
+      "认为克拉默法则是求解线性方程组的最有效方法"
+    ]
+  },
+  {
+    "id": "rank",
+    "name": "矩阵的秩",
+    "description": "矩阵的行秩、列秩及其与线性无关的关系",
+    "prerequisites": [
+      "matrix_multiplication"
+    ],
+    "abstraction_level": 2,
+    "domain": "matrix",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解行秩与列秩的定义及行秩等于列秩定理",
+      "掌握用初等变换求秩的方法",
+      "理解秩与线性方程组解的结构的关系"
+    ],
+    "examples": [
+      "满秩方阵可逆",
+      "秩为 r 的矩阵可经初等变换化为标准形",
+      "r(A) + r(B) − n ≤ r(AB)"
+    ],
+    "assessment_criteria": [
+      "能用初等变换求矩阵秩",
+      "能利用秩判断向量组的线性相关性",
+      "能应用秩的不等式"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "矩阵秩的概念由 Frobenius 在 1879 年明确化，行秩等于列秩定理是线性代数的深刻结果。",
+    "related_theorems": [
+      "行秩等于列秩定理",
+      "秩不等式定理"
+    ],
+    "common_misconceptions": [
+      "混淆矩阵秩与阶数",
+      "认为秩总是等于行数或列数中的较小者"
+    ]
+  },
+  {
+    "id": "elementary_operations",
+    "name": "初等变换",
+    "description": "矩阵的初等行变换、初等矩阵与等价标准形",
+    "prerequisites": [
+      "matrix_operations"
+    ],
+    "abstraction_level": 2,
+    "domain": "matrix",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握三种初等行变换（换行、倍乘、倍加）",
+      "理解初等矩阵与初等变换的对应",
+      "掌握用初等变换化矩阵为行阶梯形与简化行阶梯形"
+    ],
+    "examples": [
+      "高斯消元法本质是初等行变换",
+      "初等矩阵是单位矩阵经一次初等变换得到",
+      "可逆矩阵可表为初等矩阵之积"
+    ],
+    "assessment_criteria": [
+      "能用初等行变换化简矩阵",
+      "能将初等变换表示为初等矩阵乘法",
+      "能求矩阵的行阶梯形与简化行阶梯形"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "初等变换方法由 Gauss 消元法发展而来，Jordan 在 1870 年规范化了简化行阶梯形。",
+    "related_theorems": [
+      "初等变换等价定理",
+      "可逆矩阵分解定理"
+    ],
+    "common_misconceptions": [
+      "混淆行变换与列变换",
+      "认为初等变换改变矩阵的秩"
+    ]
+  },
+  {
+    "id": "systems_of_equations",
+    "name": "线性方程组",
+    "description": "线性方程组的解的结构与判定定理",
+    "prerequisites": [
+      "rank",
+      "elementary_operations"
+    ],
+    "abstraction_level": 2,
+    "domain": "matrix",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握线性方程组解的存在性与唯一性判定",
+      "理解齐次方程组解空间的结构（基础解系）",
+      "掌握非齐次方程组解的结构（特解 + 齐次解）"
+    ],
+    "examples": [
+      "r(A) = r(A|b) 判定有解",
+      "齐次方程组 Ax = 0 的解空间维数 = n − r(A)",
+      "非齐次方程组通解 = 特解 + 齐次通解"
+    ],
+    "assessment_criteria": [
+      "能判定线性方程组的解的情况",
+      "能求齐次方程组的基础解系",
+      "能求非齐次方程组的通解"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "线性方程组理论由 Rouché–Capelli 定理完善，Gauss 消元法是其计算核心。",
+    "related_theorems": [
+      "Rouché–Capelli 定理",
+      "解的结构定理"
+    ],
+    "common_misconceptions": [
+      "混淆齐次与非齐次方程组的解结构",
+      "认为方程个数等于未知数个数时必有唯一解"
+    ]
+  },
+  {
+    "id": "eigenvalue_eigenvector",
+    "name": "特征值与特征向量",
+    "description": "方阵的特征值、特征向量及其求法",
+    "prerequisites": [
+      "determinant",
+      "inverse_matrix"
+    ],
+    "abstraction_level": 3,
+    "domain": "eigen",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解特征值与特征向量的定义 Av = λv",
+      "掌握特征方程 det(A − λI) = 0 的求解",
+      "理解特征值的性质（迹、行列式与特征值的关系）"
+    ],
+    "examples": [
+      "单位矩阵的特征值全为 1",
+      "旋转矩阵在二维实数域可能无实特征值",
+      "对角矩阵的特征值即对角元"
+    ],
+    "assessment_criteria": [
+      "能求矩阵的特征值与特征向量",
+      "能利用特征值计算迹与行列式",
+      "能判断向量是否为特征向量"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "特征值概念由 Cauchy 在 1829 年研究二次型时引入，是矩阵论与动力系统分析的核心。",
+    "related_theorems": [
+      "特征值迹与行列式定理",
+      "代数基本定理（特征根存在性）"
+    ],
+    "common_misconceptions": [
+      "混淆特征向量与特征空间",
+      "认为特征向量是唯一的"
+    ]
+  },
+  {
+    "id": "diagonalization",
+    "name": "对角化",
+    "description": "矩阵的相似对角化条件与方法",
+    "prerequisites": [
+      "eigenvalue_eigenvector"
+    ],
+    "abstraction_level": 4,
+    "domain": "eigen",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解矩阵相似的定义与性质",
+      "掌握对角化的充要条件（n 个线性无关特征向量）",
+      "理解实对称矩阵必可正交对角化"
+    ],
+    "examples": [
+      "对角矩阵天然对角化",
+      "实对称矩阵可正交对角化",
+      "若尔当标准形作为不可对角化的推广"
+    ],
+    "assessment_criteria": [
+      "能判断矩阵是否可对角化",
+      "能求对角化矩阵 P 与对角矩阵 Λ",
+      "能利用对角化计算矩阵幂"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "对角化理论由 Cauchy 与 Weierstrass 发展，实对称矩阵的谱定理由 Hilbert 等人完善。",
+    "related_theorems": [
+      "谱定理（实对称矩阵）",
+      "对角化判定定理"
+    ],
+    "common_misconceptions": [
+      "认为所有方阵都可对角化",
+      "混淆相似与合同"
+    ]
+  },
+  {
+    "id": "linear_transformation",
+    "name": "线性变换",
+    "description": "线性变换的定义、矩阵表示与坐标变换",
+    "prerequisites": [
+      "vector_space",
+      "matrix_multiplication"
+    ],
+    "abstraction_level": 3,
+    "domain": "transformation",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解线性变换的定义（保持加法与数乘）",
+      "掌握线性变换与矩阵的一一对应",
+      "理解基变换下矩阵表示的变化（相似关系）"
+    ],
+    "examples": [
+      "旋转变换对应旋转矩阵",
+      "投影变换是线性变换",
+      "微分算子是多项式空间上的线性变换"
+    ],
+    "assessment_criteria": [
+      "能验证给定映射是否为线性变换",
+      "能求线性变换在某基下的矩阵",
+      "能进行基变换下的矩阵转换"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "线性变换的抽象化由 Peano 完成，其与矩阵的对应是有限维线性代数的核心结果。",
+    "related_theorems": [
+      "线性变换矩阵表示定理",
+      "基变换定理"
+    ],
+    "common_misconceptions": [
+      "认为所有变换都是线性变换",
+      "混淆线性变换与其在某基下的矩阵"
+    ]
+  },
+  {
+    "id": "kernel_and_image",
+    "name": "核与像",
+    "description": "线性变换的核（零空间）与像（值域）及秩—零度定理",
+    "prerequisites": [
+      "linear_transformation"
+    ],
+    "abstraction_level": 4,
+    "domain": "transformation",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解核 ker(T) 与像 im(T) 的定义",
+      "掌握核与像都是子空间",
+      "掌握秩—零度定理 dim ker T + dim im T = dim V"
+    ],
+    "examples": [
+      "投影变换的核是补空间",
+      "微分算子的核是常数函数",
+      "满射当且仅当像等于整个空间"
+    ],
+    "assessment_criteria": [
+      "能求线性变换的核与像",
+      "能应用秩—零度定理",
+      "能判断线性变换是否单射或满射"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "秩—零度定理是线性代数的核心结果之一，连接了代数结构与几何直观。",
+    "related_theorems": [
+      "秩—零度定理",
+      "核与像子空间定理"
+    ],
+    "common_misconceptions": [
+      "混淆核与零向量",
+      "认为核与像的维数之和等于原空间维数与定义域维数无关"
+    ]
+  },
+  {
+    "id": "inner_product_space",
+    "name": "内积空间",
+    "description": "抽象内积公理、长度、角度与正交性",
+    "prerequisites": [
+      "dot_product",
+      "vector_space"
+    ],
+    "abstraction_level": 3,
+    "domain": "inner_product",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解内积的四条公理（线性、对称、正定）",
+      "掌握由内积导出的长度、距离与角度",
+      "理解正交性、正交基与 Gram–Schmidt 正交化"
+    ],
+    "examples": [
+      "标准内积 ⟨x,y⟩ = Σ xᵢyᵢ",
+      "连续函数内积 ⟨f,g⟩ = ∫f(t)g(t)dt",
+      "Gram–Schmidt 正交化构造正交基"
+    ],
+    "assessment_criteria": [
+      "能验证给定二元函数是否为内积",
+      "能用 Gram–Schmidt 方法正交化",
+      "能用内积求长度与夹角"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "内积空间的抽象化由 Hilbert 与 Schmidt 在研究积分方程时发展，是泛函分析与有限维线性代数的桥梁。",
+    "related_theorems": [
+      "Cauchy–Schwarz 不等式",
+      "Gram–Schmidt 正交化定理",
+      "正交分解定理"
+    ],
+    "common_misconceptions": [
+      "认为内积仅有标准点积一种",
+      "混淆正交与垂直的几何直觉"
+    ]
+  }
+]

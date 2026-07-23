@@ -1,0 +1,82 @@
+{
+  "name": "mathweaver-mcp",
+  "version": "0.1.0",
+  "description": "MathWeaver MCP server exposing Z3 verification tools from the CounterExampleForge.",
+  "protocolVersion": "2024-11-05",
+  "transport": "stdio",
+  "entrypoint": "python -m mathweaver.mcp_server.server",
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    }
+  },
+  "serverInfo": {
+    "name": "mathweaver-mcp",
+    "version": "0.1.0"
+  },
+  "tools": [
+    {
+      "name": "check_group_axioms",
+      "description": "Check whether a Cayley table defines a group using Z3. Verifies closure, associativity, identity element and inverses. Returns success=True with a counter-example when any axiom is violated.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "table": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "description": "Cayley table: an n x n matrix of integers, each entry in the range [0, n). Row i, column j gives the result of the binary operation applied to (i, j)."
+          }
+        },
+        "required": ["table"]
+      }
+    },
+    {
+      "name": "verify_associativity",
+      "description": "Verify associativity of a binary operation given as a Cayley table using Z3. Returns success=True with the violating triple when associativity fails.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "table": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "description": "Cayley table: an n x n matrix of integers, each entry in the range [0, n). Row i, column j gives the result of the binary operation applied to (i, j)."
+          }
+        },
+        "required": ["table"]
+      }
+    },
+    {
+      "name": "check_commutativity",
+      "description": "Check commutativity (Abelian property) of a binary operation given as a Cayley table using Z3. Returns success=True with the violating pair when commutativity fails.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "table": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "description": "Cayley table: an n x n matrix of integers, each entry in the range [0, n). Row i, column j gives the result of the binary operation applied to (i, j)."
+          }
+        },
+        "required": ["table"]
+      }
+    }
+  ]
+}

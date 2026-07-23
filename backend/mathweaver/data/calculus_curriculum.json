@@ -1,0 +1,444 @@
+[
+  {
+    "id": "antiderivative",
+    "name": "原函数/不定积分",
+    "description": "原函数的定义、导数与原函数的逆运算关系",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "integral",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解原函数的定义：若 F'(x) = f(x)，则 F 是 f 的一个原函数",
+      "掌握原函数的存在性与不唯一性（相差一个常数）",
+      "理解求原函数是求导运算的逆过程"
+    ],
+    "examples": [
+      "x² 是 2x 的一个原函数",
+      "sin x 是 cos x 的一个原函数",
+      "ln|x| 是 1/x 的一个原函数（x ≠ 0）"
+    ],
+    "assessment_criteria": [
+      "能验证给定函数是否为另一函数的原函数",
+      "能说明原函数不唯一的原因",
+      "能区分原函数与导数的逆运算关系"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "原函数概念由 Newton 与 Leibniz 在 17 世纪独立发展，是微积分基本思想的起点，后由 Cauchy 在 19 世纪严格化。",
+    "related_theorems": [
+      "原函数存在定理",
+      "导数逆运算定理"
+    ],
+    "common_misconceptions": [
+      "认为原函数唯一",
+      "混淆原函数与导数的概念"
+    ]
+  },
+  {
+    "id": "indefinite_integral",
+    "name": "不定积分",
+    "description": "不定积分的定义、记法与基本积分表",
+    "prerequisites": [
+      "antiderivative"
+    ],
+    "abstraction_level": 0,
+    "domain": "integral",
+    "difficulty": 0.35,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解不定积分 ∫f(x)dx 表示全体原函数 F(x) + C",
+      "掌握基本积分表（幂函数、指数、对数、三角函数）",
+      "理解积分常数的几何意义（曲线族上下平移）"
+    ],
+    "examples": [
+      "∫xⁿdx = xⁿ⁺¹/(n+1) + C (n ≠ −1)",
+      "∫eˣdx = eˣ + C",
+      "∫cos x dx = sin x + C"
+    ],
+    "assessment_criteria": [
+      "能正确使用积分记法",
+      "能熟练应用基本积分表",
+      "能说明积分常数的意义"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "积分符号 ∫ 由 Leibniz 在 1675 年引入，意为“求和”（summa 的拉长首字母），奠定了积分的符号体系。",
+    "related_theorems": [
+      "基本积分表",
+      "积分与导数的互逆关系"
+    ],
+    "common_misconceptions": [
+      "遗漏积分常数 C",
+      "混淆不定积分与定积分"
+    ]
+  },
+  {
+    "id": "integration_rules",
+    "name": "积分运算法则",
+    "description": "线性法则、与导数运算法则的对应关系",
+    "prerequisites": [
+      "indefinite_integral"
+    ],
+    "abstraction_level": 1,
+    "domain": "integral",
+    "difficulty": 0.4,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握积分的线性法则 ∫[af(x) + bg(x)]dx = a∫f(x)dx + b∫g(x)dx",
+      "理解积分运算法则与导数运算法则的对应关系",
+      "能综合应用基本积分表与线性法则求解简单不定积分"
+    ],
+    "examples": [
+      "∫(3x² + 2x + 1)dx = x³ + x² + x + C",
+      "∫(eˣ − sin x)dx = eˣ + cos x + C",
+      "∫(5/x + 4eˣ)dx = 5ln|x| + 4eˣ + C"
+    ],
+    "assessment_criteria": [
+      "能正确应用积分线性法则",
+      "能将复杂被积函数分解后逐项积分",
+      "能验证积分结果的正确性"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "积分的线性性源于求导运算的线性性，是积分运算的基础法则，由 Leibniz 与 Bernoulli 兄弟早期使用。",
+    "related_theorems": [
+      "积分线性性定理",
+      "导数与积分互逆定理"
+    ],
+    "common_misconceptions": [
+      "对乘积错误应用 ∫f·g = ∫f · ∫g",
+      "混淆积分线性法则中的常数因子处理"
+    ]
+  },
+  {
+    "id": "substitution_method",
+    "name": "换元积分法",
+    "description": "第一类与第二类换元法（凑微分法）",
+    "prerequisites": [
+      "integration_rules"
+    ],
+    "abstraction_level": 1,
+    "domain": "integral",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握第一类换元法（凑微分法）的原理与步骤",
+      "掌握第二类换元法（三角换元、根式换元）",
+      "理解换元法对应链式法则的逆运算"
+    ],
+    "examples": [
+      "∫2x·cos(x²)dx = sin(x²) + C",
+      "∫dx/√(1−x²) = arcsin x + C",
+      "∫√(1−x²)dx 用三角换元 x = sinθ"
+    ],
+    "assessment_criteria": [
+      "能识别并正确凑微分",
+      "能选择恰当的换元变量",
+      "能在换元后正确回代"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "换元法由 Leibniz 早期使用，其严格化基于链式法则，是计算不定积分最常用的技巧之一。",
+    "related_theorems": [
+      "链式法则的逆运算",
+      "换元积分定理"
+    ],
+    "common_misconceptions": [
+      "换元后忘记回代原变量",
+      "混淆第一类与第二类换元的应用场景"
+    ]
+  },
+  {
+    "id": "integration_by_parts",
+    "name": "分部积分法",
+    "description": "分部积分公式 ∫u dv = uv − ∫v du 及其应用",
+    "prerequisites": [
+      "integration_rules"
+    ],
+    "abstraction_level": 2,
+    "domain": "integral",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握分部积分公式及其推导（基于乘积求导法则）",
+      "掌握 LIATE 法则选择 u 与 dv",
+      "能处理循环积分与递推积分"
+    ],
+    "examples": [
+      "∫x·eˣdx = xeˣ − eˣ + C",
+      "∫ln x dx = x·ln x − x + C",
+      "∫eˣ·sin x dx 利用循环求解"
+    ],
+    "assessment_criteria": [
+      "能正确选择 u 与 dv",
+      "能应用分部积分求解乘积型积分",
+      "能处理循环型与递推型积分"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "分部积分法由 Brook Taylor 在 1715 年前后发展，基于乘积求导法则，是处理乘积型被积函数的核心技巧。",
+    "related_theorems": [
+      "乘积求导法则的逆运算",
+      "分部积分定理"
+    ],
+    "common_misconceptions": [
+      "错误选择 u 与 dv 导致积分更复杂",
+      "在循环积分中未能正确建立方程"
+    ]
+  },
+  {
+    "id": "partial_fractions",
+    "name": "部分分式积分",
+    "description": "有理函数的部分分式分解与积分",
+    "prerequisites": [
+      "integration_rules"
+    ],
+    "abstraction_level": 2,
+    "domain": "integral",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握有理函数的部分分式分解方法",
+      "能处理真分式与假分式（多项式除法）",
+      "能对分母含一次、二次及重因子的情形分解并积分"
+    ],
+    "examples": [
+      "∫dx/(x²−1) 分解为 ½ln|(x−1)/(x+1)| + C",
+      "∫dx/(x(x+1)) 分解为 ln|x| − ln|x+1| + C",
+      "∫dx/(x²+1) = arctan x + C"
+    ],
+    "assessment_criteria": [
+      "能将真分式分解为部分分式",
+      "能对各项部分分式分别积分",
+      "能处理重根与不可约二次因子的情形"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "部分分式分解源于 Leibniz 与 Bernoulli 对有理函数积分的研究，代数基础由 Gauss 代数基本定理保证。",
+    "related_theorems": [
+      "代数基本定理",
+      "部分分式分解定理"
+    ],
+    "common_misconceptions": [
+      "对假分式直接分解而未先做多项式除法",
+      "混淆不可约二次因子与可约因子的分解形式"
+    ]
+  },
+  {
+    "id": "riemann_sum",
+    "name": "黎曼和",
+    "description": "分割、取点、求和与极限的黎曼和定义",
+    "prerequisites": [
+      "indefinite_integral"
+    ],
+    "abstraction_level": 2,
+    "domain": "integral",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解区间分割、取点与黎曼和的构造",
+      "掌握黎曼和的极限作为定积分的定义",
+      "理解达布上和与下和及其与可积性的关系"
+    ],
+    "examples": [
+      "用黎曼和计算 ∫₀¹x²dx = 1/3",
+      "等分分割的黎曼和",
+      "连续函数必黎曼可积"
+    ],
+    "assessment_criteria": [
+      "能构造给定函数的黎曼和",
+      "能通过黎曼和极限求简单定积分",
+      "能说明连续函数可积性的原因"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "黎曼和由 Riemann 在 1854 年的就职论文中严格化，将积分从连续函数推广到更一般的可积函数。",
+    "related_theorems": [
+      "黎曼可积性定理",
+      "达布定理"
+    ],
+    "common_misconceptions": [
+      "认为黎曼和与取点方式无关（需可积才无关）",
+      "混淆黎曼积分与勒贝格积分"
+    ]
+  },
+  {
+    "id": "definite_integral",
+    "name": "定积分",
+    "description": "定积分的定义、性质与几何意义",
+    "prerequisites": [
+      "riemann_sum"
+    ],
+    "abstraction_level": 2,
+    "domain": "integral",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握定积分 ∫ₐᵇf(x)dx 作为黎曼和极限的定义",
+      "掌握定积分的基本性质（线性、区间可加、保号、估值）",
+      "理解定积分的几何意义（曲线下方面积的代数和）"
+    ],
+    "examples": [
+      "∫₀¹x²dx = 1/3",
+      "∫ₐᵇ1dx = b − a",
+      "奇函数在对称区间积分为零"
+    ],
+    "assessment_criteria": [
+      "能用定义或性质计算简单定积分",
+      "能利用对称性简化定积分计算",
+      "能用定积分表示曲边梯形面积"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "定积分的严格定义由 Riemann 给出，其几何思想可追溯到 Archimedes 的穷竭法（公元前 3 世纪）。",
+    "related_theorems": [
+      "定积分线性性定理",
+      "积分中值定理"
+    ],
+    "common_misconceptions": [
+      "认为定积分结果含常数 C",
+      "混淆定积分与不定积分"
+    ]
+  },
+  {
+    "id": "fundamental_theorem",
+    "name": "微积分基本定理",
+    "description": "牛顿—莱布尼茨公式连接微分与积分",
+    "prerequisites": [
+      "definite_integral"
+    ],
+    "abstraction_level": 3,
+    "domain": "integral",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握微积分基本定理的第一部分（变上限积分的导数）",
+      "掌握牛顿—莱布尼茨公式 ∫ₐᵇf(x)dx = F(b) − F(a)",
+      "理解微分与积分互为逆运算的深刻含义"
+    ],
+    "examples": [
+      "d/dx ∫ₐˣf(t)dt = f(x)",
+      "∫₀¹x²dx = [x³/3]₀¹ = 1/3",
+      "由变上限积分定义新函数如 ln x = ∫₁ˣdt/t"
+    ],
+    "assessment_criteria": [
+      "能用牛顿—莱布尼茨公式计算定积分",
+      "能求变上限积分的导数",
+      "能说明微积分基本定理的意义"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "微积分基本定理由 Newton 与 Leibniz 在 17 世纪 60—80 年代独立发现，是微积分学的核心结果，揭示了微分与积分的互逆关系。",
+    "related_theorems": [
+      "微积分基本定理",
+      "牛顿—莱布尼茨公式"
+    ],
+    "common_misconceptions": [
+      "混淆变上限积分求导与普通函数求导",
+      "在牛顿—莱布尼茨公式中使用错误的上下限"
+    ]
+  },
+  {
+    "id": "applications_of_integration",
+    "name": "积分应用",
+    "description": "面积、体积、弧长、旋转体与物理应用",
+    "prerequisites": [
+      "fundamental_theorem"
+    ],
+    "abstraction_level": 3,
+    "domain": "application",
+    "difficulty": 0.65,
+    "is_milestone": false,
+    "learning_objectives": [
+      "能用定积分计算平面图形面积与旋转体体积",
+      "掌握弧长公式与旋转体侧面积公式",
+      "能用积分计算物理量（变力做功、质心、转动惯量）"
+    ],
+    "examples": [
+      "两曲线间面积 A = ∫ₐᵇ|f(x)−g(x)|dx",
+      "圆体积 V = π∫ₐᵇ[f(x)]²dx（圆盘法）",
+      "变力做功 W = ∫ₐᵇF(x)dx"
+    ],
+    "assessment_criteria": [
+      "能建立面积与体积的积分表达式",
+      "能选择合适的积分变量与方法",
+      "能用积分求解物理应用问题"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "积分的几何与物理应用由 Newton、Leibniz 及后继者（如 Euler、Pappus）系统发展，是微积分应用价值的集中体现。",
+    "related_theorems": [
+      "圆盘法与圆环法定理",
+      "Pappus 中心定理"
+    ],
+    "common_misconceptions": [
+      "在面积计算中忽略绝对值处理",
+      "混淆圆盘法与圆环法的适用条件"
+    ]
+  },
+  {
+    "id": "improper_integral",
+    "name": "反常积分",
+    "description": "无穷区间与无界函数的广义积分及其收敛性",
+    "prerequisites": [
+      "definite_integral"
+    ],
+    "abstraction_level": 3,
+    "domain": "integral",
+    "difficulty": 0.65,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解无穷区间反常积分的极限定义",
+      "理解无界函数（瑕积分）反常积分的定义",
+      "掌握比较判别法与极限判别法判断收敛性"
+    ],
+    "examples": [
+      "∫₁^∞dx/x² = 1（收敛）",
+      "∫₁^∞dx/x = ∞（发散）",
+      "∫₀¹dx/√x = 2（瑕积分收敛）"
+    ],
+    "assessment_criteria": [
+      "能计算简单反常积分的值或判断发散",
+      "能用比较判别法判断收敛性",
+      "能识别无界函数的瑕点"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "反常积分由 Cauchy 在 19 世纪严格化，收敛性判别法由 Abel、Dirichlet 等人发展，是无穷级数理论的基础。",
+    "related_theorems": [
+      "比较判别法",
+      "Dirichlet 与 Abel 判别法"
+    ],
+    "common_misconceptions": [
+      "将反常积分当作常义积分直接计算",
+      "忽略瑕点的存在"
+    ]
+  },
+  {
+    "id": "numerical_integration",
+    "name": "数值积分",
+    "description": "梯形法、辛普森法等数值积分方法",
+    "prerequisites": [
+      "definite_integral"
+    ],
+    "abstraction_level": 4,
+    "domain": "numerical",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握梯形法与辛普森法的计算公式",
+      "理解数值积分的误差估计",
+      "理解数值积分在原函数不可求时的应用价值"
+    ],
+    "examples": [
+      "用梯形法近似计算 ∫₀¹e^(−x²)dx",
+      "辛普森法对三次多项式精确成立",
+      "复合梯形法提高精度"
+    ],
+    "assessment_criteria": [
+      "能用梯形法与辛普森法近似计算定积分",
+      "能估计数值积分的误差",
+      "能选择合适的数值方法与步数"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "数值积分方法历史悠久，辛普森法由 Thomas Simpson 在 18 世纪系统化，是计算数学的基础工具。",
+    "related_theorems": [
+      "梯形法误差定理",
+      "辛普森法误差定理"
+    ],
+    "common_misconceptions": [
+      "认为步长越小精度总是越高（受舍入误差限制）",
+      "混淆辛普森法的适用条件（需偶数个子区间）"
+    ]
+  }
+]

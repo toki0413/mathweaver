@@ -1,0 +1,39 @@
+# MathWeaver — local development / demo stack.
+#
+# Usage:
+#   cp backend/.env.example backend/.env   # configure your LLM key (or use mock)
+#   docker compose up --build
+#
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+
+services:
+  backend:
+    build: ./backend
+    container_name: mathweaver-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Persist the SQLite database inside the mounted volume.
+      MATHWEAVER_DB_PATH: /app/data/mathweaver.db
+      MATHWEAVER_HOST: "0.0.0.0"
+      MATHWEAVER_PORT: "8000"
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: mathweaver-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      # Intended backend address inside the Docker network. The frontend is
+      # served by nginx which reverse-proxies /api and /ws to the `backend`
+      # service, so the browser uses relative URLs against this origin.
+      - VITE_API_URL=http://backend:8000
+    restart: unless-stopped

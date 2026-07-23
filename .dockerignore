@@ -1,0 +1,61 @@
+# --- Version control ---
+.git
+.gitignore
+.gitattributes
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# --- Node ---
+node_modules/
+dist/
+out/
+.npm/
+.pnpm-store/
+
+# --- Electron / desktop build output ---
+desktop/node_modules/
+desktop/out/
+desktop/dist/
+
+# --- Environment & secrets (never bake into images) ---
+.env
+.env.local
+.env.*.local
+
+# --- Logs ---
+*.log
+logs/
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Docker (avoid pulling these into the build context) ---
+**/Dockerfile
+**/*.dockerignore
+docker-compose*.yml
+
+# --- Local data / databases ---
+backend/data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
