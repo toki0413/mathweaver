@@ -25,6 +25,8 @@ from ..context import ContextMessage, TaskDecomposition
 from ..counterexample.forge import CounterExampleForge, CounterExampleResult
 from ..dag.concept_dag import ConceptDAG, get_dag
 from ..evidence.chain import EvidenceChain
+from ..grill.adaptive import AdaptiveDifficulty
+from ..grill.encouragement import EncouragementEngine
 from ..models.state import (
     AgentMessage,
     AgentRole,
@@ -40,8 +42,6 @@ from ..rag.retriever import KnowledgeBase, build_default_kb
 from ..safety.approval import ApprovalGate, ApprovalStatus, RiskLevel
 from ..safety.checkpoint import CheckpointManager
 from ..topology.config import TopologyConfig
-from ..grill.adaptive import AdaptiveDifficulty
-from ..grill.encouragement import EncouragementEngine
 
 logger = logging.getLogger(__name__)
 

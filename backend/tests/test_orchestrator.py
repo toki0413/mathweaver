@@ -236,7 +236,7 @@ def test_switch_curriculum_changes_dag_and_resets_grill(engine):
     _run(engine.process_student_input("考考我"))
     assert engine.grill_session is not None
 
-    result = {}  # switch_curriculum returns None; verify via state
+    # switch_curriculum returns None; verify via state
     engine.switch_curriculum("high_school")
 
     assert engine.curriculum_level == "high_school"

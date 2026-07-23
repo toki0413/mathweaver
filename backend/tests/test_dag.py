@@ -27,7 +27,6 @@ from mathweaver.dag.concept_dag import (
 )
 from mathweaver.models.state import ConceptNode
 
-
 LEVELS = list(CURRICULUM_LEVELS)  # 8 levels: elementary → group_theory
 
 

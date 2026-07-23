@@ -21,7 +21,6 @@ from mathweaver.dag.concept_dag import get_dag, reset_dag
 from mathweaver.grill.adaptive import AdaptiveDifficulty, PerformanceSignal
 from mathweaver.grill.session import GrillBranch, GrillQuestion, GrillSession
 
-
 LEVELS = ["group_theory", "high_school", "middle_school", "elementary"]
 
 

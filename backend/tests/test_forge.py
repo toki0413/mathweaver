@@ -12,10 +12,9 @@ from mathweaver.counterexample.forge import (
     CounterExampleForge,
     CounterExampleResult,
     FallbackLevel,
-    verify_group_axioms_cayley,
     check_commutativity_cayley,
+    verify_group_axioms_cayley,
 )
-
 
 # Known group: Z3 (cyclic group of order 3)
 # Cayley table for Z3: 0 is identity, addition mod 3

@@ -15,14 +15,14 @@ import asyncio
 import pytest
 
 from mathweaver.agents.base import AgentContext
-from mathweaver.agents.perception import PerceptionAgent
-from mathweaver.agents.epistemic import EpistemicAgent
 from mathweaver.agents.collaboration import CollaborationAgent
+from mathweaver.agents.epistemic import EpistemicAgent
+from mathweaver.agents.perception import PerceptionAgent
 from mathweaver.models.state import (
-    FourFieldState,
     AgentRole,
     CognitiveState,
     EmotionalState,
+    FourFieldState,
 )
 
 

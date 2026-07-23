@@ -22,7 +22,6 @@ from mathweaver.proof.assistant import (
     ProofTemplate,
 )
 
-
 # ---------------------------------------------------------------------------
 # Expected theorem inventory per curriculum level.
 # ---------------------------------------------------------------------------
