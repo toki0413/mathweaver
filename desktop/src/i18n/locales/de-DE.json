@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "MathWeaver",
+    "subtitle": "Multi-Agenten Mathematisches Kognitives Betriebssystem"
+  },
+  "mode": {
+    "dialogue": "Dialog",
+    "interview": "Interview",
+    "proof": "Beweis",
+    "graph": "Graph"
+  },
+  "action": {
+    "send": "Senden",
+    "save": "Speichern",
+    "load": "Laden",
+    "export": "Exportieren"
+  },
+  "status": {
+    "loading": "Laden…",
+    "error": "Fehler",
+    "ready": "Bereit"
+  },
+  "onboarding": {
+    "welcome": "Willkommen bei MathWeaver",
+    "step1": "Schritt 1: MathWeaver kennenlernen",
+    "step2": "Schritt 2: Drei Lernmodi",
+    "step3": "Schritt 3: Wie man beginnt",
+    "step4": "Schritt 4: KI konfigurieren"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "llm": "LLM-Konfiguration",
+    "about": "Über"
+  }
+}

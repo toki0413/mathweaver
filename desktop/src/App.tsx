@@ -25,6 +25,9 @@ import { FlashcardSystem } from './components/FlashcardSystem'
 import { ShortcutsOverlay, type ShortcutItem } from './components/ShortcutsOverlay'
 import { FormulaLiveEditor } from './components/FormulaLiveEditor'
 import { CollapsibleSection } from './components/CollapsibleSection'
+import { ImageInput } from './components/ImageInput'
+import { VisualStepSolver, type Step as SolverStep } from './components/VisualStepSolver'
+import { CurriculumMapper } from './components/CurriculumMapper'
 import { ChatIcon, FlameIcon, ProofIcon, GraphIcon, SettingsIcon, BookIcon, CheckIcon, TrashIcon, KeyboardIcon, InfoIcon, TrophyIcon, SparkleIcon, GraduationIcon, CrownIcon, type IconProps } from './components/Icons'
 
 type Mode = 'chat' | 'grill' | 'proof' | 'dag'
@@ -140,6 +143,10 @@ export default function App() {
 
   // --- Shortcuts overlay state ---
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+
+  // --- Visual Step Solver state ---
+  const [solverProblem, setSolverProblem] = useState('')
+  const [solverSteps, setSolverSteps] = useState<SolverStep[] | undefined>(undefined)
 
   const shortcuts: ShortcutItem[] = useMemo(() => [
     { keys: ['⌘', 'K'], description: '打开命令面板', category: '全局' },
@@ -322,7 +329,7 @@ export default function App() {
     { id: 'act-submit', label: '提交运算表', icon: 'CheckIcon', section: 'action', action: handleSendTable },
     { id: 'act-clear', label: '清空对话记录', icon: 'TrashIcon', section: 'action', action: () => useStore.getState().clearChat() },
     { id: 'help-shortcuts', label: '键盘快捷键', icon: 'KeyboardIcon', hint: '?', section: 'help', action: () => setShortcutsOpen(true) },
-    { id: 'help-about', label: '关于 MathWeaver', icon: 'InfoIcon', section: 'help', action: () => addToast({ type: 'info', title: 'MathWeaver', message: `v${appVersion} · 多智能体数学认知操作系统`, duration: 6000 }) },
+    { id: 'help-about', label: '关于 MathWeaver', icon: 'InfoIcon', section: 'help', action: () => addToast({ type: 'info', title: 'MathWeaver', message: `v${appVersion} · 多智能体数学认知操作系统 · 7 语言支持 · OCR 识别`, duration: 6000 }) },
   ], [setMode, setSettingsOpen, setOnboardingOpen, handleSendTable, addToast, appVersion])
 
   const handleNodeSelect = useCallback((id: string) => {
@@ -480,12 +487,42 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              <CollapsibleSection title="拍照 / 图片识别" hint="OCR 识别数学公式" defaultOpen={false}>
+                <p className="desc">上传题目图片或拍照，自动识别数学公式并插入到输入框。</p>
+                <ImageInput onRecognized={(text) => {
+                  setTextInput((prev) => prev + (prev ? '\n' : '') + text)
+                  setInputStartTime(Date.now())
+                  addToast({ type: 'info', title: '识别完成', message: '已插入到输入框，请检查并修正', duration: 3000 })
+                }} />
+              </CollapsibleSection>
               <ChatPanel />
             </div>
 
             {/* --- Secondary: Auxiliary Tools --- */}
             <div className="section-group">
               <div className="section-group-label">辅助工具</div>
+              <CollapsibleSection title="可视化分步解答" hint="逐步展示解题过程" defaultOpen={false}>
+                <p className="desc">输入数学问题，查看可视化的分步解答过程。每一步都有详细解释和数学公式渲染。</p>
+                <VisualStepSolver
+                  problem={solverProblem || textInput}
+                  steps={solverSteps}
+                  onRequestSolution={() => {
+                    if (!textInput.trim() || !backendReady) {
+                      addToast({ type: 'info', title: '提示', message: '请先在对话区输入问题', duration: 3000 })
+                      return
+                    }
+                    setSolverProblem(textInput)
+                    // 模拟分步解答数据（实际使用时由后端返回）
+                    setSolverSteps([
+                      { title: '分析问题', expression: textInput, explanation: '识别问题类型，确定解题方向。', type: 'transform' },
+                      { title: '建立框架', expression: '\\text{设所求为 } x', explanation: '根据题意建立数学模型。', type: 'substitute' },
+                      { title: '核心推导', expression: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}', explanation: '应用公式进行核心计算。', type: 'simplify' },
+                      { title: '得出结论', expression: '\\boxed{x = \\text{最终结果}}', explanation: '整理结果，完成解答。', type: 'conclude' },
+                    ])
+                  }}
+                />
+              </CollapsibleSection>
+
               <CollapsibleSection title="公式编辑器" hint="实时 LaTeX 预览" defaultOpen={false}>
                 <p className="desc">输入 LaTeX 代码，右侧实时预览渲染结果，可一键插入到对话。</p>
                 <FormulaLiveEditor onInsert={handleFormulaInsert} height={200} />
@@ -691,6 +728,10 @@ export default function App() {
                 onSelect={handleNodeSelect}
               />
             </div>
+            <CollapsibleSection title="教材课程映射" hint="对照课程标准定位知识点" defaultOpen={false}>
+              <p className="desc">将 MathWeaver 的概念体系映射到主流课程标准，帮助定位学习目标和年级水平。</p>
+              <CurriculumMapper />
+            </CollapsibleSection>
           </div>
           <div className="sidebar-col">
             <div className="card card-compact">

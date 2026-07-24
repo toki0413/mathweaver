@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "MathWeaver",
+    "subtitle": "Système d'exploitation cognitif mathématique multi-agents"
+  },
+  "mode": {
+    "dialogue": "Dialogue",
+    "interview": "Entretien",
+    "proof": "Démonstration",
+    "graph": "Graphe"
+  },
+  "action": {
+    "send": "Envoyer",
+    "save": "Enregistrer",
+    "load": "Charger",
+    "export": "Exporter"
+  },
+  "status": {
+    "loading": "Chargement…",
+    "error": "Erreur",
+    "ready": "Prêt"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue dans MathWeaver",
+    "step1": "Étape 1 : Découvrez MathWeaver",
+    "step2": "Étape 2 : Trois modes d'apprentissage",
+    "step3": "Étape 3 : Comment commencer",
+    "step4": "Étape 4 : Configurez votre IA"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "llm": "Configuration LLM",
+    "about": "À propos"
+  }
+}

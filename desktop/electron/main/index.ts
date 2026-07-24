@@ -641,7 +641,8 @@ app.whenReady().then(async () => {
               detail:
                 '多智能体数学认知操作系统\n\n' +
                 '七 Agent 协作架构 · 四场耦合引擎 · 暴力枚举反例工坊\n' +
-                'TypeScript 一体化后端 — 无需 Python\n\n' +
+                'OCR 拍照解题 · 可视化分步解答 · 教材课程映射\n' +
+                '7 语言支持 · TypeScript 一体化后端 — 无需 Python\n\n' +
                 'License: Apache 2.0',
               buttons: ['确定'],
             })

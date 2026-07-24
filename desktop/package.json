@@ -1,14 +1,17 @@
 {
   "name": "mathweaver",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "MathWeaver - 多智能体数学认知操作系统",
   "main": "./out/main/index.js",
   "author": "MathWeaver Team",
   "license": "Apache-2.0",
   "scripts": {
     "dev": "electron-vite dev",
+    "dev:web": "vite --config vite.web.config.ts --port 5175",
     "build": "electron-vite build",
+    "build:web": "vite build --config vite.web.config.ts",
     "preview": "electron-vite preview",
+    "preview:web": "vite preview --outDir dist-web --port 4174",
     "build:win": "electron-vite build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
@@ -31,6 +34,7 @@
     "react-dom": "^18.3.0",
     "react-i18next": "^17.0.11",
     "react-katex": "^3.1.0",
+    "tesseract.js": "^7.0.0",
     "winston": "^3.19.0",
     "zustand": "^4.5.0"
   },

@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "MathWeaver",
+    "subtitle": "マルチエージェント数学認知オペレーティングシステム"
+  },
+  "mode": {
+    "dialogue": "対話",
+    "interview": "インタビュー",
+    "proof": "証明",
+    "graph": "グラフ"
+  },
+  "action": {
+    "send": "送信",
+    "save": "保存",
+    "load": "読み込み",
+    "export": "エクスポート"
+  },
+  "status": {
+    "loading": "読み込み中…",
+    "error": "エラー",
+    "ready": "準備完了"
+  },
+  "onboarding": {
+    "welcome": "MathWeaver へようこそ",
+    "step1": "ステップ 1：MathWeaver を知る",
+    "step2": "ステップ 2：3つの学習モード",
+    "step3": "ステップ 3：始め方",
+    "step4": "ステップ 4：AIを設定する"
+  },
+  "settings": {
+    "title": "設定",
+    "llm": "LLM設定",
+    "about": "概要"
+  }
+}

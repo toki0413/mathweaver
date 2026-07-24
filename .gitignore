@@ -24,6 +24,7 @@ out/
 desktop/node_modules/
 desktop/out/
 desktop/dist/
+desktop/dist-web/
 desktop/release/
 release/
 
