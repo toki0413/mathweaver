@@ -7,11 +7,19 @@ directories:
   buildResources: build
   output: release
 
+# electron-builder automatically includes all `dependencies` from package.json
+# and rebuilds native modules (e.g. better-sqlite3) for the target platform.
+# devDependencies are excluded. Everything is packed into app.asar.
+asar: true
+
 files:
   - out/**/*
   - package.json
   - "!**/*.{ts,tsx,map}"
   - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+
+# Ensure native modules are rebuilt for Electron's ABI
+npmRebuild: true
 
 # Code signing configuration
 # For production builds, set these environment variables:
@@ -23,9 +31,10 @@ win:
     - target: nsis
       arch:
         - x64
+    - target: zip
+      arch:
+        - x64
   icon: build/icon.png
-  # Code signing: uses environment variable CSC_LINK or WIN_CSC_LINK
-  # signingHashAlgorithms: ['sha256']
 
 nsis:
   oneClick: false
@@ -33,8 +42,7 @@ nsis:
   perMachine: false
   shortcutName: MathWeaver
   uninstallDisplayName: MathWeaver
-  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
-  # Include uninstaller for clean removal
+  artifactName: ${productName}-${version}-${os}-${arch}-setup.${ext}
   deleteAppDataOnUninstall: false
 
 mac:
@@ -43,22 +51,23 @@ mac:
       arch:
         - x64
         - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
   icon: build/icon.png
   category: public.app-category.education
-  # Code signing: uses CSC_LINK or CSC_NAME (keychain)
-  # hardenedRuntime: true
-  # gatekeeperAssess: false
-  # entitlements: build/entitlements.mac.plist
-  # entitlementsInherit: build/entitlements.mac.plist
 
 dmg:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
-  # Sign DMG for distribution
   sign: true
 
 linux:
   target:
     - target: AppImage
+      arch:
+        - x64
+    - target: zip
       arch:
         - x64
   icon: build/icon.png
@@ -68,14 +77,11 @@ appImage:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 # Auto-update: publish to GitHub Releases
-# electron-updater checks this provider for new versions
 publish:
   - provider: github
     owner: toki0413
     repo: mathweaver
     releaseType: release
-    # Private repo support: set GH_TOKEN environment variable
 
 # Generate latest.yml / latest-mac.yml / latest-linux.yml
-# These files are required by electron-updater for auto-update
 generateUpdatesFilesForAllChannels: true
