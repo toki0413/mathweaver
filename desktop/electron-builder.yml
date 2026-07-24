@@ -13,23 +13,19 @@ files:
   - "!**/*.{ts,tsx,map}"
   - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
 
-extraResources:
-  - from: ../backend
-    to: backend
-    filter:
-      - "**/*"
-      - "!**/__pycache__/**"
-      - "!**/*.pyc"
-      - "!**/.pytest_cache/**"
-      - "!**/tests/**"
-      - "!**/*.egg-info/**"
-
+# Code signing configuration
+# For production builds, set these environment variables:
+#   Windows: CSC_LINK (path to .pfx), CSC_KEY_PASSWORD
+#   macOS:   CSC_LINK (path to .p12),  CSC_KEY_PASSWORD
+#   Or use:  WIN_CSC_LINK, CSC_NAME (for macOS keychain)
 win:
   target:
     - target: nsis
       arch:
         - x64
   icon: build/icon.png
+  # Code signing: uses environment variable CSC_LINK or WIN_CSC_LINK
+  # signingHashAlgorithms: ['sha256']
 
 nsis:
   oneClick: false
@@ -38,6 +34,8 @@ nsis:
   shortcutName: MathWeaver
   uninstallDisplayName: MathWeaver
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+  # Include uninstaller for clean removal
+  deleteAppDataOnUninstall: false
 
 mac:
   target:
@@ -47,9 +45,16 @@ mac:
         - arm64
   icon: build/icon.png
   category: public.app-category.education
+  # Code signing: uses CSC_LINK or CSC_NAME (keychain)
+  # hardenedRuntime: true
+  # gatekeeperAssess: false
+  # entitlements: build/entitlements.mac.plist
+  # entitlementsInherit: build/entitlements.mac.plist
 
 dmg:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+  # Sign DMG for distribution
+  sign: true
 
 linux:
   target:
@@ -62,7 +67,15 @@ linux:
 appImage:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
+# Auto-update: publish to GitHub Releases
+# electron-updater checks this provider for new versions
 publish:
   - provider: github
     owner: toki0413
     repo: mathweaver
+    releaseType: release
+    # Private repo support: set GH_TOKEN environment variable
+
+# Generate latest.yml / latest-mac.yml / latest-linux.yml
+# These files are required by electron-updater for auto-update
+generateUpdatesFilesForAllChannels: true

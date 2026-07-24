@@ -1,4 +1,6 @@
 // Type declarations for Electron IPC bridge (renderer-side)
+// `electronAPI` is an alias of `api` — both point to the same object exposed
+// by the preload script via contextBridge.
 declare global {
   interface Window {
     electronAPI: {

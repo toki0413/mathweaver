@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "MathWeaver",
+    "subtitle": "Multi-Agent Mathematical Cognitive Operating System"
+  },
+  "mode": {
+    "dialogue": "Dialogue",
+    "interview": "Interview",
+    "proof": "Proof",
+    "graph": "Graph"
+  },
+  "action": {
+    "send": "Send",
+    "save": "Save",
+    "load": "Load",
+    "export": "Export"
+  },
+  "status": {
+    "loading": "Loading…",
+    "error": "Error",
+    "ready": "Ready"
+  },
+  "onboarding": {
+    "welcome": "Welcome to MathWeaver",
+    "step1": "Step 1: Meet MathWeaver",
+    "step2": "Step 2: Three Learning Modes",
+    "step3": "Step 3: How to Begin",
+    "step4": "Step 4: Configure Your AI"
+  },
+  "settings": {
+    "title": "Settings",
+    "llm": "LLM Configuration",
+    "about": "About"
+  }
+}

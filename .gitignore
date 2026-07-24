@@ -60,3 +60,8 @@ backend/data/
 *.tar.gz
 polish-reports/
 backend/build/
+
+# --- Test artifacts ---
+test-results/
+playwright-report/
+coverage/

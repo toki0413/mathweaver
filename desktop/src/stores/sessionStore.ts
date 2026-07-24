@@ -1,47 +1,9 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-// Backend URL will be set from main process
-let API_BASE = 'http://127.0.0.1:18765'
-
-// Initialize API base from Electron main process
-export async function initBackendUrl() {
-  if (window.electronAPI) {
-    try {
-      const url = await window.electronAPI.getBackendUrl()
-      if (url) API_BASE = url
-    } catch (e) {
-      console.error('Failed to get backend URL:', e)
-    }
-  }
-}
-
-// Get current API base (dynamic, reflects initBackendUrl changes)
-export function getApiBase(): string {
-  return API_BASE
-}
-
-// Helper: fetch with backend URL
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, options)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
-
-// Helper: native file save via IPC
-async function nativeSaveFile(data: string): Promise<string | null> {
-  if (window.electronAPI) {
-    return await window.electronAPI.invoke('file:save-session', data) as string | null
-  }
-  return null
-}
-
-// Helper: native file load via IPC
-async function nativeLoadFile(): Promise<string | null> {
-  if (window.electronAPI) {
-    return await window.electronAPI.invoke('file:load-session') as string | null
-  }
-  return null
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface ChatMessage {
   role: 'user' | 'system'
@@ -101,7 +63,157 @@ interface DagNodeInfo {
   is_milestone: boolean
 }
 
+interface LLMPreset {
+  id: string
+  label: string
+  provider: string
+  baseUrl: string
+  defaultModel: string
+  requiresApiKey: boolean
+  helpUrl: string
+  description: string
+}
+
+interface LLMConfig {
+  provider: string
+  apiKey: string
+  baseUrl: string
+  model: string
+  temperature: number
+  maxTokens: number
+}
+
+interface GrillQuestion {
+  qid: string
+  concept_node_id: string
+  concept_name: string
+  question: string
+  recommended_answer: string
+  difficulty: number
+  branch_type: string
+}
+
+interface AdaptiveDifficulty {
+  current_difficulty: number
+  difficulty_band: string
+  target_difficulty: number
+  accuracy_rate: number
+  streak_correct: number
+  streak_wrong: number
+  total_questions: number
+  total_correct: number
+  trend: string
+  should_increase: boolean
+  should_decrease: boolean
+}
+
+interface GrillSummary {
+  active: boolean
+  total_branches: number
+  resolved_branches: number
+  correct_answers: number
+  progress: string
+  adaptive: AdaptiveDifficulty
+  encouragement: Record<string, unknown>
+  branches: Record<string, unknown>
+}
+
+interface GrillState {
+  active: boolean
+  currentQuestion: GrillQuestion | null
+  difficulty: number
+  questionsAsked: number
+  encouragement: string
+  summary: GrillSummary | null
+}
+
+interface ProofStepResult {
+  step_number: number
+  claim: string
+  justification: string
+  is_valid: boolean
+  feedback: string
+  matched_expected: string
+  implicit_steps: string[]
+}
+
+interface ProofResult {
+  theorem_name: string
+  steps: ProofStepResult[]
+  is_complete: boolean
+  missing_steps: string[]
+  socratic_hint: string
+  overall_feedback: string
+  progress: string
+}
+
+interface ProofState {
+  theorems: string[]
+  currentResult: ProofResult | null
+  selectedTheorem: string | null
+}
+
+interface VisualData {
+  dag_progress?: Record<string, unknown>
+  four_field_gauges?: {
+    cognitive_load: number
+    cognitive_state: string
+    anxiety_index: number
+    flow_score: number
+    hint_dependency: number
+  }
+  mastery_radar?: {
+    accuracy: number
+    conjecture: number
+    independence: number
+    fluency: number
+    abstraction: number
+    overall: number
+  }
+  conjecture_journey?: {
+    timeline: Array<{
+      step: number
+      claim: string
+      verdict: 'confirmed' | 'refuted' | 'undecidable'
+      counter_example?: string | null
+      is_refinement?: boolean
+    }>
+    refinement_chains: Array<{ steps: number[]; claim: string }>
+    total_conjectures: number
+    confirmed: number
+    refuted: number
+  }
+  difficulty_gauge?: {
+    current_difficulty: number
+    difficulty_band: string
+    trend: string
+    accuracy_rate: number
+  }
+  [key: string]: unknown
+}
+
+interface ErrorState {
+  message: string
+  headline: string
+  detail?: string
+  recovery?: string
+  timestamp: number
+}
+
+// ---------------------------------------------------------------------------
+// API helper — uses IPC (no HTTP)
+// ---------------------------------------------------------------------------
+
+function getAPI(): MathWeaverAPI {
+  return (window as unknown as { api: MathWeaverAPI }).api
+}
+
+// ---------------------------------------------------------------------------
+// Session Store
+// ---------------------------------------------------------------------------
+
 interface SessionState {
+  // Session core
   sessionId: string | null
   targetNode: string | null
   phase: string
@@ -110,9 +222,27 @@ interface SessionState {
   loading: boolean
   phaseTrace: string[]
   decision: { action: string; reason: string } | null
+  visualData: VisualData | null
   backendReady: boolean
   dagNodes: DagNodeInfo[]
 
+  // Grill
+  grillState: GrillState
+
+  // Proof
+  proofState: ProofState
+
+  // Error
+  error: ErrorState | null
+
+  // LLM
+  llmConfig: LLMConfig | null
+  llmPresets: LLMPreset[]
+
+  // Onboarding
+  onboardingCompleted: boolean
+
+  // Actions
   startSession: (studentId: string, targetNode: string) => Promise<void>
   sendInput: (input: string, responseTimeMs: number) => Promise<void>
   clearChat: () => void
@@ -120,9 +250,47 @@ interface SessionState {
   fetchDagNodes: () => Promise<void>
   saveSession: () => Promise<string | null>
   loadSession: () => Promise<boolean>
+
+  // Grill actions
+  startGrill: (studentId?: string, curriculumLevel?: string) => Promise<void>
+  submitGrillAnswer: (qid: string, answer: string, responseTimeMs?: number) => Promise<void>
+
+  // Proof actions
+  fetchTheorems: (level?: string) => Promise<void>
+  submitProof: (theoremId: string, steps: string[], level?: string) => Promise<void>
+  setSelectedTheorem: (theoremId: string | null) => void
+
+  // LLM actions
+  fetchLLMConfig: () => Promise<void>
+  saveLLMConfig: (config: Partial<LLMConfig>) => Promise<void>
+  fetchLLMPresets: () => Promise<void>
+
+  // Onboarding
+  checkOnboarding: () => Promise<void>
+  completeOnboarding: () => Promise<void>
+
+  // Error
+  clearError: () => void
+  setError: (headline: string, detail?: string, recovery?: string) => void
 }
 
-export const useStore = create<SessionState>((set, get) => ({
+// ---------------------------------------------------------------------------
+// Persisted slice (Task 2a) — only these fields are written to localStorage
+// ---------------------------------------------------------------------------
+
+interface PersistedSessionState {
+  sessionId: string | null
+  targetNode: string | null
+  phase: string
+  chat: ChatMessage[]
+  phaseTrace: string[]
+  grillState: GrillState
+  proofState: ProofState
+}
+
+export const useStore = create<SessionState>()(
+  persist(
+    (set, get) => ({
   sessionId: null,
   targetNode: null,
   phase: 'idle',
@@ -131,48 +299,114 @@ export const useStore = create<SessionState>((set, get) => ({
   loading: false,
   phaseTrace: [],
   decision: null,
+  visualData: null,
   backendReady: false,
   dagNodes: [],
 
+  grillState: {
+    active: false,
+    currentQuestion: null,
+    difficulty: 0.5,
+    questionsAsked: 0,
+    encouragement: '',
+    summary: null,
+  },
+
+  proofState: {
+    theorems: [],
+    currentResult: null,
+    selectedTheorem: null,
+  },
+
+  error: null,
+
+  llmConfig: null,
+  llmPresets: [],
+
+  onboardingCompleted: false,
+
+  // -------------------------------------------------------------------------
+  // Backend health
+  // -------------------------------------------------------------------------
+
   checkBackend: async () => {
     try {
-      await apiFetch('/api/health')
-      set({ backendReady: true })
-    } catch {
+      const api = getAPI()
+      if (!api) return
+      const result = await api.health()
+      set({ backendReady: result != null })
+    } catch (e) {
+      console.error('Backend health check failed:', e)
       set({ backendReady: false })
     }
   },
 
+  // -------------------------------------------------------------------------
+  // DAG
+  // -------------------------------------------------------------------------
+
   fetchDagNodes: async () => {
     try {
-      const data = await apiFetch('/api/dag')
-      set({ dagNodes: data.nodes || [] })
+      const api = getAPI()
+      if (!api) return
+      const data = (await api.getDag()) as Record<string, unknown> | null
+      if (data && typeof data === 'object' && 'nodes' in data) {
+        set({ dagNodes: (data.nodes as DagNodeInfo[]) || [] })
+      }
     } catch (e) {
       console.error('Failed to fetch DAG nodes:', e)
+      set({
+        error: {
+          message: '概念图谱加载失败',
+          headline: '无法加载概念图谱',
+          detail: String(e),
+          recovery: '请检查应用是否正常启动，或重启应用',
+          timestamp: Date.now(),
+        },
+      })
     }
   },
 
+  // -------------------------------------------------------------------------
+  // Session
+  // -------------------------------------------------------------------------
+
   startSession: async (studentId: string, targetNode: string) => {
-    set({ loading: true })
+    set({ loading: true, error: null })
     try {
-      const data = await apiFetch('/api/session/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: studentId, target_node_id: targetNode }),
-      })
+      const api = getAPI()
+      if (!api) throw new Error('API not available')
+      const data = (await api.startSession({
+        student_id: studentId,
+        target_node_id: targetNode,
+      })) as Record<string, unknown> | null
+
+      if (!data) throw new Error('No response from backend')
+
       set({
-        sessionId: data.session_id,
-        targetNode: data.target_node,
-        phase: data.phase,
+        sessionId: (data.session_id as string) || null,
+        targetNode: (data.target_node as string) || targetNode,
+        phase: (data.phase as string) || 'idle',
         loading: false,
-        chat: [{
-          role: 'system',
-          content: `📄 学习目标: ${data.node_name}\n${data.node_description}\n\n学习路径: ${data.learning_path?.map((n: any) => n.name).join(' → ') || '直接开始'}`,
-          phase: 'session_start',
-        }],
+        chat: [
+          {
+            role: 'system',
+            content: `学习目标: ${data.node_name || targetNode}\n${data.node_description || ''}\n\n学习路径: ${((data.learning_path as Array<{ name: string }>) || []).map((n) => n.name).join(' → ') || '直接开始'}`,
+            phase: 'session_start',
+          },
+        ],
       })
     } catch (e) {
-      set({ loading: false })
+      set({
+        loading: false,
+        error: {
+          message: 'Session start failed',
+          headline: '会话启动失败',
+          detail: String(e),
+          recovery: '请检查应用是否正常启动',
+          timestamp: Date.now(),
+        },
+      })
       console.error('Failed to start session:', e)
     }
   },
@@ -181,34 +415,72 @@ export const useStore = create<SessionState>((set, get) => ({
     set((state) => ({
       chat: [...state.chat, { role: 'user', content: input }],
       loading: true,
+      error: null,
     }))
 
     try {
-      const data = await apiFetch('/api/session/input', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_input: input, response_time_ms: responseTimeMs }),
-      })
+      const api = getAPI()
+      if (!api) throw new Error('API not available')
+      const data = (await api.sendInput({
+        student_input: input,
+        response_time_ms: responseTimeMs,
+      })) as Record<string, unknown> | null
+
+      if (!data) throw new Error('No response from backend')
+
+      const response = data.response as Record<string, unknown> | undefined
+      const grillData = data.grill as Record<string, unknown> | undefined
 
       set((state) => ({
-        chat: [...state.chat, {
-          role: 'system',
-          content: data.response?.content || '',
-          phase: data.response?.action,
-        }],
-        phase: data.phase || 'idle',
-        fourFields: data.four_fields,
-        phaseTrace: data.phase_trace || [],
-        decision: data.decision,
+        chat: [
+          ...state.chat,
+          {
+            role: 'system' as const,
+            content: (response?.content as string) || '',
+            phase: (response?.action as string) || undefined,
+          },
+        ],
+        phase: (data.phase as string) || 'idle',
+        fourFields: (data.four_fields as FourFields) || null,
+        phaseTrace: (data.phase_trace as string[]) || [],
+        decision: (data.decision as { action: string; reason: string }) || null,
+        visualData: (data.visual_data as VisualData) || null,
         loading: false,
       }))
+
+      // Update grill state if grill data is present
+      if (grillData) {
+        set({
+          grillState: {
+            active: (grillData.active as boolean) || false,
+            currentQuestion: (grillData.current_question as GrillQuestion) || null,
+            difficulty: (grillData.difficulty as number) || 0.5,
+            questionsAsked: (grillData.questions_asked as number) || 0,
+            encouragement: (grillData.encouragement as string) || '',
+            summary: (grillData.summary as GrillSummary) || null,
+          },
+        })
+      }
     } catch (e) {
-      set({ loading: false })
+      set({
+        loading: false,
+        error: {
+          message: 'Send input failed',
+          headline: '提交失败',
+          detail: String(e),
+          recovery: '请重试或检查网络连接',
+          timestamp: Date.now(),
+        },
+      })
       console.error('Failed to send input:', e)
     }
   },
 
   clearChat: () => set({ chat: [] }),
+
+  // -------------------------------------------------------------------------
+  // File operations
+  // -------------------------------------------------------------------------
 
   saveSession: async () => {
     const state = get()
@@ -220,11 +492,15 @@ export const useStore = create<SessionState>((set, get) => ({
       phaseTrace: state.phaseTrace,
       savedAt: new Date().toISOString(),
     }
-    return await nativeSaveFile(JSON.stringify(sessionData, null, 2))
+    const api = getAPI()
+    if (!api) return null
+    return (await api.saveSession(JSON.stringify(sessionData, null, 2))) as string | null
   },
 
   loadSession: async () => {
-    const content = await nativeLoadFile()
+    const api = getAPI()
+    if (!api) return false
+    const content = (await api.loadSession()) as string | null
     if (!content) return false
 
     try {
@@ -241,4 +517,283 @@ export const useStore = create<SessionState>((set, get) => ({
       return false
     }
   },
-}))
+
+  // -------------------------------------------------------------------------
+  // Grill
+  // -------------------------------------------------------------------------
+
+  startGrill: async (studentId?: string, curriculumLevel?: string) => {
+    set({ loading: true, error: null })
+    try {
+      const api = getAPI()
+      if (!api) throw new Error('API not available')
+      const data = (await api.startGrill(studentId, curriculumLevel)) as Record<string, unknown> | null
+      if (!data) throw new Error('No response')
+
+      const grillData = data.grill as Record<string, unknown> | undefined
+      const summary = (grillData?.summary as GrillSummary) || null
+      set({
+        loading: false,
+        grillState: {
+          active: (grillData?.active as boolean) || true,
+          currentQuestion: (grillData?.current_question as GrillQuestion) || null,
+          difficulty: (grillData?.difficulty as number) || summary?.adaptive?.current_difficulty || 0.5,
+          questionsAsked: 0,
+          encouragement: (grillData?.encouragement as string) || '',
+          summary,
+        },
+      })
+    } catch (e) {
+      set({
+        loading: false,
+        error: {
+          message: 'Grill start failed',
+          headline: '面试模式启动失败',
+          detail: String(e),
+          timestamp: Date.now(),
+        },
+      })
+    }
+  },
+
+  submitGrillAnswer: async (qid: string, answer: string, responseTimeMs?: number) => {
+    set({ loading: true, error: null })
+    try {
+      const api = getAPI()
+      if (!api) throw new Error('API not available')
+      const data = (await api.submitGrillAnswer(qid, answer, responseTimeMs)) as Record<string, unknown> | null
+      if (!data) throw new Error('No response')
+
+      const grillData = data.grill as Record<string, unknown> | undefined
+      const summary = (grillData?.summary as GrillSummary) || null
+      set((state) => ({
+        loading: false,
+        grillState: {
+          active: (grillData?.active as boolean) || state.grillState.active,
+          currentQuestion: (grillData?.current_question as GrillQuestion) || null,
+          difficulty: (grillData?.difficulty as number) || summary?.adaptive?.current_difficulty || state.grillState.difficulty,
+          questionsAsked: state.grillState.questionsAsked + 1,
+          encouragement: (grillData?.encouragement as string) || '',
+          summary,
+        },
+      }))
+    } catch (e) {
+      set({
+        loading: false,
+        error: {
+          message: 'Grill answer failed',
+          headline: '答案提交失败',
+          detail: String(e),
+          timestamp: Date.now(),
+        },
+      })
+    }
+  },
+
+  // -------------------------------------------------------------------------
+  // Proof
+  // -------------------------------------------------------------------------
+
+  fetchTheorems: async (level?: string) => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      const data = (await api.getTheorems(level)) as Record<string, unknown> | null
+      if (data && 'theorems' in data) {
+        const theorems = (data.theorems as string[]) || []
+        set({
+          proofState: {
+            theorems,
+            currentResult: null,
+            selectedTheorem: theorems[0] || null,
+          },
+        })
+      }
+    } catch (e) {
+      console.error('Failed to fetch theorems:', e)
+    }
+  },
+
+  submitProof: async (theoremId: string, steps: string[], level?: string) => {
+    set({ loading: true, error: null })
+    try {
+      const api = getAPI()
+      if (!api) throw new Error('API not available')
+      const data = (await api.submitProof(theoremId, steps, level)) as Record<string, unknown> | null
+      if (!data) throw new Error('No response')
+
+      set((state) => ({
+        loading: false,
+        proofState: {
+          ...state.proofState,
+          currentResult: data as unknown as ProofResult,
+        },
+      }))
+    } catch (e) {
+      set({
+        loading: false,
+        error: {
+          message: 'Proof verification failed',
+          headline: '证明验证失败',
+          detail: String(e),
+          timestamp: Date.now(),
+        },
+      })
+    }
+  },
+
+  setSelectedTheorem: (theoremId: string | null) =>
+    set((state) => ({
+      proofState: { ...state.proofState, selectedTheorem: theoremId },
+    })),
+
+  // -------------------------------------------------------------------------
+  // LLM Settings
+  // -------------------------------------------------------------------------
+
+  fetchLLMConfig: async () => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      const config = (await api.getLLMConfig()) as LLMConfig | null
+      if (config) set({ llmConfig: config })
+    } catch (e) {
+      console.error('Failed to fetch LLM config:', e)
+    }
+  },
+
+  saveLLMConfig: async (config: Partial<LLMConfig>) => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      const result = (await api.setLLMConfig(config)) as { success: boolean; config: LLMConfig } | null
+      if (result?.config) {
+        set({ llmConfig: result.config })
+      }
+    } catch (e) {
+      console.error('Failed to save LLM config:', e)
+      set({
+        error: {
+          message: 'LLM config save failed',
+          headline: 'LLM 配置保存失败',
+          detail: String(e),
+          timestamp: Date.now(),
+        },
+      })
+    }
+  },
+
+  fetchLLMPresets: async () => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      const presets = (await api.getLLMPresets()) as LLMPreset[] | null
+      if (presets) set({ llmPresets: presets })
+    } catch (e) {
+      console.error('Failed to fetch LLM presets:', e)
+    }
+  },
+
+  // -------------------------------------------------------------------------
+  // Onboarding
+  // -------------------------------------------------------------------------
+
+  checkOnboarding: async () => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      const complete = (await api.isOnboardingComplete()) as boolean | null
+      set({ onboardingCompleted: complete ?? false })
+    } catch (e) {
+      console.error('Failed to check onboarding status:', e)
+    }
+  },
+
+  completeOnboarding: async () => {
+    try {
+      const api = getAPI()
+      if (!api) return
+      await api.setOnboardingComplete(true)
+      set({ onboardingCompleted: true })
+    } catch (e) {
+      console.error('Failed to complete onboarding:', e)
+    }
+  },
+
+  // -------------------------------------------------------------------------
+  // Error management
+  // -------------------------------------------------------------------------
+
+  clearError: () => set({ error: null }),
+
+  setError: (headline: string, detail?: string, recovery?: string) =>
+    set({
+      error: {
+        message: headline,
+        headline,
+        detail,
+        recovery,
+        timestamp: Date.now(),
+      },
+    }),
+    }),
+
+    // -----------------------------------------------------------------------
+    // Persist configuration (Task 2a)
+    // -----------------------------------------------------------------------
+    {
+      name: 'mathweaver-session',
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // Only persist session-critical fields. Transient runtime state
+      // (loading, error, backendReady, dagNodes, …) is re-fetched on startup
+      // and must not be persisted.
+      partialize: (state): PersistedSessionState => ({
+        sessionId: state.sessionId,
+        targetNode: state.targetNode,
+        phase: state.phase,
+        // Cap chat history to the most recent 100 messages to keep the
+        // localStorage payload small.
+        chat: state.chat.slice(-100),
+        phaseTrace: state.phaseTrace,
+        grillState: state.grillState,
+        proofState: state.proofState,
+      }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('[sessionStore] Failed to rehydrate persisted state:', error)
+        } else if (state) {
+          console.log('[sessionStore] Rehydrated session from localStorage:', {
+            sessionId: state.sessionId,
+            targetNode: state.targetNode,
+            phase: state.phase,
+            chatLength: state.chat.length,
+          })
+        }
+      },
+    },
+  ),
+)
+
+// ---------------------------------------------------------------------------
+// Backend URL bootstrap
+// ---------------------------------------------------------------------------
+// App.tsx calls this once at startup. The store itself talks to the backend
+// through `window.api` (contextBridge IPC, which needs no URL), so this only
+// resolves the local backend URL via IPC so the bridge/main process is ready.
+// It is a safe no-op when the Electron bridge is unavailable.
+
+export async function initBackendUrl(): Promise<void> {
+  try {
+    const electronAPI = (
+      window as unknown as {
+        electronAPI?: { getBackendUrl?: () => Promise<string> }
+      }
+    ).electronAPI
+    if (electronAPI?.getBackendUrl) {
+      await electronAPI.getBackendUrl()
+    }
+  } catch {
+    // no-op: communication goes through window.api (contextBridge IPC)
+  }
+}

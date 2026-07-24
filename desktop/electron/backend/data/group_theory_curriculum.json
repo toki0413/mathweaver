@@ -1,0 +1,1107 @@
+[
+  {
+    "id": "set_basics",
+    "name": "集合基础",
+    "description": "集合的概念、运算（并、交、补）与映射",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "foundations",
+    "difficulty": 0.2,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解集合的定义和表示方法",
+      "掌握集合的基本运算（并、交、补、差）",
+      "理解映射的概念及分类（单射、满射、双射）"
+    ],
+    "examples": [
+      "{0, 1, 2, ...} 自然数集",
+      "Z/nZ 模 n 剩余类",
+      "矩阵集合 M_n(R)"
+    ],
+    "assessment_criteria": [
+      "能判断元素是否属于给定集合",
+      "能计算集合运算结果",
+      "能判断映射的类型"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "Cantor 在 19 世纪末创立集合论，为现代数学提供了基础语言。",
+    "related_theorems": [
+      "Cantor 定理",
+      "选择公理"
+    ],
+    "common_misconceptions": [
+      "混淆 ∈ 和 ⊆",
+      "认为空集没有子集"
+    ]
+  },
+  {
+    "id": "functions_and_mappings",
+    "name": "函数与映射",
+    "description": "映射的定义、单射/满射/双射及其复合",
+    "prerequisites": [
+      "set_basics"
+    ],
+    "abstraction_level": 0,
+    "domain": "foundations",
+    "difficulty": 0.25,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解映射的形式定义 f: A → B 及定义域、陪域",
+      "区分单射、满射、双射并掌握判定方法",
+      "理解映射的复合与逆映射存在的充要条件"
+    ],
+    "examples": [
+      "f: R → R, f(x) = x²（非单非满）",
+      "指数映射 exp: R → R⁺（双射）",
+      "行列式 det: M_n(R) → R（满射非单射）"
+    ],
+    "assessment_criteria": [
+      "能判断给定映射是否为单射、满射或双射",
+      "能构造双射并求其逆映射"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "Dirichlet 在 1837 年给出函数的现代定义，将函数从“解析表达式”解放为任意对应关系。",
+    "related_theorems": [
+      "双射判定定理",
+      "Schröder–Bernstein 定理"
+    ],
+    "common_misconceptions": [
+      "认为满射必为单射",
+      "混淆定义域与陪域"
+    ]
+  },
+  {
+    "id": "equivalence_relations",
+    "name": "等价关系",
+    "description": "自反、对称、传递关系与等价类划分",
+    "prerequisites": [
+      "set_basics",
+      "functions_and_mappings"
+    ],
+    "abstraction_level": 0,
+    "domain": "foundations",
+    "difficulty": 0.3,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解等价关系的三条公理（自反、对称、传递）",
+      "掌握等价类与商集的概念",
+      "理解等价关系与集合划分的一一对应"
+    ],
+    "examples": [
+      "整数模 n 同余 a ≡ b (mod n)",
+      "矩阵的相似关系与合同关系",
+      "实数的相等关系"
+    ],
+    "assessment_criteria": [
+      "能验证给定关系是否为等价关系",
+      "能求给定等价关系的商集"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "等价关系的抽象化由 20 世纪的 Bourbaki 学派系统化，但同余思想可追溯到 Gauss 的《算术研究》（1801）。",
+    "related_theorems": [
+      "等价类划分定理",
+      "同余基本定理"
+    ],
+    "common_misconceptions": [
+      "认为对称性可由自反性与传递性推出",
+      "混淆等价类的代表元与整个等价类"
+    ]
+  },
+  {
+    "id": "binary_operation",
+    "name": "二元运算",
+    "description": "集合上的封闭二元运算及其性质",
+    "prerequisites": [
+      "set_basics",
+      "equivalence_relations"
+    ],
+    "abstraction_level": 1,
+    "domain": "algebra",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解二元运算 *: S × S → S 的封闭性含义",
+      "掌握运算表（Cayley 表）的构造与阅读",
+      "理解运算性质（结合、交换、单位、逆元）的判定方法"
+    ],
+    "examples": [
+      "整数加法 +: Z × Z → Z",
+      "矩阵乘法: M_n(R) × M_n(R) → M_n(R)",
+      "集合的对称差运算 △"
+    ],
+    "assessment_criteria": [
+      "能判断运算在给定集合上是否封闭",
+      "能构造给定运算的 Cayley 表"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "二元运算的抽象化归功于 19 世纪后期 Cayley 与 Dedekind 的工作，是抽象代数的起点。",
+    "related_theorems": [
+      "运算封闭性定理",
+      "Cayley 表示定理"
+    ],
+    "common_misconceptions": [
+      "认为所有运算都满足交换律",
+      "忽略封闭性这一隐含条件"
+    ]
+  },
+  {
+    "id": "cayley_table",
+    "name": "Cayley 表",
+    "description": "有限运算的乘法表表示及其结构信息",
+    "prerequisites": [
+      "binary_operation"
+    ],
+    "abstraction_level": 1,
+    "domain": "algebra",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握 Cayley 表的构造方法",
+      "能从表中读出单位元、逆元与交换性",
+      "理解拉丁方性质与消去律的关系"
+    ],
+    "examples": [
+      "Z₃ 加法表",
+      "Klein 四元群乘法表",
+      "S₃ 置换乘法表"
+    ],
+    "assessment_criteria": [
+      "能正确填写给定运算的 Cayley 表",
+      "能从表中识别群的结构性质"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "Cayley 表由英国数学家 Arthur Cayley 在 1854 年引入，用于研究有限群的结构。",
+    "related_theorems": [
+      "拉丁方定理",
+      "Cayley 表示定理"
+    ],
+    "common_misconceptions": [
+      "认为 Cayley 表的行列顺序不影响结构解读",
+      "混淆行元素与列元素的角色"
+    ]
+  },
+  {
+    "id": "associativity",
+    "name": "结合律",
+    "description": "(a·b)·c = a·(b·c) 的运算性质",
+    "prerequisites": [
+      "binary_operation"
+    ],
+    "abstraction_level": 1,
+    "domain": "algebra",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解结合律的形式定义",
+      "掌握结合律对省略括号的意义（广义结合律）",
+      "能验证给定运算是否满足结合律"
+    ],
+    "examples": [
+      "整数加法满足结合律",
+      "减法不满足结合律：(a−b)−c ≠ a−(b−c)",
+      "矩阵乘法满足结合律"
+    ],
+    "assessment_criteria": [
+      "能判断运算是否满足结合律",
+      "能举例说明非结合运算"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "结合律由 Hamilton 在研究四元数时明确意识到其重要性，后被纳入抽象代数公理的核心。",
+    "related_theorems": [
+      "广义结合律定理",
+      "Cayley 表示定理"
+    ],
+    "common_misconceptions": [
+      "认为所有运算天然满足结合律",
+      "混淆结合律与交换律"
+    ]
+  },
+  {
+    "id": "commutativity",
+    "name": "交换律",
+    "description": "a·b = b·a 的运算性质",
+    "prerequisites": [
+      "binary_operation"
+    ],
+    "abstraction_level": 1,
+    "domain": "algebra",
+    "difficulty": 0.3,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解交换律的形式定义",
+      "能从 Cayley 表判断交换性（表关于主对角线对称）",
+      "理解非交换运算的存在"
+    ],
+    "examples": [
+      "实数加法满足交换律",
+      "矩阵乘法一般不交换",
+      "函数复合一般不交换"
+    ],
+    "assessment_criteria": [
+      "能判断运算是否满足交换律",
+      "能给出非交换运算的例子"
+    ],
+    "estimated_minutes": 25,
+    "historical_context": "交换性概念在 Abel 研究多项式方程根式可解性时凸显其重要性，交换群以其命名。",
+    "related_theorems": [
+      "Abel 定理",
+      "交换环基本定理"
+    ],
+    "common_misconceptions": [
+      "认为乘法必然交换",
+      "混淆交换律与结合律"
+    ]
+  },
+  {
+    "id": "identity_element",
+    "name": "单位元",
+    "description": "使 e·a = a·e = a 成立的元素 e",
+    "prerequisites": [
+      "binary_operation",
+      "associativity"
+    ],
+    "abstraction_level": 2,
+    "domain": "algebra",
+    "difficulty": 0.4,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解单位元的定义及其唯一性",
+      "能在 Cayley 表中识别单位元",
+      "理解在结合律下左单位元与右单位元的相等性"
+    ],
+    "examples": [
+      "整数加法的单位元 0",
+      "矩阵乘法的单位矩阵 I",
+      "函数复合的单位函数 id"
+    ],
+    "assessment_criteria": [
+      "能求给定运算的单位元",
+      "能证明单位元的唯一性"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "单位元的抽象由 Dedekind 与 Weber 在 19 世纪 80 年代的工作中逐步明确。",
+    "related_theorems": [
+      "单位元唯一性定理",
+      "群的公理"
+    ],
+    "common_misconceptions": [
+      "认为单位元可以有多个",
+      "混淆左单位元与右单位元"
+    ]
+  },
+  {
+    "id": "inverse_element",
+    "name": "逆元",
+    "description": "对每个 a 存在 a⁻¹ 使 a·a⁻¹ = a⁻¹·a = e",
+    "prerequisites": [
+      "identity_element",
+      "associativity"
+    ],
+    "abstraction_level": 2,
+    "domain": "algebra",
+    "difficulty": 0.45,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解逆元的定义及其唯一性",
+      "能在 Cayley 表中求元素的逆元",
+      "理解在结合律下左逆与右逆的相等性"
+    ],
+    "examples": [
+      "整数 a 的加法逆元 −a",
+      "非零实数的乘法逆元 1/a",
+      "可逆矩阵的逆矩阵 A⁻¹"
+    ],
+    "assessment_criteria": [
+      "能求给定元素的逆元",
+      "能证明逆元的唯一性"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "逆元概念由 Galois 在研究置换群时隐含使用，后被严格公理化。",
+    "related_theorems": [
+      "逆元唯一性定理",
+      "穿脱引理（Socks-Shoes Lemma）"
+    ],
+    "common_misconceptions": [
+      "认为所有元素都有逆元",
+      "混淆左逆与右逆"
+    ]
+  },
+  {
+    "id": "cancellation_law",
+    "name": "消去律",
+    "description": "由 a·c = b·c 推出 a = b 的左/右消去律",
+    "prerequisites": [
+      "identity_element",
+      "inverse_element"
+    ],
+    "abstraction_level": 2,
+    "domain": "algebra",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解左消去律与右消去律的形式",
+      "掌握消去律与逆元存在性的等价关系",
+      "能用消去律证明元素相等"
+    ],
+    "examples": [
+      "群中由 a·c = b·c 推出 a = b",
+      "整数乘法消去需附加条件 c ≠ 0",
+      "矩阵乘法一般不满足消去律"
+    ],
+    "assessment_criteria": [
+      "能正确应用消去律进行推理",
+      "能说明消去律成立的条件"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "消去律是 Euclid《几何原本》中处理比例论的基础，后被纳入群的等价公理体系。",
+    "related_theorems": [
+      "消去律定理",
+      "群的等价公理"
+    ],
+    "common_misconceptions": [
+      "在逆元不存在时滥用消去律",
+      "忽略左消去与右消去的区别"
+    ]
+  },
+  {
+    "id": "semigroup",
+    "name": "半群",
+    "description": "带有结合二元运算的集合",
+    "prerequisites": [
+      "binary_operation",
+      "associativity"
+    ],
+    "abstraction_level": 2,
+    "domain": "algebra",
+    "difficulty": 0.4,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解半群的公理定义（集合 + 结合二元运算）",
+      "区分半群、幺半群与群",
+      "理解半群到群公理的逐步强化过程"
+    ],
+    "examples": [
+      "正整数在加法下构成半群",
+      "非空集合上的全体变换在复合下构成半群",
+      "字符串在拼接运算下构成半群"
+    ],
+    "assessment_criteria": [
+      "能判断代数结构是否为半群",
+      "能给出半群但非幺半群的例子"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "半群概念由法国数学家 de Séguier 在 1904 年正式引入。",
+    "related_theorems": [
+      "半群基本定理",
+      "Cayley 表示定理"
+    ],
+    "common_misconceptions": [
+      "认为半群必有单位元",
+      "混淆半群与群的边界"
+    ]
+  },
+  {
+    "id": "monoid",
+    "name": "幺半群",
+    "description": "含有单位元的半群",
+    "prerequisites": [
+      "semigroup",
+      "identity_element"
+    ],
+    "abstraction_level": 2,
+    "domain": "algebra",
+    "difficulty": 0.42,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解幺半群的公理（半群 + 单位元）",
+      "区分幺半群与群（元素未必有逆）",
+      "理解幺半群在计算机科学与形式语言中的应用"
+    ],
+    "examples": [
+      "非负整数在加法下的幺半群",
+      "字符串在拼接下（单位元为空串）",
+      "n 阶方阵全体在乘法下的幺半群"
+    ],
+    "assessment_criteria": [
+      "能判断代数结构是否为幺半群",
+      "能识别幺半群但非群的例子"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "幺半群术语由 Bourbaki 学派在 20 世纪中叶规范化，单位元的存在将其与半群区分开来。",
+    "related_theorems": [
+      "幺半群基本定理",
+      "子幺半群定理"
+    ],
+    "common_misconceptions": [
+      "认为幺半群元素必有逆元",
+      "混淆幺半群与群"
+    ]
+  },
+  {
+    "id": "group_definition",
+    "name": "群的定义",
+    "description": "封闭 + 结合 + 单位元 + 逆元 = 群",
+    "prerequisites": [
+      "binary_operation",
+      "associativity",
+      "identity_element",
+      "inverse_element"
+    ],
+    "abstraction_level": 3,
+    "domain": "algebra",
+    "difficulty": 0.55,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握群的四条公理及其等价表述",
+      "能验证给定代数结构是否为群",
+      "理解群公理的等价形式（如单边单位元与单边逆元公理）"
+    ],
+    "examples": [
+      "(Z, +) 整数加法群",
+      "(R*, ×) 非零实数乘法群",
+      "GL_n(R) 一般线性群"
+    ],
+    "assessment_criteria": [
+      "能从公理出发证明群的基本性质",
+      "能判断给定代数结构是否为群"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "群的公理化定义由 E. V. Huntington（1902）与 E. H. Moore 给出；Galois 最早用群研究方程可解性。",
+    "related_theorems": [
+      "群的等价公理定理",
+      "单位元唯一性定理"
+    ],
+    "common_misconceptions": [
+      "忽略封闭性这一隐含公理",
+      "认为群必满足交换律"
+    ]
+  },
+  {
+    "id": "finite_group",
+    "name": "有限群",
+    "description": "元素个数有限的群",
+    "prerequisites": [
+      "group_definition",
+      "cayley_table"
+    ],
+    "abstraction_level": 3,
+    "domain": "algebra",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解有限群与无限群的本质区别",
+      "掌握用 Cayley 表完全描述有限群的方法",
+      "理解有限群分类问题的意义与困难"
+    ],
+    "examples": [
+      "Z_n 模 n 剩余类加法群",
+      "Klein 四元群 V₄",
+      "对称群 S_n"
+    ],
+    "assessment_criteria": [
+      "能判断群是否为有限群",
+      "能用 Cayley 表刻画小阶有限群"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "Cayley 定理（1854）指出每个有限群同构于某个置换群的子群，奠定了有限群研究的基础。",
+    "related_theorems": [
+      "Cayley 定理",
+      "有限群分类定理"
+    ],
+    "common_misconceptions": [
+      "认为有限群必交换",
+      "混淆群的阶与元素的阶"
+    ]
+  },
+  {
+    "id": "group_order",
+    "name": "群的阶",
+    "description": "群中元素的个数 |G|",
+    "prerequisites": [
+      "group_definition",
+      "finite_group"
+    ],
+    "abstraction_level": 3,
+    "domain": "algebra",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解群的阶 |G| 的定义",
+      "区分群的阶与元素的阶",
+      "理解无限群的阶记作 ∞"
+    ],
+    "examples": [
+      "|Z_n| = n",
+      "|S_n| = n!",
+      "|(Z, +)| = ∞"
+    ],
+    "assessment_criteria": [
+      "能计算常见群的阶",
+      "能区分群阶与元素阶"
+    ],
+    "estimated_minutes": 30,
+    "historical_context": "群的阶概念在 Lagrange 研究代数方程根的置换时被隐含使用。",
+    "related_theorems": [
+      "Lagrange 定理",
+      "元素的阶定理"
+    ],
+    "common_misconceptions": [
+      "混淆群的阶与元素的阶",
+      "认为阶必为有限数"
+    ]
+  },
+  {
+    "id": "abelian_group",
+    "name": "交换群（Abel 群）",
+    "description": "满足交换律 a·b = b·a 的群",
+    "prerequisites": [
+      "group_definition",
+      "commutativity"
+    ],
+    "abstraction_level": 4,
+    "domain": "algebra",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解交换群的公理（群 + 交换律）",
+      "掌握交换群的加法记法约定",
+      "理解交换群与模、向量空间的联系"
+    ],
+    "examples": [
+      "(Z, +) 整数加法群",
+      "(R^n, +) n 维向量加法群",
+      "n 次单位根群 μ_n"
+    ],
+    "assessment_criteria": [
+      "能判断群是否交换",
+      "能在加法记法下处理交换群"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "交换群以挪威数学家 Niels Henrik Abel 命名，他在研究多项式方程根式可解性时揭示了交换性的作用。",
+    "related_theorems": [
+      "Abel 定理",
+      "有限交换群结构定理"
+    ],
+    "common_misconceptions": [
+      "认为所有群都交换",
+      "混淆乘法记法与加法记法"
+    ]
+  },
+  {
+    "id": "cyclic_group",
+    "name": "循环群",
+    "description": "由单个元素生成的群 ⟨g⟩ = {gⁿ | n ∈ Z}",
+    "prerequisites": [
+      "group_definition"
+    ],
+    "abstraction_level": 4,
+    "domain": "algebra",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解循环群的定义与生成元",
+      "掌握循环群的分类（有限与无限）",
+      "理解循环群必为交换群这一重要性质"
+    ],
+    "examples": [
+      "(Z, +) 由 1 生成的无限循环群",
+      "(Z_n, +) 由 1 生成的 n 阶循环群",
+      "n 次单位根群 μ_n"
+    ],
+    "assessment_criteria": [
+      "能判断群是否循环并求出生成元",
+      "能分类给定阶的循环群"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "循环群是最早被完全分类的群类，Gauss 在研究同余时已掌握其结构。",
+    "related_theorems": [
+      "循环群分类定理",
+      "子群对应定理"
+    ],
+    "common_misconceptions": [
+      "认为循环群的生成元唯一",
+      "混淆循环群与循环置换群"
+    ]
+  },
+  {
+    "id": "generator",
+    "name": "生成元",
+    "description": "生成整个群或子群的最小元素集合",
+    "prerequisites": [
+      "cyclic_group"
+    ],
+    "abstraction_level": 4,
+    "domain": "algebra",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解生成元与生成子群的概念",
+      "掌握有限循环群生成元的计数（Euler 函数）",
+      "理解生成集的极小性"
+    ],
+    "examples": [
+      "Z_n 的生成元是与 n 互素的元素",
+      "S₃ 可由一个对换和一个轮换生成",
+      "D_n 二面体群由一个旋转与一个反射生成"
+    ],
+    "assessment_criteria": [
+      "能求循环群的全部生成元",
+      "能判断给定集合是否生成群"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "生成元概念由 Cayley 与 Burnside 在研究群的结构时系统使用。",
+    "related_theorems": [
+      "Euler 定理",
+      "Burnside 定理"
+    ],
+    "common_misconceptions": [
+      "认为生成元必然唯一",
+      "混淆生成元与单位元"
+    ]
+  },
+  {
+    "id": "exponent_of_group",
+    "name": "群的指数",
+    "description": "使所有元素 g 满足 gⁿ = e 的最小正整数 n",
+    "prerequisites": [
+      "group_order",
+      "cyclic_group"
+    ],
+    "abstraction_level": 4,
+    "domain": "algebra",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解群指数 exp(G) 的定义",
+      "掌握指数与元素阶、群阶的关系",
+      "理解交换群的指数等于最大元素阶"
+    ],
+    "examples": [
+      "Z_n 的指数为 n",
+      "Klein 四元群 V₄ 的指数为 2",
+      "S₃ 的指数为 6"
+    ],
+    "assessment_criteria": [
+      "能计算常见群的指数",
+      "能说明指数与群阶的关系"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "群指数概念在研究幂结构时由 Frobenius 等人发展，是有限群结构理论的重要工具。",
+    "related_theorems": [
+      "Frobenius 定理",
+      "指数整除阶定理"
+    ],
+    "common_misconceptions": [
+      "混淆群指数与群的阶",
+      "认为指数恒等于最大元素阶（仅在交换群成立）"
+    ]
+  },
+  {
+    "id": "subgroup",
+    "name": "子群",
+    "description": "群的子集自身在原运算下构成群",
+    "prerequisites": [
+      "group_definition",
+      "monoid"
+    ],
+    "abstraction_level": 5,
+    "domain": "algebra",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解子群的定义与判定",
+      "掌握子群的交与生成子群运算",
+      "理解子群与原群共用同一单位元"
+    ],
+    "examples": [
+      "nZ 是 (Z, +) 的子群",
+      "SL_n(R) 是 GL_n(R) 的子群",
+      "A_n 是 S_n 的子群"
+    ],
+    "assessment_criteria": [
+      "能判断子集是否为子群",
+      "能求子群的交与生成子群"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "子群概念由 Galois 在研究置换群的可解链时隐含使用，是正规群列的基础。",
+    "related_theorems": [
+      "子群判定定理",
+      "生成子群定理"
+    ],
+    "common_misconceptions": [
+      "认为子群可有不同于群的单位元",
+      "认为子群的元素个数可以任意"
+    ]
+  },
+  {
+    "id": "subgroup_test",
+    "name": "子群判定",
+    "description": "子群的等价判定准则",
+    "prerequisites": [
+      "subgroup"
+    ],
+    "abstraction_level": 5,
+    "domain": "algebra",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握子群判定定理（非空 + 封闭于乘法与逆）",
+      "掌握有限子群的简化判定（非空 + 封闭于乘法）",
+      "能灵活选用恰当的判定准则"
+    ],
+    "examples": [
+      "用判定定理证明 nZ ≤ Z",
+      "用有限判定证明 H ≤ G",
+      "验证特殊线性群 SL_n 是子群"
+    ],
+    "assessment_criteria": [
+      "能用判定定理证明子集是子群",
+      "能根据群是否有限选择判定准则"
+    ],
+    "estimated_minutes": 35,
+    "historical_context": "子群判定定理是早期抽象代数教材（如 van der Waerden 1930）的标准内容，源于公理化运动。",
+    "related_theorems": [
+      "子群判定定理",
+      "有限子群判定定理"
+    ],
+    "common_misconceptions": [
+      "在无限群中误用仅验证封闭于乘法",
+      "忽略非空性条件"
+    ]
+  },
+  {
+    "id": "cosets",
+    "name": "陪集",
+    "description": "子群的左/右陪集与等价类划分",
+    "prerequisites": [
+      "subgroup"
+    ],
+    "abstraction_level": 5,
+    "domain": "algebra",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解左陪集 gH 与右陪集 Hg 的定义",
+      "掌握陪集作为等价类的划分性质",
+      "理解左陪集与右陪集的关系"
+    ],
+    "examples": [
+      "Z 中 nZ 的陪集即模 n 剩余类",
+      "R² 中直线子空间的平行陪集",
+      "S₃ 中子群的陪集分解"
+    ],
+    "assessment_criteria": [
+      "能求子群的陪集分解",
+      "能说明所有陪集彼此等势"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "陪集概念由 Lagrange 在研究方程根置换时隐含使用，后被 Galois 系统化为群论工具。",
+    "related_theorems": [
+      "陪集分解定理",
+      "Lagrange 定理"
+    ],
+    "common_misconceptions": [
+      "认为陪集必然是子群",
+      "混淆左陪集与右陪集"
+    ]
+  },
+  {
+    "id": "normal_subgroup",
+    "name": "正规子群",
+    "description": "满足 gNg⁻¹ = N 的子群",
+    "prerequisites": [
+      "subgroup",
+      "cosets"
+    ],
+    "abstraction_level": 5,
+    "domain": "algebra",
+    "difficulty": 0.7,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解正规子群的多种等价定义",
+      "掌握左陪集等于右陪集的判定",
+      "理解正规子群是构造商群的前提"
+    ],
+    "examples": [
+      "交换群的任意子群都正规",
+      "A_n 是 S_n 的正规子群",
+      "SL_n(R) 是 GL_n(R) 的正规子群"
+    ],
+    "assessment_criteria": [
+      "能判断子群是否正规",
+      "能给出非正规子群的例子"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "正规子群概念由 Galois 引入，是判断方程根式可解的核心（可解群链）。",
+    "related_theorems": [
+      "正规子群判定定理",
+      "Galois 对应定理"
+    ],
+    "common_misconceptions": [
+      "认为所有子群都正规",
+      "混淆正规子群与交换子群"
+    ]
+  },
+  {
+    "id": "lagrange_theorem",
+    "name": "拉格朗日定理",
+    "description": "子群的阶整除群的阶",
+    "prerequisites": [
+      "subgroup",
+      "cosets",
+      "group_order"
+    ],
+    "abstraction_level": 6,
+    "domain": "algebra",
+    "difficulty": 0.75,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解 Lagrange 定理的陈述与证明思路",
+      "掌握定理对元素阶的推论",
+      "理解指数 [G:H] 与 |G|/|H| 的关系"
+    ],
+    "examples": [
+      "6 阶群的子群阶只能是 1、2、3、6",
+      "素数阶群必为循环群",
+      "p² 阶群必有 p 阶子群"
+    ],
+    "assessment_criteria": [
+      "能用 Lagrange 定理限制子群的阶",
+      "能证明素数阶群为循环群"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "Lagrange 在 1770–1771 年研究多项式方程时得到该结果，本质是陪集的等势性。",
+    "related_theorems": [
+      "Lagrange 定理",
+      "元素的阶整除群阶"
+    ],
+    "common_misconceptions": [
+      "认为逆定理成立（阶整除必存在相应子群）",
+      "混淆指数与子群阶"
+    ]
+  },
+  {
+    "id": "cauchy_theorem",
+    "name": "Cauchy 定理",
+    "description": "若素数 p 整除 |G|，则 G 中存在 p 阶元",
+    "prerequisites": [
+      "lagrange_theorem",
+      "cyclic_group"
+    ],
+    "abstraction_level": 6,
+    "domain": "algebra",
+    "difficulty": 0.75,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解 Cauchy 定理的陈述",
+      "掌握其与 Lagrange 定理的关系（部分逆定理）",
+      "理解 p 阶子群的存在性"
+    ],
+    "examples": [
+      "6 阶群必有 2 阶元和 3 阶元",
+      "12 阶群必有 2 阶元和 3 阶元",
+      "p 阶群（p 为素数）为循环群"
+    ],
+    "assessment_criteria": [
+      "能应用 Cauchy 定理判断元素阶的存在性",
+      "能说明其与 Sylow 定理的联系"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "Cauchy 在 1845 年证明该定理，是有限群存在性定理的先驱，后由 Sylow 定理推广。",
+    "related_theorems": [
+      "Cauchy 定理",
+      "Sylow 定理"
+    ],
+    "common_misconceptions": [
+      "认为 Lagrange 逆定理普遍成立",
+      "混淆 Cauchy 定理与 Sylow 定理"
+    ]
+  },
+  {
+    "id": "quotient_group",
+    "name": "商群",
+    "description": "正规子群的陪集构成的群 G/N",
+    "prerequisites": [
+      "normal_subgroup",
+      "cosets"
+    ],
+    "abstraction_level": 6,
+    "domain": "algebra",
+    "difficulty": 0.75,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解商群 G/N 的构造与运算定义",
+      "掌握正规性是商群良定义的前提",
+      "理解商群的阶 |G/N| = |G|/|N|"
+    ],
+    "examples": [
+      "Z/nZ ≅ Z_n",
+      "S₃/A₃ ≅ Z₂",
+      "R/Z 同构于圆周群"
+    ],
+    "assessment_criteria": [
+      "能构造商群并定义其运算",
+      "能说明正规性的必要性"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "商群概念由 Galois 隐含引入，后由 Jordan 在 1870 年的《置换论》中明确化。",
+    "related_theorems": [
+      "商群构造定理",
+      "第一同构定理"
+    ],
+    "common_misconceptions": [
+      "认为任意子群都可构造商群",
+      "混淆商群与子群"
+    ]
+  },
+  {
+    "id": "isomorphism_theorem",
+    "name": "同构定理",
+    "description": "群的三条同构基本定理",
+    "prerequisites": [
+      "quotient_group",
+      "normal_subgroup",
+      "group_homomorphism"
+    ],
+    "abstraction_level": 6,
+    "domain": "algebra",
+    "difficulty": 0.8,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握第一同构定理 G/ker φ ≅ im φ",
+      "掌握第二、第三同构定理",
+      "理解同态与商群的深刻联系"
+    ],
+    "examples": [
+      "R → S¹, x ↦ e^(2πix)，核为 Z，故 R/Z ≅ S¹",
+      "S_n → Z₂ 符号映射，故 S_n/A_n ≅ Z₂",
+      "GL_n → R* 行列式映射，故 GL_n/SL_n ≅ R*"
+    ],
+    "assessment_criteria": [
+      "能应用同构定理化简商群",
+      "能识别同态的核与像"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "同构定理由 Noether 在 1920 年代系统化，是现代代数结构主义的核心成果。",
+    "related_theorems": [
+      "第一同构定理",
+      "第二同构定理",
+      "第三同构定理"
+    ],
+    "common_misconceptions": [
+      "混淆核与像",
+      "认为同构定理仅对交换群成立"
+    ]
+  },
+  {
+    "id": "symmetric_group",
+    "name": "对称群",
+    "description": "集合上全体置换构成的群 S_n",
+    "prerequisites": [
+      "group_definition",
+      "group_order"
+    ],
+    "abstraction_level": 7,
+    "domain": "algebra",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解置换与对称群 S_n 的定义",
+      "掌握轮换表示与置换乘法",
+      "理解 Cayley 定理：每个群都嵌入某个对称群"
+    ],
+    "examples": [
+      "S₃ 是最小非交换群，阶为 6",
+      "S_n 的阶为 n!",
+      "正 n 边形对称性的置换表示"
+    ],
+    "assessment_criteria": [
+      "能计算置换的乘法",
+      "能将置换分解为不交轮换"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "对称群的研究由 Cauchy（1845）与 Cayley 系统化，Cayley 定理表明它是一切群的“泛型”。",
+    "related_theorems": [
+      "Cayley 定理",
+      "轮换分解定理"
+    ],
+    "common_misconceptions": [
+      "认为 S_n 必交换",
+      "混淆轮换与置换"
+    ]
+  },
+  {
+    "id": "alternating_group",
+    "name": "交错群",
+    "description": "全体偶置换构成的群 A_n",
+    "prerequisites": [
+      "symmetric_group",
+      "subgroup"
+    ],
+    "abstraction_level": 7,
+    "domain": "algebra",
+    "difficulty": 0.75,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解偶置换与奇置换的奇偶性",
+      "掌握交错群 A_n 是 S_n 的指数 2 正规子群",
+      "理解 A_n 在 n ≥ 5 时的单性"
+    ],
+    "examples": [
+      "A₃ ≅ Z₃",
+      "A₄ 阶为 12，含 Klein 四元正规子群",
+      "A₅ 是最小非交换单群，阶为 60"
+    ],
+    "assessment_criteria": [
+      "能判断置换的奇偶性",
+      "能说明 A_n 的正规性"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "交错群 A₅ 的单性由 Galois 隐含发现，是五次以上方程不可根式解的关键。",
+    "related_theorems": [
+      "交错群单性定理",
+      "Galois 定理"
+    ],
+    "common_misconceptions": [
+      "认为 A_n 必交换",
+      "混淆偶置换与恒等置换"
+    ]
+  },
+  {
+    "id": "group_homomorphism",
+    "name": "群同态",
+    "description": "保持群结构的映射 φ(ab) = φ(a)φ(b)",
+    "prerequisites": [
+      "group_definition",
+      "normal_subgroup"
+    ],
+    "abstraction_level": 6,
+    "domain": "algebra",
+    "difficulty": 0.7,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解同态的定义与“保持结构”的含义",
+      "掌握核 ker φ 与像 im φ 的概念",
+      "理解同态基本定理与商群的联系"
+    ],
+    "examples": [
+      "行列式 det: GL_n(R) → R* 是同态",
+      "符号映射 sgn: S_n → {±1}",
+      "指数映射 exp: (R, +) → (R⁺, ×)"
+    ],
+    "assessment_criteria": [
+      "能判断映射是否为同态",
+      "能求同态的核与像"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "同态概念由 Klein 在其 Erlangen 纲领（1872）中强调，是几何统一化的核心工具。",
+    "related_theorems": [
+      "同态基本定理",
+      "第一同构定理"
+    ],
+    "common_misconceptions": [
+      "认为同态必为双射",
+      "混淆同态与同构"
+    ]
+  }
+]

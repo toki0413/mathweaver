@@ -1,0 +1,1511 @@
+/**
+ * Orchestrator: Four-field coupling engine.
+ *
+ * Ported from Python backend (backend/mathweaver/orchestrator/engine.py)
+ *
+ * This is the central coordinator that:
+ * 1. Maintains the FourFieldState (single-writer pattern)
+ * 2. Routes messages between agents via an LLM-driven loop
+ * 3. Makes pedagogical decisions based on field coupling
+ * 4. Manages the teaching loop state machine
+ *
+ * State machine phases:
+ *   PERCEIVE -> ABSTRACT -> VERIFY -> DIAGNOSE -> REFLECT -> COLLABORATE -> DELIVER
+ *
+ * SIMPLIFICATIONS (per porting instructions):
+ * - observability / trace / metrics / safety / persistence / audit modules are
+ *   replaced with console.log.
+ * - grill/session.py is NOT ported; grill mode is handled by a simplified
+ *   inline session (one-question-at-a-time over a small question bank).
+ * - proof/assistant.py is NOT ported; proof mode is handled by a simplified
+ *   inline verifier (keyword theorem detection + step counting).
+ * - dag/concept_dag.py is NOT ported; a minimal inline concept DAG with a few
+ *   group-theory nodes is provided.
+ * - Map replaces dict, async/await replaces asyncio, console.log replaces logging.
+ */
+
+import {
+  AgentRole,
+  SessionPhase,
+  type FourFieldState,
+  type StudentProfile,
+  type AgentMessage,
+  type AgentContext,
+  type TeachingDecision,
+  defaultFourFieldState,
+  defaultStudentProfile,
+  getMastery,
+  isCognitiveOverloaded,
+  isEmotionalAnxious,
+  isEmotionalInFlow,
+  isKnowledgeInZPD,
+  isKnowledgeReadyToAdvance,
+  shouldFadeScaffold,
+  isInteractionStruggling,
+  snapshotFourField,
+} from '../types'
+import type { LLMClient } from '../llm/client'
+import { MockLLMClient } from '../llm/client'
+import { CounterExampleForge } from '../forge/forge'
+import { BaseAgent } from '../agents/base'
+import {
+  PerceptionAgent,
+  AbstractionAgent,
+  CounterExampleAgent,
+  EpistemicAgent,
+  HistoricalAgent,
+  CollaborationAgent,
+  MetaEvolutionAgent,
+} from '../agents'
+import { ParameterLearner } from '../agents/meta'
+import { KnowledgeBase, buildDefaultKB } from '../agents/historical'
+import type { ConceptDAG } from '../dag/concept_dag'
+import { getDag } from '../dag/concept_dag'
+
+// ---------------------------------------------------------------------------
+// Minimal Concept DAG (replaces dag/concept_dag.py)
+// ---------------------------------------------------------------------------
+
+interface DagNode {
+  id: string
+  name: string
+  description: string
+  prerequisites: string[]
+  abstraction_level: number
+  domain: string
+}
+
+const DEFAULT_DAG_NODES: DagNode[] = [
+  {
+    id: 'group_definition',
+    name: '群的定义',
+    description: '集合配上二元运算，满足封闭性、结合律、单位元、逆元四条公理。',
+    prerequisites: [],
+    abstraction_level: 1,
+    domain: 'group_theory',
+  },
+  {
+    id: 'subgroup',
+    name: '子群',
+    description: '群的子集在原运算下仍构成群。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 2,
+    domain: 'group_theory',
+  },
+  {
+    id: 'cyclic_group',
+    name: '循环群',
+    description: '由单个元素生成的群，如 Z_n。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 2,
+    domain: 'group_theory',
+  },
+  {
+    id: 'abelian_group',
+    name: '交换群',
+    description: '满足交换律 a·b = b·a 的群。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 2,
+    domain: 'group_theory',
+  },
+  {
+    id: 'lagrange_theorem',
+    name: 'Lagrange 定理',
+    description: '有限群的子群阶必然整除群的阶。',
+    prerequisites: ['subgroup', 'cyclic_group'],
+    abstraction_level: 3,
+    domain: 'group_theory',
+  },
+  {
+    id: 'symmetric_group',
+    name: '对称群',
+    description: '所有置换构成的群，S_n 是最小的非交换群例子。',
+    prerequisites: ['group_definition', 'abelian_group'],
+    abstraction_level: 3,
+    domain: 'group_theory',
+  },
+]
+
+class SimpleConceptDAG {
+  private nodes: Map<string, DagNode>
+
+  constructor(nodes: DagNode[] = DEFAULT_DAG_NODES) {
+    this.nodes = new Map(nodes.map((n) => [n.id, n]))
+  }
+
+  getNode(id: string): DagNode | undefined {
+    return this.nodes.get(id)
+  }
+
+  getAllNodes(): DagNode[] {
+    return [...this.nodes.values()]
+  }
+
+  getNodeCount(): number {
+    return this.nodes.size
+  }
+
+  checkPrerequisites(targetId: string, mastery: Record<string, number>): string[] {
+    const node = this.nodes.get(targetId)
+    if (!node) return []
+    const gaps: string[] = []
+    for (const pre of node.prerequisites) {
+      if ((mastery[pre] ?? 0) < 0.6) gaps.push(pre)
+    }
+    return gaps
+  }
+
+  getLearningPath(targetId: string, _mastery: Record<string, number>): string[] {
+    const node = this.nodes.get(targetId)
+    if (!node) return []
+    const path: string[] = [...node.prerequisites, targetId]
+    return path
+  }
+
+  /** Nodes that depend on `id` (children). */
+  getDependents(id: string): string[] {
+    const deps: string[] = []
+    for (const node of this.nodes.values()) {
+      if (node.prerequisites.includes(id)) deps.push(node.id)
+    }
+    return deps
+  }
+
+  getCurriculumSummary(): Record<string, unknown> {
+    const domains = new Set<string>()
+    for (const n of this.nodes.values()) domains.add(n.domain)
+    return {
+      total_nodes: this.nodes.size,
+      domains: [...domains],
+      levels: Math.max(...[...this.nodes.values()].map((n) => n.abstraction_level)),
+    }
+  }
+}
+
+const CURRICULUM_LABELS: Record<string, string> = {
+  elementary: '小学数学',
+  middle_school: '初中数学',
+  high_school: '高中数学',
+  group_theory: '群论（抽象代数）',
+}
+
+// ---------------------------------------------------------------------------
+// Minimal Topology (replaces topology/config.py) — permissive
+// ---------------------------------------------------------------------------
+
+class SimpleTopology {
+  entryAgent = 'perception'
+  exitAgent = 'collaboration'
+  agents = [
+    'perception',
+    'abstraction',
+    'counter_example',
+    'epistemic',
+    'historical',
+    'collaboration',
+  ]
+  maxIterations = 10
+
+  isActive(name: string): boolean {
+    return this.agents.includes(name)
+  }
+
+  availableFrom(_from: string): string[] {
+    return [...this.agents]
+  }
+
+  canRoute(_from: string, _to: string): boolean {
+    return true
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Simplified Grill Session (replaces grill/session.py)
+// ---------------------------------------------------------------------------
+
+interface GrillQuestion {
+  qid: string
+  concept_name: string
+  question: string
+  recommended_answer: string
+  branch_type: string
+  difficulty: number
+}
+
+const GRILL_QUESTIONS: GrillQuestion[] = [
+  {
+    qid: 'g1',
+    concept_name: '群的定义',
+    question: '什么是群？群需要满足哪几条公理？',
+    recommended_answer: '群是一个集合配上一个二元运算，满足封闭性、结合律、单位元、逆元四条公理。',
+    branch_type: 'concept',
+    difficulty: 0.3,
+  },
+  {
+    qid: 'g2',
+    concept_name: '单位元',
+    question: '群的单位元为什么是唯一的？',
+    recommended_answer: '若 e 和 f 都是单位元，则 e = e·f = f，由传递性得 e = f。',
+    branch_type: 'concept',
+    difficulty: 0.5,
+  },
+  {
+    qid: 'g3',
+    concept_name: '逆元',
+    question: '群中每个元素的逆元是否唯一？为什么？',
+    recommended_answer: '唯一。若 b、c 都是 a 的逆元，则 b = b·e = b·(a·c) = (b·a)·c = e·c = c。',
+    branch_type: 'concept',
+    difficulty: 0.6,
+  },
+  {
+    qid: 'g4',
+    concept_name: '交换群',
+    question: '举一个非交换群的例子。',
+    recommended_answer: 'S₃（3次对称群）是非交换群，存在 a,b 使 a·b ≠ b·a。',
+    branch_type: 'edge_case',
+    difficulty: 0.7,
+  },
+  {
+    qid: 'g5',
+    concept_name: 'Lagrange 定理',
+    question: 'Lagrange 定理说了什么？',
+    recommended_answer: '子群的阶必然整除群的阶，即 |H| 整除 |G|。',
+    branch_type: 'application',
+    difficulty: 0.8,
+  },
+]
+
+interface GrillConjectureRecord {
+  text: string
+  verdict: string
+  counter_example: string | null
+}
+
+class SimpleGrillSession {
+  active = false
+  currentIndex = 0
+  cayleyTablesSeen = 0
+  conjectureHistory: GrillConjectureRecord[] = []
+
+  activate(): void {
+    this.active = true
+  }
+
+  reactivate(): void {
+    this.active = true
+    this.currentIndex = 0
+  }
+
+  nextQuestion(): GrillQuestion | null {
+    if (this.currentIndex < GRILL_QUESTIONS.length) {
+      return GRILL_QUESTIONS[this.currentIndex]
+    }
+    return null
+  }
+
+  advance(): void {
+    this.currentIndex += 1
+  }
+
+  recordCayleyTable(): void {
+    this.cayleyTablesSeen += 1
+  }
+
+  recordConjecture(text: string, verdict: string, counterExample: string | null): void {
+    this.conjectureHistory.push({ text, verdict, counter_example: counterExample })
+  }
+
+  getSummary(): Record<string, unknown> {
+    const total = GRILL_QUESTIONS.length
+    const resolved = Math.min(this.currentIndex, total)
+    const conjSuccess =
+      this.conjectureHistory.length > 0
+        ? this.conjectureHistory.filter((c) => c.verdict === 'confirmed').length /
+          this.conjectureHistory.length
+        : 0
+    return {
+      resolved_branches: resolved,
+      total_branches: total,
+      correct_answers: 0, // free-text correctness evaluation not implemented
+      conjecture_count: this.conjectureHistory.length,
+      cayley_tables_seen: this.cayleyTablesSeen,
+      adaptive: {
+        streak_correct: 0,
+        streak_wrong: 0,
+        total_questions: resolved,
+        difficulty_band: resolved > total / 2 ? 'advanced' : 'standard',
+        trend: 'stable',
+        // neutral placeholder: correctness of free-text answers is not evaluated
+        accuracy_rate: 0.5,
+        conjecture_success_rate: conjSuccess,
+        current_difficulty: 0.4,
+      },
+    }
+  }
+
+  getConjectureHistory(): GrillConjectureRecord[] {
+    return this.conjectureHistory
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Simplified Proof Templates (replaces proof/assistant.py)
+// ---------------------------------------------------------------------------
+
+interface ProofTemplate {
+  description: string
+  given: string[]
+  toProve: string
+  expectedSteps: string[]
+  socraticHints: string[]
+}
+
+const PROOF_TEMPLATES: Record<string, ProofTemplate> = {
+  identity_unique: {
+    description: '群的单位元唯一',
+    given: ['G 是群', 'e, f 都是单位元'],
+    toProve: 'e = f',
+    expectedSteps: ['e·f = f（e 是单位元）', 'e·f = e（f 是单位元）', 'e = f（传递性）'],
+    socraticHints: ['试试用单位元的定义。'],
+  },
+  inverse_unique: {
+    description: '群中元素的逆元唯一',
+    given: ['G 是群', 'a ∈ G', 'b, c 都是 a 的逆元'],
+    toProve: 'b = c',
+    expectedSteps: [
+      'b = b·e（e 是单位元）',
+      'b = b·(a·c)（c 是 a 的逆元）',
+      'b = (b·a)·c（结合律）',
+      'b = e·c（b 是 a 的逆元）',
+      'b = c（e 是单位元）',
+    ],
+    socraticHints: ['从 b = b·e 开始，把 e 替换成 a·c。'],
+  },
+  cancellation_law: {
+    description: '群的消去律',
+    given: ['G 是群', 'a·b = a·c'],
+    toProve: 'b = c',
+    expectedSteps: [
+      'a⁻¹·(a·b) = a⁻¹·(a·c)（两边左乘 a 的逆元）',
+      '(a⁻¹·a)·b = (a⁻¹·a)·c（结合律）',
+      'e·b = e·c（逆元定义）',
+      'b = c（单位元定义）',
+    ],
+    socraticHints: ['两边同时左乘 a 的逆元。'],
+  },
+  trivial_subgroup: {
+    description: '{e} 是子群',
+    given: ['G 是群', 'e 是单位元'],
+    toProve: '{e} 是 G 的子群',
+    expectedSteps: [
+      '封闭性：e·e = e ∈ {e}',
+      '单位元：e ∈ {e}',
+      '逆元：e 的逆元是 e ∈ {e}',
+    ],
+    socraticHints: ['逐条验证子群判定条件。'],
+  },
+  abelian_subgroup_of_squares: {
+    description: '交换群中平方元素构成子群',
+    given: ['G 是交换群', 'H = {g² : g ∈ G}'],
+    toProve: 'H 是 G 的子群',
+    expectedSteps: [
+      '封闭性：(a²)·(b²) = (a·b)² ∈ H（交换律）',
+      '单位元：e² = e ∈ H',
+      '逆元：(a²)⁻¹ = (a⁻¹)² ∈ H',
+    ],
+    socraticHints: ['利用交换律证明封闭性。'],
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Orchestrator
+// ---------------------------------------------------------------------------
+
+export class Orchestrator {
+  /** The central orchestrator implementing four-field coupling. */
+
+  curriculumLevel: string
+  dag: ConceptDAG
+  forge: CounterExampleForge
+  llmClient: LLMClient | null
+  state: FourFieldState
+  profile: StudentProfile | null
+  phase: SessionPhase
+  messageHistory: AgentMessage[]
+  topology: SimpleTopology
+  knowledgeBase: KnowledgeBase
+  paramLearner: ParameterLearner
+  grillSession: SimpleGrillSession | null
+  agents: Record<string, BaseAgent>
+  private sessionStart: Date | null = null
+
+  constructor(
+    opts: {
+      dag?: ConceptDAG
+      forge?: CounterExampleForge
+      llmClient?: LLMClient | null
+      curriculumLevel?: string
+      dbPath?: string
+    } = {},
+  ) {
+    this.curriculumLevel = opts.curriculumLevel ?? 'group_theory'
+    this.dag = opts.dag ?? getDag(this.curriculumLevel)
+    this.llmClient = opts.llmClient ?? null
+    this.forge = opts.forge ?? new CounterExampleForge(opts.llmClient ?? undefined)
+    this.state = defaultFourFieldState()
+    this.profile = null
+    this.phase = SessionPhase.IDLE
+    this.messageHistory = []
+    this.topology = new SimpleTopology()
+    this.knowledgeBase = buildDefaultKB()
+    this.paramLearner = new ParameterLearner()
+    this.grillSession = null
+
+    // Initialize independent agents (1.1: each agent is self-contained)
+    const llm = this.llmClient
+    this.agents = {
+      perception: new PerceptionAgent(llm),
+      abstraction: new AbstractionAgent(llm),
+      counter_example: new CounterExampleAgent(this.forge, llm),
+      epistemic: new EpistemicAgent(llm),
+      historical: new HistoricalAgent(llm, this.knowledgeBase),
+      collaboration: new CollaborationAgent(llm),
+      meta: new MetaEvolutionAgent(llm, this.paramLearner),
+    }
+  }
+
+  // -- Session Management --
+
+  startSession(
+    studentId: string,
+    studentName = '',
+    targetNodeId?: string,
+    curriculumLevel?: string,
+  ): Record<string, unknown> {
+    if (curriculumLevel && curriculumLevel !== this.curriculumLevel) {
+      this.switchCurriculum(curriculumLevel)
+    }
+
+    this.profile = defaultStudentProfile(studentId)
+    this.profile.name = studentName
+    this.state = defaultFourFieldState()
+    this.phase = SessionPhase.PERCEIVE
+    this.messageHistory = []
+    this.grillSession = null
+    this.sessionStart = new Date()
+
+    // Set initial knowledge field
+    if (targetNodeId) {
+      const node = this.dag.getNode(targetNodeId)
+      if (node) {
+        this.state.knowledge.current_node_id = targetNodeId
+        this.state.knowledge.mastery_estimate = getMastery(this.profile, targetNodeId)
+        const gaps = this.dag.checkPrerequisites(targetNodeId, this.profile.dag_mastery)
+        this.state.knowledge.prerequisite_gaps = gaps
+
+        return {
+          session_id: `sess_${studentId}_${Math.floor(this.sessionStart.getTime() / 1000)}`,
+          student_id: studentId,
+          target_node: targetNodeId,
+          node_name: node.name,
+          node_description: node.description,
+          prerequisite_gaps: gaps,
+          learning_path: this.dag.getLearningPath(targetNodeId, this.profile.dag_mastery),
+          phase: this.phase,
+        }
+      }
+    }
+
+    return {
+      session_id: `sess_${studentId}_${Math.floor(this.sessionStart.getTime() / 1000)}`,
+      student_id: studentId,
+      phase: this.phase,
+    }
+  }
+
+  getStateSnapshot(): Record<string, unknown> {
+    return {
+      phase: this.phase,
+      four_fields: snapshotFourField(this.state),
+      current_node: this.state.knowledge.current_node_id,
+      in_zpd: isKnowledgeInZPD(this.state.knowledge),
+      cognitive_overloaded: isCognitiveOverloaded(this.state.cognitive),
+      emotional_state: this.state.emotional.state,
+      in_flow: isEmotionalInFlow(this.state.emotional),
+      should_fade_scaffold: shouldFadeScaffold(this.state.interaction),
+    }
+  }
+
+  switchCurriculum(level: string): void {
+    this.curriculumLevel = level
+    // Reset grill session — it was tied to the old DAG
+    this.grillSession = null
+    const allNodes = this.dag.getAllNodes()
+    if (allNodes.length > 0) {
+      const first = allNodes.reduce((a, b) =>
+        a.abstraction_level <= b.abstraction_level ? a : b,
+      )
+      this.state.knowledge.current_node_id = first.id
+    }
+    console.info(
+      `Switched curriculum to [${level}] (${CURRICULUM_LABELS[level] ?? level}), ` +
+        `${this.dag.getNodeCount()} concepts`,
+    )
+  }
+
+  detectCurriculumSwitch(text: string): [string, string] | null {
+    const textLower = text.toLowerCase()
+    const switchMap: Record<string, string[]> = {
+      elementary: ['小学', 'elementary', 'primary'],
+      middle_school: ['初中', 'middle school', '中学'],
+      high_school: ['高中', 'high school'],
+      group_theory: ['群论', 'group theory', '大学', '抽象代数'],
+    }
+    const switchVerbs = ['切换', '学', '想学', '换', '转到', 'switch', 'change']
+    const hasSwitchIntent = switchVerbs.some((v) => textLower.includes(v))
+
+    for (const [level, keywords] of Object.entries(switchMap)) {
+      if (keywords.some((kw) => textLower.includes(kw))) {
+        if (hasSwitchIntent || level !== this.curriculumLevel) {
+          return [level, CURRICULUM_LABELS[level] ?? level]
+        }
+      }
+    }
+    return null
+  }
+
+  getCurriculumInfo(): Record<string, unknown> {
+    return {
+      current_level: this.curriculumLevel,
+      current_label: CURRICULUM_LABELS[this.curriculumLevel] ?? this.curriculumLevel,
+      current_summary: this.dag.getCurriculumSummary(),
+    }
+  }
+
+  // -- Agent Registration --
+
+  registerAgent(role: AgentRole, _handler: unknown): void {
+    // Placeholder for custom agent handlers (kept for API compatibility)
+    console.debug(`Registered agent handler for ${role}`)
+  }
+
+  // -- Single-Writer Field Update --
+
+  /** Apply a field update atomically (single-writer pattern). */
+  private applyFieldUpdate(fieldName: string, updates: Record<string, unknown>): void {
+    const fieldMap: Record<string, Record<string, unknown>> = {
+      knowledge: this.state.knowledge as unknown as Record<string, unknown>,
+      cognitive: this.state.cognitive as unknown as Record<string, unknown>,
+      emotional: this.state.emotional as unknown as Record<string, unknown>,
+      interaction: this.state.interaction as unknown as Record<string, unknown>,
+    }
+    const model = fieldMap[fieldName]
+    if (!model) {
+      console.warn(`Rejected field update: unknown field '${fieldName}'`)
+      return
+    }
+
+    // Type/range constraints per field
+    const float01Fields: Record<string, Set<string>> = {
+      knowledge: new Set(['mastery_estimate', 'misconception_rate']),
+      cognitive: new Set(['cognitive_load']),
+      emotional: new Set(['anxiety_index', 'flow_score', 'skip_rate']),
+      interaction: new Set(['hint_dependency']),
+    }
+    const intFields: Record<string, Set<string>> = {
+      cognitive: new Set(['backtrack_count', 'trial_sequence_length']),
+      interaction: new Set(['current_hint_level', 'consecutive_correct', 'scaffold_fade_threshold']),
+    }
+    const nnFloatFields: Record<string, Set<string>> = {
+      cognitive: new Set(['response_time_ms', 'baseline_rt_ms', 'struggle_duration_s']),
+      interaction: new Set(['struggle_duration_s']),
+    }
+
+    const ok01 = float01Fields[fieldName] ?? new Set<string>()
+    const okInt = intFields[fieldName] ?? new Set<string>()
+    const okNnFloat = nnFloatFields[fieldName] ?? new Set<string>()
+
+    for (const [key, val] of Object.entries(updates)) {
+      if (!(key in model)) {
+        console.warn(`Rejected: ${fieldName}.${key} does not exist`)
+        continue
+      }
+
+      if (ok01.has(key)) {
+        if (typeof val !== 'number' || !(val >= 0.0 && val <= 1.0)) {
+          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} out of [0,1]`)
+          continue
+        }
+      }
+      if (okInt.has(key)) {
+        if (!Number.isInteger(val) || (val as number) < 0) {
+          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} not non-negative int`)
+          continue
+        }
+      }
+      if (okNnFloat.has(key)) {
+        if (typeof val !== 'number' || (val as number) < 0) {
+          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} not non-negative`)
+          continue
+        }
+      }
+
+      model[key] = val
+    }
+
+    this.state.updated_at = new Date().toISOString()
+  }
+
+  // -- Pedagogical Decision Engine --
+
+  /** Make a pedagogical decision based on four-field coupling. */
+  makeDecision(): TeachingDecision {
+    const k = this.state.knowledge
+    const c = this.state.cognitive
+    const e = this.state.emotional
+    const i = this.state.interaction
+
+    // Case 1: Student is overwhelmed — reduce load
+    if (isCognitiveOverloaded(c) && !isEmotionalInFlow(e)) {
+      return {
+        action: 'reduce_abstraction',
+        reason: `Cognitive overload detected (RT z-score=${c.rt_zscore.toFixed(2)}), reducing abstraction level`,
+        field_signals: { cognitive_load: c.cognitive_load, rt_zscore: c.rt_zscore },
+        hint_level: Math.min(i.current_hint_level + 1, 3),
+        next_phase: SessionPhase.COLLABORATE,
+      }
+    }
+
+    // Case 2: Student is anxious — provide emotional support
+    if (isEmotionalAnxious(e)) {
+      return {
+        action: 'emotional_support',
+        reason: `Anxiety index ${e.anxiety_index.toFixed(2)} exceeds threshold, providing scaffolding before proceeding`,
+        field_signals: { anxiety_index: e.anxiety_index },
+        hint_level: Math.min(i.current_hint_level + 1, 3),
+        next_phase: SessionPhase.REFLECT,
+      }
+    }
+
+    // Case 3: Student is in flow — advance
+    if (isEmotionalInFlow(e) && isKnowledgeReadyToAdvance(k)) {
+      return {
+        action: 'advance',
+        reason: 'Student is in flow and mastery exceeds ZPD upper bound, advancing',
+        field_signals: { flow_score: e.flow_score, mastery: k.mastery_estimate },
+        hint_level: 0,
+        next_phase: SessionPhase.ABSTRACT,
+      }
+    }
+
+    // Case 4: Student in ZPD — continue guided discovery
+    if (isKnowledgeInZPD(k)) {
+      return {
+        action: 'guided_discovery',
+        reason: 'Mastery is in ZPD grey area, continuing guided discovery',
+        field_signals: { mastery: k.mastery_estimate, zpd_range: [k.zpd_lower, k.zpd_upper] },
+        hint_level: shouldFadeScaffold(i)
+          ? Math.max(i.current_hint_level - 1, 0)
+          : i.current_hint_level,
+        next_phase: SessionPhase.VERIFY,
+      }
+    }
+
+    // Case 5: Student struggling — provide hint
+    if (isInteractionStruggling(i)) {
+      return {
+        action: 'provide_hint',
+        reason: `Struggle duration ${i.struggle_duration_s.toFixed(0)}s, providing hint level ${i.current_hint_level + 1}`,
+        field_signals: { struggle_duration: i.struggle_duration_s },
+        hint_level: Math.min(i.current_hint_level + 1, 3),
+        next_phase: SessionPhase.COLLABORATE,
+      }
+    }
+
+    // Default: continue current phase
+    return {
+      action: 'continue',
+      reason: 'No special condition detected, continuing current phase',
+      field_signals: {},
+      hint_level: 0,
+      next_phase: this.phase,
+    }
+  }
+
+  // -- Teaching Loop --
+
+  async processStudentInput(
+    studentInput: string,
+    inputMetadata: Record<string, unknown> | null = null,
+  ): Promise<Record<string, unknown>> {
+    const metadata = inputMetadata ?? {}
+    const rtMs = (metadata['response_time_ms'] as number) ?? 5000
+
+    // Update cognitive field from response time
+    if ('response_time_ms' in metadata) {
+      this.state.cognitive.response_time_ms = rtMs
+      this.state.cognitive.rt_zscore =
+        (rtMs - this.state.cognitive.baseline_rt_ms) /
+        Math.max(this.state.cognitive.baseline_rt_ms * 0.3, 1.0)
+    }
+
+    // --- Curriculum switch detection ---
+    const switched = this.detectCurriculumSwitch(studentInput)
+    if (switched) {
+      const [level, label] = switched
+      this.switchCurriculum(level)
+      return {
+        response:
+          `已切换到「${label}」课程体系！\n` +
+          `当前课程包含 ${this.dag.getNodeCount()} 个概念，` +
+          `涵盖 ${(this.dag.getCurriculumSummary()['domains'] as unknown[]).length} 个知识域。\n` +
+          `你可以开始学习，或说「考考我」进入提问模式。`,
+        curriculum_switched: true,
+        curriculum_level: level,
+        curriculum_label: label,
+        curriculum_summary: this.dag.getCurriculumSummary(),
+      }
+    }
+
+    // --- Grill Me mode detection ---
+    const grillTriggerKeywords = ['考考我', 'grill me', '考考看', '来考考', '审问我', '面试我']
+    const isGrillTrigger = grillTriggerKeywords.some((kw) =>
+      studentInput.toLowerCase().includes(kw),
+    )
+
+    if (isGrillTrigger && this.grillSession === null) {
+      this.grillSession = new SimpleGrillSession()
+      this.grillSession.activate()
+      console.info('Grill mode activated by student request')
+    } else if (isGrillTrigger && this.grillSession !== null) {
+      this.grillSession.reactivate()
+      console.info('Grill mode re-activated by student request')
+    }
+
+    // --- Proof mode detection ---
+    const proofTriggerKeywords = ['证明', '求证', 'prove', 'proof', '我要证', '验证以下']
+    const isProof = proofTriggerKeywords.some((kw) => studentInput.toLowerCase().includes(kw))
+    let proofResultData: Record<string, unknown> | null = null
+    if (isProof) {
+      proofResultData = this.handleProof(studentInput)
+      console.info(
+        `Proof mode: theorem=${proofResultData['theorem_name'] ?? '?'}, ` +
+          `progress=${proofResultData['progress'] ?? '?'}`,
+      )
+    }
+
+    // --- Track Cayley tables for grill session ---
+    if (this.grillSession !== null) {
+      const trimmed = studentInput.trim()
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const table = JSON.parse(trimmed)
+          if (Array.isArray(table) && table.every((r) => Array.isArray(r))) {
+            this.grillSession.recordCayleyTable()
+          }
+        } catch {
+          // not a valid table
+        }
+      }
+    }
+
+    // LLM-driven agent loop (1.2: LLM controls flow, not hardcoded pipeline)
+    const llm = this.llmClient ?? new MockLLMClient()
+
+    const priorResults: Record<string, Record<string, unknown>> = {}
+    const phaseTrace: string[] = []
+    const fullTrace: Record<string, unknown>[] = []
+    const maxIterations = this.topology.maxIterations
+    const calledAgents = new Set<string>()
+    const sessionId = this.profile ? this.profile.student_id : 'unknown'
+
+    // Pre-compute a default decision in case the loop exits early
+    let decision = this.makeDecision()
+
+    // 2.1: LLM generates task decomposition
+    const decomposition = await this.decomposeTask(llm, studentInput)
+    fullTrace.push({ phase: 'decompose', decomposition })
+
+    let lastAgent = 'orchestrator'
+    let delivered = false
+
+    for (let iteration = 0; iteration < maxIterations; iteration++) {
+      // Build agent descriptions, filtered by topology + called set
+      let agentDescriptions: Record<string, unknown> = {}
+      for (const [name, agent] of Object.entries(this.agents)) {
+        if (!calledAgents.has(name) || name === this.topology.exitAgent) {
+          agentDescriptions[name] = agent.describe()
+        }
+      }
+      // Topology filtering (permissive)
+      let topologyAllowed: Set<string>
+      if (calledAgents.size > 0) {
+        topologyAllowed = new Set(this.topology.availableFrom(lastAgent))
+      } else {
+        topologyAllowed = new Set([this.topology.entryAgent])
+      }
+      topologyAllowed.add(this.topology.exitAgent)
+      const filtered: Record<string, unknown> = {}
+      for (const [name, desc] of Object.entries(agentDescriptions)) {
+        if (topologyAllowed.has(name) || !this.topology.agents.includes(name)) {
+          filtered[name] = desc
+        }
+      }
+      agentDescriptions = filtered
+
+      const llmInput = this.buildLlmInput(studentInput, priorResults, calledAgents, agentDescriptions)
+      const llmResp = await llm.chat(this.systemPrompt(), llmInput)
+
+      // LLM decides to deliver
+      if (llmResp.next_action === 'deliver' || iteration === maxIterations - 1) {
+        const exitName = this.topology.exitAgent
+
+        // Compute pedagogical decision BEFORE collaboration
+        decision = this.makeDecision()
+
+        // --- Grill Me mode: prepare grill session data for collaboration agent ---
+        let grillData: Record<string, unknown> | null = null
+        if (this.grillSession !== null && this.grillSession.active) {
+          // Record conjecture result if this was a conjecture input
+          const ceResult = (priorResults['counter_example'] ?? {}) as Record<string, unknown>
+          const ceMeta = (ceResult['metadata'] ?? {}) as Record<string, unknown>
+          if (ceMeta['conjecture_verdict']) {
+            const resultDict = (ceMeta['conjecture_result'] as Record<string, unknown>) ?? {}
+            this.grillSession.recordConjecture(
+              (resultDict['claim'] as string) ?? studentInput,
+              ceMeta['conjecture_verdict'] as string,
+              (ceMeta['conjecture_counter_example'] as string) ?? null,
+            )
+          }
+
+          const grillQ = this.grillSession.nextQuestion()
+          grillData = {
+            active: true,
+            next_question: grillQ,
+            summary: this.grillSession.getSummary(),
+            conjecture_history: this.grillSession.getConjectureHistory(),
+          }
+          // Advance to the next question for the following turn (simplified)
+          this.grillSession.advance()
+        }
+
+        const ctx: AgentContext = {
+          student_input: studentInput,
+          four_field_state: this.state,
+          prior_results: priorResults,
+          metadata: {
+            response_time_ms: rtMs,
+            pedagogical_decision: {
+              action: decision.action,
+              reason: decision.reason,
+              hint_level: decision.hint_level,
+              field_signals: decision.field_signals,
+            },
+            grill_session: grillData,
+            proof_result: proofResultData,
+          },
+        }
+
+        console.debug(`Context message orchestrator -> ${exitName} (session ${sessionId})`)
+
+        const msg = await this.agents[exitName].run(ctx)
+        this.messageHistory.push(msg)
+        priorResults[exitName] = {
+          content: msg.content,
+          metadata: msg.metadata,
+        }
+        phaseTrace.push('collaborate')
+        fullTrace.push({
+          phase: 'collaborate',
+          agent: exitName,
+          result: { content: msg.content },
+          iteration,
+          tool_calls: msg.tool_calls.length,
+        })
+
+        delivered = true
+        break
+      }
+
+      // LLM decides which agent to call
+      let nextAgentName = llmResp.next_agent
+      if (nextAgentName && !this.topology.isActive(nextAgentName)) {
+        console.info(`Agent '${nextAgentName}' not in topology, ignoring`)
+        nextAgentName = null
+      }
+      if (!nextAgentName || !(nextAgentName in this.agents)) {
+        if (!calledAgents.has(this.topology.exitAgent)) {
+          nextAgentName = this.topology.exitAgent
+        } else {
+          break
+        }
+      }
+
+      // Topology routing validation (permissive)
+      if (this.topology.isActive(nextAgentName)) {
+        if (nextAgentName !== this.topology.exitAgent) {
+          const isEntry = calledAgents.size === 0 && nextAgentName === this.topology.entryAgent
+          if (!isEntry && !this.topology.canRoute(lastAgent, nextAgentName)) {
+            console.warn(`Topology blocked route ${lastAgent} -> ${nextAgentName}, falling back to exit`)
+            nextAgentName = this.topology.exitAgent
+          }
+        }
+      }
+
+      const agent = this.agents[nextAgentName]
+      calledAgents.add(nextAgentName)
+      lastAgent = nextAgentName
+      const phaseName = this.agentToPhase(nextAgentName)
+      this.phase = phaseName
+
+      // Build context for this agent
+      const ctx: AgentContext = {
+        student_input: studentInput,
+        four_field_state: this.state,
+        prior_results: priorResults,
+        metadata: { response_time_ms: rtMs },
+      }
+
+      // Run the agent
+      const msg = await agent.run(ctx)
+      this.messageHistory.push(msg)
+
+      // Apply field updates (single-writer: orchestrator applies, not agent)
+      for (const [fieldName, updates] of Object.entries(msg.field_updates)) {
+        this.applyFieldUpdate(fieldName, updates as Record<string, unknown>)
+      }
+
+      // Store result for next agent
+      priorResults[nextAgentName] = {
+        content: msg.content,
+        field_updates: msg.field_updates,
+        tool_calls: msg.tool_calls,
+        confidence: msg.confidence,
+        metadata: msg.metadata,
+      }
+
+      phaseTrace.push(phaseName)
+      fullTrace.push({
+        phase: phaseName,
+        agent: nextAgentName,
+        result: priorResults[nextAgentName],
+        iteration,
+        llm_decision: llmResp.next_action,
+        tool_calls: msg.tool_calls.length,
+      })
+    }
+
+    if (!delivered) {
+      // Loop ended without explicit deliver — synthesize a fallback response
+      decision = this.makeDecision()
+      const exitName = this.topology.exitAgent
+      const ctx: AgentContext = {
+        student_input: studentInput,
+        four_field_state: this.state,
+        prior_results: priorResults,
+        metadata: {
+          response_time_ms: rtMs,
+          pedagogical_decision: {
+            action: decision.action,
+            reason: decision.reason,
+            hint_level: decision.hint_level,
+            field_signals: decision.field_signals,
+          },
+          grill_session: null,
+          proof_result: proofResultData,
+        },
+      }
+      const msg = await this.agents[exitName].run(ctx)
+      this.messageHistory.push(msg)
+      priorResults[exitName] = { content: msg.content, metadata: msg.metadata }
+      phaseTrace.push('collaborate')
+    }
+
+    // Update interaction field
+    this.state.interaction.hint_dependency = Math.min(
+      this.state.interaction.hint_dependency + 0.01,
+      1.0,
+    )
+    if (this.profile) {
+      this.profile.total_interactions += 1
+    }
+
+    // Get final response
+    const finalResponse = (priorResults['collaboration'] ?? {}) as Record<string, unknown>
+    const responseContent = (finalResponse['content'] as string) ?? '未能生成回应。'
+
+    this.phase = SessionPhase.DELIVER
+
+    // S3: Run meta-evolution agent (during post-processing)
+    let metaResult: Record<string, unknown> | null = null
+    try {
+      const metaAgent = this.agents['meta']
+      if (metaAgent) {
+        const metaCtx: AgentContext = {
+          student_input: studentInput,
+          four_field_state: this.state,
+          prior_results: {},
+          metadata: {
+            feedback: { evaluated: this.messageHistory.length, action_stats: {} },
+            metrics: { success_rate: 1, avg_latency_ms: 0 },
+          },
+        }
+        const metaMsg = await metaAgent.run(metaCtx)
+        metaResult = {
+          content: metaMsg.content,
+          version: metaMsg.metadata['version'] ?? 0,
+          effectiveness: metaMsg.metadata['effectiveness'] ?? 0,
+          evolution_count: metaMsg.metadata['evolution_count'] ?? 0,
+          param_learner_state: metaMsg.metadata['param_learner_state'] ?? {},
+        }
+      }
+    } catch (e) {
+      console.warn(`MetaEvolution agent failed: ${e}`)
+    }
+
+    // DAG 自主推进: 当掌握度超过 ZPD 上界时，推荐下一概念
+    let dagAdvance: Record<string, unknown> | null = null
+    if (this.state.knowledge.mastery_estimate >= this.state.knowledge.zpd_upper) {
+      const current = this.state.knowledge.current_node_id
+      if (current) {
+        const dependents = this.dag.getDependents(current)
+        if (dependents.length > 0) {
+          const nextId = dependents[0]
+          const nextNode = this.dag.getNode(nextId)
+          if (nextNode) {
+            dagAdvance = {
+              from: current,
+              to: nextId,
+              to_name: nextNode.name,
+              to_description: nextNode.description,
+              reason:
+                `掌握度 ${(this.state.knowledge.mastery_estimate * 100).toFixed(0)}% 超过 ZPD 上界 ` +
+                `${(this.state.knowledge.zpd_upper * 100).toFixed(0)}%`,
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      response: responseContent,
+      four_fields: snapshotFourField(this.state),
+      decision,
+      phase_trace: phaseTrace,
+      full_trace: fullTrace,
+      dag_advance: dagAdvance,
+      grill_mode: this.grillSession !== null && this.grillSession.active,
+      grill_summary: this.grillSession ? this.grillSession.getSummary() : null,
+      proof_mode: proofResultData !== null,
+      proof_result: proofResultData,
+      curriculum_level: this.curriculumLevel,
+      meta: metaResult,
+      visual: this.buildVisualData(rtMs),
+    }
+  }
+
+  private buildVisualData(rtMs: number): Record<string, unknown> {
+    const speedFactor = Math.min(1.0, 5000.0 / Math.max(rtMs, 500.0))
+    return {
+      four_field_gauges: {
+        cognitive_load: Math.round(this.state.cognitive.cognitive_load * 100) / 100,
+        cognitive_state: this.state.cognitive.state,
+        anxiety_index: Math.round(this.state.emotional.anxiety_index * 100) / 100,
+        flow_score: Math.round(this.state.emotional.flow_score * 100) / 100,
+        emotional_state: this.state.emotional.state,
+        hint_dependency: Math.round(this.state.interaction.hint_dependency * 100) / 100,
+        mastery_estimate: Math.round(this.state.knowledge.mastery_estimate * 100) / 100,
+        consecutive_correct: this.state.interaction.consecutive_correct,
+        in_zpd: isKnowledgeInZPD(this.state.knowledge),
+        ready_to_advance: isKnowledgeReadyToAdvance(this.state.knowledge),
+      },
+      mastery_radar: {
+        accuracy_rate: this.state.knowledge.mastery_estimate,
+        conjecture_success_rate: 0.5,
+        hint_independence: 1.0 - this.state.interaction.hint_dependency,
+        speed_factor: speedFactor,
+        abstraction_level: Math.min(1.0, this.state.knowledge.mastery_estimate),
+      },
+    }
+  }
+
+  // -- Proof Assistant Integration (simplified) --
+
+  /** Handle a proof attempt: parse, verify (simplified), and return results. */
+  private handleProof(studentInput: string): Record<string, unknown> {
+    const theoremName = this.detectTheorem(studentInput)
+    const steps = this.parseProofSteps(studentInput)
+
+    if (theoremName && steps.length > 0) {
+      const template = PROOF_TEMPLATES[theoremName]
+      const expected = template.expectedSteps
+      const verifiedSteps = steps.map((s, idx) => ({
+        step_number: idx + 1,
+        claim: s.claim,
+        justification: s.justification,
+        is_valid: s.claim.length > 0, // simplified: non-empty claim is accepted
+        feedback: s.claim.length > 0 ? '步骤已记录。' : '步骤内容为空。',
+        matched_expected: idx < expected.length ? expected[idx] : '',
+        implicit_steps: [] as string[],
+      }))
+      const isComplete = steps.length >= expected.length
+      const missing = expected.slice(steps.length)
+      return {
+        theorem_name: theoremName,
+        is_complete: isComplete,
+        progress: `${steps.length}/${expected.length}`,
+        overall_feedback: isComplete
+          ? '证明步骤已完整记录。'
+          : `已记录 ${steps.length} 步，还需要 ${missing.length} 步。`,
+        socratic_hint: template.socraticHints[0] ?? '',
+        steps: verifiedSteps,
+        missing_steps: missing,
+        available_theorems: [],
+      }
+    }
+
+    if (theoremName && steps.length === 0) {
+      const template = PROOF_TEMPLATES[theoremName]
+      return {
+        theorem_name: theoremName,
+        is_complete: false,
+        progress: `0/${template.expectedSteps.length}`,
+        overall_feedback:
+          `你想证明「${template.description}」。\n` +
+          `已知：${template.given.join(', ')}\n` +
+          `求证：${template.toProve}\n\n` +
+          `请写出你的证明步骤，每一步包含论断和理由。`,
+        socratic_hint: template.socraticHints[0] ?? '',
+        steps: [],
+        missing_steps: template.expectedSteps,
+        available_theorems: [],
+      }
+    }
+
+    // No theorem matched — show theorems available
+    const available = Object.entries(PROOF_TEMPLATES).map(([name, t]) => ({
+      name,
+      description: t.description,
+      given: t.given,
+      to_prove: t.toProve,
+      num_expected_steps: t.expectedSteps.length,
+    }))
+    return {
+      theorem_name: null,
+      is_complete: false,
+      progress: '0/0',
+      overall_feedback: '我可以帮你验证以下定理的证明：',
+      available_theorems: available,
+      steps: [],
+      missing_steps: [],
+      socratic_hint: '选择一个定理，写出你的证明步骤。',
+    }
+  }
+
+  /** Detect which theorem the student is trying to prove. */
+  private detectTheorem(text: string): string | null {
+    const textLower = text.toLowerCase()
+    const theoremMap: Record<string, string[]> = {
+      identity_unique: ['单位元唯一', 'identity unique', 'identity is unique', '唯一单位元'],
+      inverse_unique: ['逆元唯一', 'inverse unique', '逆元唯一性', '唯一逆元'],
+      cancellation_law: ['消去律', 'cancellation', '消去'],
+      trivial_subgroup: ['平凡子群', 'trivial subgroup', '{e}是子群', '{e} 是子群'],
+      abelian_subgroup_of_squares: ['平方子群', 'squares', '{g²}', '交换群的平方'],
+    }
+    for (const [name, keywords] of Object.entries(theoremMap)) {
+      if (keywords.some((kw) => textLower.includes(kw.toLowerCase()))) {
+        return name
+      }
+    }
+    return null
+  }
+
+  /** Parse proof steps from natural language text. */
+  private parseProofSteps(text: string): Array<{ claim: string; justification: string }> {
+    const steps: Array<{ claim: string; justification: string }> = []
+
+    // Pattern 1: 第X步：claim
+    const re1 = new RegExp(
+      '第[一二三四五六七八九十\\d]+步[：:]\\s*(.*?)(?=第[一二三四五六七八九十\\d]+步[：:]|$)',
+      'gs',
+    )
+    let matches = text.match(re1)
+    if (matches) {
+      for (const m of matches) {
+        steps.push(this.splitClaimJustification(m.trim()))
+      }
+      return steps
+    }
+
+    // Pattern 2: Step N: claim
+    const re2 = new RegExp('Step\\s*\\d+[：:]\\s*(.*?)(?=Step\\s*\\d+[：:]|$)', 'gsi')
+    matches = text.match(re2)
+    if (matches) {
+      for (const m of matches) {
+        steps.push(this.splitClaimJustification(m.trim()))
+      }
+      return steps
+    }
+
+    // Pattern 3: N. claim  or  N、 claim
+    const re3 = new RegExp('(?:^|\\n)\\s*(\\d+)[.、]\\s*(.*?)(?=\\n\\s*\\d+[.、]|$)', 'gs')
+    const found3 = text.match(re3)
+    if (found3 && found3.length >= 2) {
+      for (const m of found3) {
+        // strip leading number
+        const cleaned = m.replace(/(?:^|\n)\s*\d+[.、]\s*/, '').trim()
+        if (cleaned) steps.push(this.splitClaimJustification(cleaned))
+      }
+      return steps
+    }
+
+    return steps
+  }
+
+  private splitClaimJustification(text: string): { claim: string; justification: string } {
+    const seps = ['因为', '（', '(', 'since', 'because']
+    for (const sep of seps) {
+      if (text.includes(sep)) {
+        const idx = text.indexOf(sep)
+        const claim = text.slice(0, idx).trim()
+        const just = text
+          .slice(idx + sep.length)
+          .trim()
+          .replace(/[)）]+$/, '')
+          .trim()
+        return { claim, justification: just }
+      }
+    }
+    if (text.includes('，')) {
+      const idx = text.indexOf('，')
+      return { claim: text.slice(0, idx).trim(), justification: text.slice(idx + 1).trim() }
+    }
+    return { claim: text, justification: '' }
+  }
+
+  // -- LLM Orchestration Helpers --
+
+  private async decomposeTask(
+    llm: LLMClient,
+    studentInput: string,
+  ): Promise<Record<string, unknown>> {
+    const resp = await llm.chat(
+      '一位学生刚刚写下了他的数学笔记。作为课程设计者，' +
+        '你需要判断这个问题需要从哪些角度来回应。\n' +
+        '可用的视角：\n' +
+        '  perception —— 辨认学生在做什么\n' +
+        '  abstraction —— 提炼数学结构\n' +
+        '  counter_example —— 用暴力枚举做形式化验证\n' +
+        '  epistemic —— 诊断学生的认知状态\n' +
+        '  historical —— 连接数学史\n' +
+        '  collaboration —— 综合苏格拉底式回应\n\n' +
+        '并非每个问题都需要全部视角。想想：这个学生此刻最需要什么？\n' +
+        '用 [CALL:视角名] 标注每个需要的步骤，以 [DELIVER] 结束。',
+      `学生写下了：${studentInput}\n\n这个回答需要哪些视角？`,
+    )
+
+    const calls = Array.from(resp.content.matchAll(/\[CALL:(\w+)\]/g)).map((m) => m[1])
+    let finalCalls = calls
+    if (finalCalls.length === 0) {
+      // Fallback: infer from input type
+      if (studentInput.includes('[[')) {
+        finalCalls = ['perception', 'abstraction', 'counter_example', 'epistemic']
+      } else if (studentInput.includes('历史')) {
+        finalCalls = ['perception', 'historical']
+      } else {
+        finalCalls = ['perception', 'abstraction', 'epistemic']
+      }
+    }
+
+    return {
+      student_input: studentInput,
+      steps: finalCalls.map((name) => ({
+        agent: name,
+        reason: `LLM decided: needed for ${name}`,
+        optional: name === 'historical',
+      })),
+    }
+  }
+
+  private systemPrompt(): string {
+    const agentLines: Record<string, string> = {
+      perception: '辨认学生在做什么',
+      abstraction: '提炼数学结构',
+      counter_example: '用暴力枚举做形式化验证',
+      epistemic: '感知学生的认知状态',
+      historical: '连接数学史脉络',
+      collaboration: '综合苏格拉底式回应',
+    }
+    const active = this.topology.agents
+      .filter((name) => name in this.agents)
+      .map((name) => `- ${name}: ${agentLines[name] ?? '未知'}`)
+      .join('\n')
+    return (
+      '你是一位指挥，面前有几位各有所长的乐手。\n' +
+      '学生抛出了一个数学问题，你需要决定让谁先回应。\n\n' +
+      `在场的乐手：\n${active}\n\n` +
+      '听完一位乐手的演奏后，判断是否需要其他视角补充，还是已经可以交付回应。\n' +
+      '用 [CALL:agent_name] 召唤下一位，用 [DELIVER] 表示可以交付。'
+    )
+  }
+
+  /**
+   * Build the input message for the LLM to decide next action.
+   * NOTE: uses "学生输入:" and "已执行:" labels so the MockLLMClient can parse
+   * the student input and the set of already-called agents.
+   */
+  private buildLlmInput(
+    studentInput: string,
+    priorResults: Record<string, Record<string, unknown>>,
+    calledAgents: Set<string>,
+    availableAgents: Record<string, unknown>,
+  ): string {
+    const parts: string[] = []
+    parts.push(`学生输入: ${studentInput.slice(0, 500)}`)
+    const calledStr = [...calledAgents].sort().join(',') || '无'
+    parts.push(`已执行: ${calledStr}`)
+
+    for (const [name, result] of Object.entries(priorResults)) {
+      const content = ((result['content'] as string) ?? '').slice(0, 200)
+      parts.push(`[${name}]: ${content}`)
+    }
+
+    parts.push(`可以召唤: ${Object.keys(availableAgents).join(', ')}`)
+    parts.push('下一位该是谁？')
+    return parts.join('\n')
+  }
+
+  private agentToPhase(agentName: string): SessionPhase {
+    const mapping: Record<string, SessionPhase> = {
+      perception: SessionPhase.PERCEIVE,
+      abstraction: SessionPhase.ABSTRACT,
+      counter_example: SessionPhase.VERIFY,
+      epistemic: SessionPhase.DIAGNOSE,
+      historical: SessionPhase.REFLECT,
+      collaboration: SessionPhase.COLLABORATE,
+      meta: SessionPhase.REFLECT,
+    }
+    return mapping[agentName] ?? SessionPhase.IDLE
+  }
+
+  // -- Metrics --
+
+  /** Return session metrics for observability. */
+  getMetrics(): Record<string, unknown> {
+    const agentCallCounts: Record<string, number> = {}
+    for (const msg of this.messageHistory) {
+      const role = msg.role as string
+      agentCallCounts[role] = (agentCallCounts[role] ?? 0) + 1
+    }
+
+    const sessionDurationMs = this.sessionStart
+      ? Date.now() - this.sessionStart.getTime()
+      : 0
+
+    return {
+      session_start: this.sessionStart?.toISOString() ?? null,
+      session_duration_ms: sessionDurationMs,
+      total_messages: this.messageHistory.length,
+      agent_call_counts: agentCallCounts,
+      current_phase: this.phase,
+      curriculum_level: this.curriculumLevel,
+      dag_node_count: this.dag.getNodeCount(),
+      profile: this.profile
+        ? {
+            student_id: this.profile.student_id,
+            total_interactions: this.profile.total_interactions,
+            total_sessions: this.profile.total_sessions,
+            mastered_concepts: Object.keys(this.profile.dag_mastery).length,
+          }
+        : null,
+      four_fields: snapshotFourField(this.state),
+      grill_active: this.grillSession !== null && this.grillSession.active,
+      llm_configured: this.llmClient !== null,
+    }
+  }
+
+  // -- Theorem Listing --
+
+  /** List available proof theorems for a given curriculum level. */
+  getTheorems(level?: string): Record<string, unknown> {
+    const _level = level ?? this.curriculumLevel
+
+    const theorems = Object.entries(PROOF_TEMPLATES).map(([id, template]) => ({
+      id,
+      name: template.description,
+      statement: template.toProve,
+      given: template.given,
+      expected_step_count: template.expectedSteps.length,
+      level: _level,
+    }))
+
+    return {
+      level: _level,
+      theorems,
+      count: theorems.length,
+    }
+  }
+
+  // -- Proof Submission --
+
+  /** Submit and verify a student's proof for a given theorem. */
+  submitProof(
+    theoremId: string,
+    studentSteps: string[],
+    curriculumLevel?: string,
+  ): Record<string, unknown> {
+    const _level = curriculumLevel ?? this.curriculumLevel
+    const template = PROOF_TEMPLATES[theoremId]
+
+    if (!template) {
+      return {
+        theorem_id: theoremId,
+        is_valid: false,
+        headline: `未找到定理「${theoremId}」`,
+        detail: '请从可用定理列表中选择。',
+        available_theorems: Object.keys(PROOF_TEMPLATES),
+      }
+    }
+
+    const expectedSteps = template.expectedSteps
+    const verifiedSteps = studentSteps.map((step, idx) => {
+      const expected = idx < expectedSteps.length ? expectedSteps[idx] : ''
+      const isValid = step.trim().length > 0
+      return {
+        step_number: idx + 1,
+        student_step: step,
+        expected_step: expected,
+        is_valid: isValid,
+        feedback: isValid
+          ? '步骤已记录。'
+          : '步骤内容为空，请补充。',
+        matched_expected:
+          idx < expectedSteps.length && step.includes(expected.slice(0, 10)),
+      }
+    })
+
+    const completedSteps = verifiedSteps.filter((s) => s.is_valid).length
+    const isComplete = completedSteps >= expectedSteps.length
+    const missingSteps = expectedSteps.slice(studentSteps.length)
+
+    return {
+      theorem_id: theoremId,
+      theorem_name: template.description,
+      level: _level,
+      is_complete: isComplete,
+      is_valid: true,
+      progress: `${completedSteps}/${expectedSteps.length}`,
+      headline: isComplete
+        ? '证明步骤完整！'
+        : `已记录 ${completedSteps} 步，还需要 ${missingSteps.length} 步。`,
+      given: template.given,
+      to_prove: template.toProve,
+      steps: verifiedSteps,
+      missing_steps: missingSteps,
+      socratic_hint: template.socraticHints[0] ?? '',
+      overall_feedback: isComplete
+        ? '你的证明已经完整。试着回顾每一步的依据，确保逻辑链条严密。'
+        : '继续补充剩余步骤。每一步都应有明确的论断和理由。',
+    }
+  }
+}

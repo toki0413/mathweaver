@@ -1,0 +1,557 @@
+[
+  {
+    "id": "divisibility",
+    "name": "整除性",
+    "description": "整数整除的定义、带余除法及其基本性质",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "divisibility",
+    "difficulty": 0.2,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解整除的定义：a | b 当且仅当存在整数 k 使 b = ak",
+      "掌握整除的传递性与线性组合性质",
+      "理解带余除法 a = bq + r（0 ≤ r < |b|）及其唯一性"
+    ],
+    "examples": [
+      "3 | 12，因为 12 = 3 × 4",
+      "7 ∤ 10，因为 10 = 7 × 1 + 3 余数非零",
+      "若 a | b 且 a | c，则 a | (bx + cy) 对任意整数 x, y 成立"
+    ],
+    "assessment_criteria": [
+      "能判断一个整数是否整除另一个整数",
+      "能正确执行带余除法并写出商与余数",
+      "能用整除性质证明简单的整除关系"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "整除概念可追溯到古希腊毕达哥拉斯学派的数论研究，欧几里得《几何原本》第七卷系统记载了带余除法。",
+    "related_theorems": [
+      "带余除法定理",
+      "整除的线性组合性质"
+    ],
+    "common_misconceptions": [
+      "认为 a | b 蕴含 a ≤ b（忽略负数与 ±1 的情形）",
+      "混淆“a 整除 b”与“b 整除 a”"
+    ]
+  },
+  {
+    "id": "prime_numbers",
+    "name": "素数",
+    "description": "大于 1 且恰有两个正因数的整数，素数的性质与分布",
+    "prerequisites": [
+      "divisibility"
+    ],
+    "abstraction_level": 0,
+    "domain": "divisibility",
+    "difficulty": 0.25,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解素数的定义及合数的概念",
+      "掌握素数有无穷多的证明（反证法）",
+      "理解每个大于 1 的整数至少有一个素因数"
+    ],
+    "examples": [
+      "前几个素数：2, 3, 5, 7, 11, 13, ...",
+      "2 是唯一的偶素数",
+      "埃拉托色尼筛法求 100 以内的素数"
+    ],
+    "assessment_criteria": [
+      "能判断给定正整数是否为素数",
+      "能用筛法列出指定范围内的素数",
+      "能复述素数无穷多的证明"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "素数研究始于古希腊，欧几里得在《几何原本》中证明了素数无穷多。埃拉托色尼（公元前 3 世纪）发明了筛法。",
+    "related_theorems": [
+      "素数无穷定理（Euclid）",
+      "算术基本定理（存在性部分）"
+    ],
+    "common_misconceptions": [
+      "认为 1 是素数",
+      "认为所有素数都是奇数（忽略 2）"
+    ]
+  },
+  {
+    "id": "prime_factorization",
+    "name": "素因数分解",
+    "description": "算术基本定理：每个大于 1 的整数可唯一分解为素数之积",
+    "prerequisites": [
+      "prime_numbers"
+    ],
+    "abstraction_level": 1,
+    "domain": "divisibility",
+    "difficulty": 0.35,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握算术基本定理的陈述（存在性与唯一性）",
+      "能对给定整数进行素因数分解",
+      "理解唯一性中“不计顺序”的含义及其证明思路"
+    ],
+    "examples": [
+      "60 = 2² × 3 × 5",
+      "84 = 2² × 3 × 7",
+      "1024 = 2¹⁰"
+    ],
+    "assessment_criteria": [
+      "能将整数分解为标准素因数幂形式",
+      "能利用分解式求因数个数与因数之和",
+      "能说明唯一性证明的关键（Euclid 引理）"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "算术基本定理由 Gauss 在《算术研究》（1801）中首次严格证明，但其本质早已被 Euclid 所认识。",
+    "related_theorems": [
+      "算术基本定理",
+      "Euclid 引理"
+    ],
+    "common_misconceptions": [
+      "忽略负整数与 0、1 的特殊情况",
+      "认为分解中各素因数的指数可以任意交换而不影响唯一性表述"
+    ]
+  },
+  {
+    "id": "gcd_lcm",
+    "name": "最大公约数与最小公倍数",
+    "description": "最大公约数与最小公倍数的定义、性质及与素因数分解的关系",
+    "prerequisites": [
+      "divisibility"
+    ],
+    "abstraction_level": 1,
+    "domain": "divisibility",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解最大公约数 gcd(a, b) 与最小公倍数 lcm(a, b) 的定义",
+      "掌握 gcd 与 lcm 通过素因数分解的计算方法",
+      "理解 gcd(a, b) × lcm(a, b) = |ab| 这一恒等关系"
+    ],
+    "examples": [
+      "gcd(12, 18) = 6，lcm(12, 18) = 36",
+      "gcd(84, 60) = 12",
+      "互素的定义：gcd(a, b) = 1"
+    ],
+    "assessment_criteria": [
+      "能用素因数分解计算 gcd 与 lcm",
+      "能判断两个数是否互素",
+      "能验证 gcd × lcm 恒等式"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "最大公约数概念自古希腊即被使用，Euclid《几何原本》中已有系统的处理。",
+    "related_theorems": [
+      "Bézout 恒等式",
+      "gcd 与 lcm 关系定理"
+    ],
+    "common_misconceptions": [
+      "认为 gcd 总是小于两个数本身",
+      "混淆“互素”与“都为素数”"
+    ]
+  },
+  {
+    "id": "euclidean_algorithm",
+    "name": "辗转相除法",
+    "description": "基于带余除法递归求最大公约数的算法及 Bézout 恒等式",
+    "prerequisites": [
+      "gcd_lcm"
+    ],
+    "abstraction_level": 1,
+    "domain": "divisibility",
+    "difficulty": 0.45,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握辗转相除法求 gcd 的递归步骤",
+      "理解 Bézout 恒等式 gcd(a, b) = ax + by 的存在性",
+      "能用扩展辗转相除法求 Bézout 系数 x, y"
+    ],
+    "examples": [
+      "gcd(48, 18): 48 = 18×2 + 12, 18 = 12×1 + 6, 12 = 6×2 + 0 → gcd = 6",
+      "Bézout: gcd(48, 18) = 6 = 48×(−1) + 18×3",
+      "求 35 关于模 12 的逆元"
+    ],
+    "assessment_criteria": [
+      "能用辗转相除法计算 gcd",
+      "能用扩展算法求 Bézout 系数",
+      "能说明算法终止的原因"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "辗转相除法由 Euclid《几何原本》（约公元前 300 年）记载，是人类最古老的算法之一。Bézout 恒等式由法国数学家 Bézout 在 18 世纪系统化。",
+    "related_theorems": [
+      "Bézout 恒等式",
+      "Euclid 算法终止定理"
+    ],
+    "common_misconceptions": [
+      "认为辗转相除法只适用于正整数",
+      "混淆辗转相除法的余数序列与素因数分解"
+    ]
+  },
+  {
+    "id": "modular_arithmetic",
+    "name": "模运算",
+    "description": "取模运算的定义、剩余类的概念及基本运算性质",
+    "prerequisites": [
+      "divisibility"
+    ],
+    "abstraction_level": 1,
+    "domain": "modular",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解 a mod n 的定义及取模运算",
+      "掌握模运算下加法、减法、乘法的保持性",
+      "理解剩余类 Z/nZ 的概念与代表元"
+    ],
+    "examples": [
+      "7 mod 3 = 1",
+      "(a + b) mod n = ((a mod n) + (b mod n)) mod n",
+      "时钟算术：模 12 的运算"
+    ],
+    "assessment_criteria": [
+      "能正确计算模运算表达式",
+      "能在模 n 下执行加减乘运算",
+      "能识别剩余类的代表元"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "模运算的系统化由 Gauss 在《算术研究》（1801）中完成，时钟算术的思想则更古老。",
+    "related_theorems": [
+      "模运算基本性质",
+      "剩余类划分定理"
+    ],
+    "common_misconceptions": [
+      "认为模运算结果可以是负数",
+      "在模运算中错误地进行除法而不考虑可逆性"
+    ]
+  },
+  {
+    "id": "congruence",
+    "name": "同余",
+    "description": "同余关系 a ≡ b (mod n) 的定义、等价类与基本性质",
+    "prerequisites": [
+      "modular_arithmetic"
+    ],
+    "abstraction_level": 2,
+    "domain": "modular",
+    "difficulty": 0.45,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解同余 a ≡ b (mod n) 当且仅当 n | (a − b)",
+      "掌握同余的等价关系性质（自反、对称、传递）",
+      "掌握同余式加减乘运算的保持与同除的限制"
+    ],
+    "examples": [
+      "17 ≡ 5 (mod 4)，因为 4 | (17 − 5)",
+      "若 a ≡ b (mod n) 且 c ≡ d (mod n)，则 ac ≡ bd (mod n)",
+      "约去公因数：ca ≡ cb (mod n) 等价于 a ≡ b (mod n/gcd(c,n))"
+    ],
+    "assessment_criteria": [
+      "能判断两个整数是否同余",
+      "能正确进行同余式的运算",
+      "能理解同余类即等价类这一抽象"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "同余记号 a ≡ b (mod n) 由 Gauss 在 1801 年的《算术研究》中首次引入，是现代数论的基础语言。",
+    "related_theorems": [
+      "同余基本定理",
+      "同余类的等价关系定理"
+    ],
+    "common_misconceptions": [
+      "在同余式两边约去公因数时忘记除以模数",
+      "认为同余式两边可以直接做除法"
+    ]
+  },
+  {
+    "id": "linear_congruence",
+    "name": "线性同余方程",
+    "description": "形如 ax ≡ b (mod n) 的方程的求解与可解条件",
+    "prerequisites": [
+      "congruence"
+    ],
+    "abstraction_level": 2,
+    "domain": "modular",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解线性同余方程 ax ≡ b (mod n) 的可解条件 gcd(a, n) | b",
+      "掌握求解线性同余方程的一般方法（辗转相除法求逆）",
+      "理解解的个数等于 gcd(a, n) 的含义"
+    ],
+    "examples": [
+      "3x ≡ 1 (mod 7) 的解为 x ≡ 5 (mod 7)",
+      "4x ≡ 2 (mod 6) 有两个解：x ≡ 2, 5 (mod 6)",
+      "2x ≡ 3 (mod 4) 无解，因为 gcd(2,4)=2 不整除 3"
+    ],
+    "assessment_criteria": [
+      "能判断线性同余方程是否有解",
+      "能求出全部解",
+      "能计算模 n 下乘法逆元存在的充要条件"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "线性同余方程的求解在古代中国与印度数学中已有研究，是其算术传统的重要组成部分。",
+    "related_theorems": [
+      "线性同余可解性定理",
+      "乘法逆元存在定理"
+    ],
+    "common_misconceptions": [
+      "认为所有线性同余方程都有唯一解",
+      "忽略 gcd(a, n) > 1 时解的模数变化"
+    ]
+  },
+  {
+    "id": "chinese_remainder_theorem",
+    "name": "中国剩余定理",
+    "description": "两两互素模数下线性同余方程组的解的存在唯一性",
+    "prerequisites": [
+      "linear_congruence"
+    ],
+    "abstraction_level": 3,
+    "domain": "modular",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握中国剩余定理的陈述与构造性证明",
+      "能求解模数两两互素的线性同余方程组",
+      "理解定理在同构 Z/(mn)Z ≅ Z/mZ × Z/nZ 下的代数意义"
+    ],
+    "examples": [
+      "“物不知数”：x ≡ 2 (mod 3), x ≡ 3 (mod 5), x ≡ 2 (mod 7) → x ≡ 23 (mod 105)",
+      "将模 15 的运算分解为模 3 与模 5 的运算",
+      "RSA 解密中利用 CRT 加速"
+    ],
+    "assessment_criteria": [
+      "能用构造法求解同余方程组",
+      "能说明互素条件的必要性",
+      "能将大模数问题分解为小模数问题"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "中国剩余定理最早见于《孙子算经》（约公元 4-5 世纪）的“物不知数”问题，秦九韶在《数书九章》（1247）给出一般算法。西方由 Gauss 重新发现。",
+    "related_theorems": [
+      "中国剩余定理",
+      "环同构定理 Z/(mn)Z ≅ Z/mZ × Z/nZ"
+    ],
+    "common_misconceptions": [
+      "忽略模数必须两两互素的条件",
+      "混淆解的模数与原模数"
+    ]
+  },
+  {
+    "id": "fermat_little_theorem",
+    "name": "费马小定理",
+    "description": "若 p 为素数且 p ∤ a，则 a^(p−1) ≡ 1 (mod p)",
+    "prerequisites": [
+      "congruence",
+      "prime_numbers"
+    ],
+    "abstraction_level": 3,
+    "domain": "modular",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握费马小定理的陈述及等价形式 a^p ≡ a (mod p)",
+      "理解基于置换或归纳的证明思路",
+      "能应用定理简化大指数的模运算"
+    ],
+    "examples": [
+      "2^10 = 1024 ≡ 1 (mod 11)",
+      "求 3^100 mod 7：因 3^6 ≡ 1 (mod 7)，故 3^100 = 3^(6×16+4) ≡ 3^4 ≡ 4 (mod 7)",
+      "费马素性检验的基本原理"
+    ],
+    "assessment_criteria": [
+      "能用费马小定理简化模幂运算",
+      "能区分费马小定理与费马大定理",
+      "能说明定理对素性检验的启发意义"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "费马小定理由 Pierre de Fermat 在 1640 年提出，Euler 于 1736 年给出严格证明。它是现代公钥密码学的基石之一。",
+    "related_theorems": [
+      "费马小定理",
+      "Euler 定理（推广）"
+    ],
+    "common_misconceptions": [
+      "混淆费马小定理与费马大定理",
+      "在 p | a 时仍套用 a^(p−1) ≡ 1 (mod p)"
+    ]
+  },
+  {
+    "id": "euler_phi_function",
+    "name": "欧拉函数",
+    "description": "欧拉 φ 函数 φ(n) 的定义、计算公式与积性性质",
+    "prerequisites": [
+      "fermat_little_theorem"
+    ],
+    "abstraction_level": 3,
+    "domain": "modular",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解 φ(n) 为不超过 n 且与 n 互素的正整数个数",
+      "掌握 φ(n) 的计算公式（素因数分解形式）",
+      "理解 φ 函数的积性：gcd(m,n)=1 时 φ(mn)=φ(m)φ(n)"
+    ],
+    "examples": [
+      "φ(7) = 6（素数 p 的 φ(p) = p − 1）",
+      "φ(12) = 4（与 12 互素的数：1, 5, 7, 11）",
+      "φ(n) = n × ∏(1 − 1/p)（p 遍历 n 的素因数）"
+    ],
+    "assessment_criteria": [
+      "能计算给定 n 的 φ(n)",
+      "能证明 φ 函数的积性",
+      "能验证费马小定理是 Euler 定理的特例"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "欧拉函数由 Leonhard Euler 引入，与他对费马小定理的推广密切相关。",
+    "related_theorems": [
+      "欧拉函数公式",
+      "积性函数定理"
+    ],
+    "common_misconceptions": [
+      "认为 φ(n) = n − 1 对所有 n 成立",
+      "混淆积性与完全积性"
+    ]
+  },
+  {
+    "id": "euler_theorem",
+    "name": "欧拉定理",
+    "description": "若 gcd(a, n) = 1，则 a^φ(n) ≡ 1 (mod n)",
+    "prerequisites": [
+      "euler_phi_function"
+    ],
+    "abstraction_level": 3,
+    "domain": "modular",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握 Euler 定理的陈述及与费马小定理的关系",
+      "理解基于缩系置换的证明思路",
+      "能应用定理简化模幂运算并求乘法逆元"
+    ],
+    "examples": [
+      "a^100 mod 21：φ(21) = 12，gcd(a,21)=1 时 a^100 = a^(12×8+4) ≡ a^4 (mod 21)",
+      "求 a 在模 n 下的逆：a^(φ(n)−1) ≡ a⁻¹ (mod n)",
+      "费马小定理是 n 为素数时的特例"
+    ],
+    "assessment_criteria": [
+      "能用 Euler 定理简化模幂运算",
+      "能说明 gcd(a,n)=1 条件的必要性",
+      "能证明费马小定理是 Euler 定理的推论"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "欧拉定理由 Euler 在 1763 年提出，推广了费马小定理，是数论的核心定理之一。",
+    "related_theorems": [
+      "Euler 定理",
+      "费马小定理",
+      "Lagrange 定理（群论视角）"
+    ],
+    "common_misconceptions": [
+      "在 gcd(a, n) ≠ 1 时套用 Euler 定理",
+      "混淆 φ(n) 与 n − 1"
+    ]
+  },
+  {
+    "id": "primitive_root",
+    "name": "原根",
+    "description": "模 n 的原根的定义、存在条件与阶的概念",
+    "prerequisites": [
+      "euler_theorem"
+    ],
+    "abstraction_level": 4,
+    "domain": "modular",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解元素的阶 ord_n(a) 与原根的定义",
+      "掌握原根存在定理：n 有原根当且仅当 n ∈ {1,2,4,p^k,2p^k}",
+      "理解原根个数为 φ(φ(n))（当存在时）"
+    ],
+    "examples": [
+      "3 是模 7 的原根：3^1,3^2,...,3^6 模 7 遍历 3,2,6,4,5,1",
+      "模 8 无原根（因为 8 ∉ 上述集合）",
+      "模素数 p 的原根存在且恰有 φ(p−1) 个"
+    ],
+    "assessment_criteria": [
+      "能判断给定元素是否为原根",
+      "能判断模数 n 是否存在原根",
+      "能计算原根的个数"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "原根概念由 Gauss 在《算术研究》中深入研究，与离散对数问题密切相关。",
+    "related_theorems": [
+      "原根存在定理",
+      "元素阶定理"
+    ],
+    "common_misconceptions": [
+      "认为所有模数都有原根",
+      "混淆元素的阶与 φ(n)"
+    ]
+  },
+  {
+    "id": "quadratic_residue",
+    "name": "二次剩余",
+    "description": "模 p 的二次剩余、Legendre 符号与二次互反律",
+    "prerequisites": [
+      "congruence"
+    ],
+    "abstraction_level": 4,
+    "domain": "modular",
+    "difficulty": 0.75,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解二次剩余与二次非剩余的定义",
+      "掌握 Legendre 符号的定义与 Euler 判别法",
+      "了解二次互反律的陈述及其深刻意义"
+    ],
+    "examples": [
+      "模 7 的二次剩余：1²≡1, 2²≡4, 3²≡2 → {1, 2, 4}",
+      "Euler 判别法：(a/p) ≡ a^((p−1)/2) (mod p)",
+      "二次互反律：(p/q)(q/p) = (−1)^((p−1)(q−1)/4)"
+    ],
+    "assessment_criteria": [
+      "能判断模素数下的二次剩余",
+      "能计算 Legendre 符号",
+      "能说明二次互反律的作用"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "二次剩余由 Euler 与 Legendre 系统研究，二次互反律由 Gauss 在 1796 年（19 岁）首次证明，Gauss 称其为“黄金定理”。",
+    "related_theorems": [
+      "二次互反律",
+      "Euler 判别法"
+    ],
+    "common_misconceptions": [
+      "认为所有非零元素都是二次剩余",
+      "混淆二次剩余与完全平方数"
+    ]
+  },
+  {
+    "id": "rsa_cryptosystem",
+    "name": "RSA密码系统",
+    "description": "基于大数分解困难性与 Euler 定理的公钥密码体制",
+    "prerequisites": [
+      "euler_theorem"
+    ],
+    "abstraction_level": 4,
+    "domain": "application",
+    "difficulty": 0.7,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解 RSA 的密钥生成、加密与解密流程",
+      "掌握解密正确性基于 Euler 定理的证明",
+      "理解 RSA 安全性依赖大整数分解的困难性"
+    ],
+    "examples": [
+      "密钥生成：选 p=3, q=11，n=33，φ(n)=20，选 e=3，求 d=7（因 3×7≡1 mod 20）",
+      "加密 m=2：c = 2^3 mod 33 = 8",
+      "解密 c=8：m = 8^7 mod 33 = 2"
+    ],
+    "assessment_criteria": [
+      "能完成小规模 RSA 的完整流程",
+      "能证明解密还原明文的正确性",
+      "能说明大数分解困难性对安全性的意义"
+    ],
+    "estimated_minutes": 75,
+    "historical_context": "RSA 由 Ron Rivest、Adi Shamir、Leonard Adleman 于 1977 年提出，是首个可实用的公钥密码方案，奠定了现代互联网安全的基础。",
+    "related_theorems": [
+      "Euler 定理",
+      "算术基本定理"
+    ],
+    "common_misconceptions": [
+      "认为 RSA 加密是对称的（混淆公钥与私钥）",
+      "认为安全性依赖于 φ(n) 的保密而非大数分解的困难性"
+    ]
+  }
+]

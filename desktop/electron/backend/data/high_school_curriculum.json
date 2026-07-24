@@ -1,0 +1,1424 @@
+[
+  {
+    "id": "set_theory",
+    "name": "集合",
+    "description": "集合的概念、表示方法（列举法、描述法、Venn图）与集合间的基本关系（包含、相等）。",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "foundations",
+    "difficulty": 0.3,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解集合的定义，能区分元素与集合的属于关系",
+      "掌握集合的三种表示方法：列举法、描述法和 Venn 图法",
+      "理解子集、真子集和集合相等的定义并能进行判定",
+      "能求给定集合的子集个数和幂集"
+    ],
+    "examples": [
+      "自然数集 N = {0, 1, 2, 3, ...}",
+      "方程 x^2 - 5x + 6 = 0 的解集 {2, 3}",
+      "用描述法表示偶数集 {x ∈ Z | x = 2k, k ∈ Z}",
+      "集合 A = {1, 2} 的子集有 {}, {1}, {2}, {1,2} 共 4 个"
+    ],
+    "assessment_criteria": [
+      "能正确用列举法或描述法表示给定集合",
+      "能判断两集合间的包含或相等关系",
+      "能计算有限集合的子集个数（2^n 规律）"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "德国数学家康托尔（Georg Cantor）在 1874 年发表开创性论文，创立了集合论，被誉为现代数学的基础语言。他证明实数集不可数，震惊了数学界。",
+    "related_theorems": [
+      "Cantor 定理（幂集的基数严格大于原集合）",
+      "子集个数定理（n 元素集合有 2^n 个子集）"
+    ],
+    "common_misconceptions": [
+      "混淆属于（∈）与包含于（⊆）的关系",
+      "认为空集没有子集（实际上空集是任何集合的子集）",
+      "将 {0} 与空集混淆"
+    ]
+  },
+  {
+    "id": "set_operations",
+    "name": "集合运算",
+    "description": "集合的并、交、补运算及其运算律（交换律、结合律、分配律、德摩根律）。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 1,
+    "domain": "foundations",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握交集、并集、补集的定义和运算",
+      "理解全集的概念并能求给定集合的补集",
+      "熟练运用德摩根律进行集合运算化简",
+      "能用 Venn 图直观理解和验证集合运算"
+    ],
+    "examples": [
+      "若 A = {1,2,3}, B = {2,3,4}，则 A∩B = {2,3}, A∪B = {1,2,3,4}",
+      "全集 U = {1,2,...,10}，A = {2,4,6,8}，则补集 CuA = {1,3,5,7,9,10}",
+      "德摩根律：Cu(A∩B) = CuA ∪ CuB",
+      "分配律：A∩(B∪C) = (A∩B)∪(A∩C)"
+    ],
+    "assessment_criteria": [
+      "能正确计算集合的交、并、补运算",
+      "能用德摩根律和分配律化简集合表达式",
+      "能借助 Venn 图验证集合等式"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "德摩根律以英国数学家 Augustus De Morgan（1806-1871）命名，他首先系统阐述了集合运算的对偶规律，这一规律后来成为布尔代数的基石。",
+    "related_theorems": [
+      "德摩根律（De Morgan's Laws）",
+      "集合运算分配律"
+    ],
+    "common_misconceptions": [
+      "认为 A∪B = A∩B 总是成立",
+      "求补集时忽略全集的定义",
+      "混淆差集 A\\B 与补集 CuA"
+    ]
+  },
+  {
+    "id": "logic_propositions",
+    "name": "逻辑用语",
+    "description": "命题的概念，逻辑联结词（且、或、非）与命题的真值表，充分条件与必要条件。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 1,
+    "domain": "foundations",
+    "difficulty": 0.38,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解命题的概念，能判断一个语句是否为命题",
+      "掌握逻辑联结词且（∧）、或（∨）、非（¬）的含义和真值表",
+      "理解充分条件、必要条件和充要条件的区别与判定",
+      "能写出命题的逆命题、否命题和逆否命题"
+    ],
+    "examples": [
+      "命题 p: '3 是奇数'（真），q: '3 > 5'（假），则 p∧q 为假，p∨q 为真",
+      "'x > 2' 是 'x^2 > 4' 的充分条件但不必要",
+      "逆否命题：原命题 '若 x=1 则 x^2=1' 的逆否命题为 '若 x^2≠1 则 x≠1'",
+      "充要条件：'三角形等边' 与 '三角形等角' 互为充要条件"
+    ],
+    "assessment_criteria": [
+      "能正确构造复合命题并判断真假",
+      "能区分充分条件、必要条件和充要条件",
+      "能写出原命题的逆命题、否命题和逆否命题"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "古希腊亚里士多德开创了形式逻辑学，建立了三段论体系。19 世纪英国数学家布尔（George Boole）创立布尔代数，将逻辑推理符号化，为计算机科学的诞生奠定基础。",
+    "related_theorems": [
+      "逆否命题等价定理（原命题与逆否命题同真假）",
+      "布尔代数基本定律"
+    ],
+    "common_misconceptions": [
+      "混淆充分条件与必要条件的方向",
+      "认为否命题就是对结论取否定（实际上需要同时否定条件和结论）",
+      "将日常语言的'或'等同于逻辑的'或'（析取）"
+    ]
+  },
+  {
+    "id": "quantifiers",
+    "name": "全称量词与存在量词",
+    "description": "全称量词（∀）和存在量词（∃）的含义，含量词命题的否定。",
+    "prerequisites": [
+      "logic_propositions"
+    ],
+    "abstraction_level": 2,
+    "domain": "foundations",
+    "difficulty": 0.42,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解全称量词 ∀ 和存在量词 ∃ 的含义",
+      "能用符号正确表示含量词的命题",
+      "掌握含量词命题的否定方法：∀ 变 ∃、∃ 变 ∀",
+      "能判断含量词命题的真假"
+    ],
+    "examples": [
+      "∀x ∈ R, x^2 ≥ 0（真命题：任意实数的平方非负）",
+      "∃x ∈ R, x^2 + 1 = 0（假命题：不存在实数使 x^2=-1）",
+      "否定：¬(∀x ∈ R, x^2 ≥ 0) 等价于 ∃x ∈ R, x^2 < 0",
+      "否定：¬(∃x ∈ Z, 2x = 3) 等价于 ∀x ∈ Z, 2x ≠ 3"
+    ],
+    "assessment_criteria": [
+      "能将自然语言命题翻译为含量词的符号命题",
+      "能正确写出含量词命题的否定",
+      "能判断含量词命题的真假并给出理由"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "量词符号由德国数学家弗雷格（Gottlob Frege）在 1879 年的《概念文字》中首次引入，后经罗素和希尔伯特完善，成为现代数理逻辑的标准符号。",
+    "related_theorems": [
+      "量词否定对偶律（德摩根律的推广）",
+      "量词分配律"
+    ],
+    "common_misconceptions": [
+      "否定全称命题时仍保留全称量词（应变为存在量词）",
+      "混淆 ∀ 的否定与 ∃ 的否定",
+      "认为 ∀x, p(x) 为真需要逐一验证（实际上可通过一般性证明）"
+    ]
+  },
+  {
+    "id": "proof_by_contradiction",
+    "name": "反证法",
+    "description": "反证法的基本思想：假设结论不成立，推出矛盾，从而证明原命题成立。",
+    "prerequisites": [
+      "logic_propositions"
+    ],
+    "abstraction_level": 2,
+    "domain": "foundations",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解反证法的基本逻辑结构（排中律的应用）",
+      "掌握反证法的一般步骤：否定结论→推理→导出矛盾",
+      "能运用反证法证明典型的数学命题",
+      "理解反证法适用的情境（结论为否定式或存在性命题）"
+    ],
+    "examples": [
+      "证明 √2 是无理数：假设 √2 = p/q（既约分数），推出 p、q 均为偶数，矛盾",
+      "证明素数有无穷多个：假设有限个，构造新素数产生矛盾",
+      "证明若 n 是整数且 n^2 为偶数，则 n 为偶数",
+      "证明一条直线至多通过有限个整点"
+    ],
+    "assessment_criteria": [
+      "能正确写出反证法的假设并推导矛盾",
+      "能判断哪些命题适合用反证法证明",
+      "能区分反证法与逆否命题法的异同"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "反证法可追溯到古希腊毕达哥拉斯学派证明 √2 是无理数的故事。传说希帕索斯发现不可公度量，动摇了毕达哥拉斯'万物皆数'的信仰，被投入大海。欧几里得《几何原本》中大量使用反证法。",
+    "related_theorems": [
+      "排中律（Law of Excluded Middle）",
+      "√2 无理性证明"
+    ],
+    "common_misconceptions": [
+      "反证法中忘记否定结论就直接推理",
+      "推出的'矛盾'不够明确或并非真正的逻辑矛盾",
+      "混淆反证法与举反例（举反例用于否定全称命题）"
+    ]
+  },
+  {
+    "id": "function_concept_hs",
+    "name": "函数的概念与性质",
+    "description": "函数的定义（映射观点）、定义域、值域、对应法则，以及函数的基本表示方法。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 2,
+    "domain": "function",
+    "difficulty": 0.4,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解函数的本质：定义域到值域的映射 f: A → B",
+      "能求各类函数的定义域和值域",
+      "掌握函数的三种表示方法：解析法、列表法、图像法",
+      "理解分段函数的概念并能处理分段函数问题"
+    ],
+    "examples": [
+      "f(x) = x^2 + 1 的定义域为 R，值域为 [1, +∞)",
+      "分段函数：f(x) = |x| = {x, x≥0; -x, x<0}",
+      "函数 f(x) = 1/(x-2) 的定义域为 {x ∈ R | x ≠ 2}",
+      "快递费函数：首重内 y=10，超出部分 y=10+2(x-1)"
+    ],
+    "assessment_criteria": [
+      "能正确求出给定函数的定义域和值域",
+      "能用多种方法表示同一个函数",
+      "能处理分段函数的求值和图像问题"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "函数概念经历了漫长演化。莱布尼茨 1673 年首次使用'函数'一词；欧拉 1748 年将其定义为'解析表达式'；狄利克雷 1837 年给出现代定义——任意对应关系，彻底摆脱了'公式'的束缚。著名的狄利克雷函数 D(x) 就是为说明此点而构造。",
+    "related_theorems": [
+      "函数定义域确定定理",
+      "映射的像集定理"
+    ],
+    "common_misconceptions": [
+      "认为函数必须有解析表达式（狄利克雷函数否定此观念）",
+      "混淆定义域与存在域",
+      "认为不同的解析式一定表示不同的函数（如 |x| 和 √(x^2) 是同一函数）"
+    ]
+  },
+  {
+    "id": "monotonicity",
+    "name": "函数单调性",
+    "description": "函数单调递增和单调递减的定义，以及用定义法和导数法判断单调性。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 3,
+    "domain": "function",
+    "difficulty": 0.48,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解单调递增和单调递减的形式化定义",
+      "能用定义法证明函数在给定区间上的单调性",
+      "能利用单调性比较函数值大小",
+      "能结合图像判断函数的单调区间"
+    ],
+    "examples": [
+      "f(x) = x^2 在 (-∞, 0] 上单调递减，在 [0, +∞) 上单调递增",
+      "f(x) = -1/x 在 (0, +∞) 上单调递减",
+      "f(x) = 2^x 在 R 上单调递增",
+      "比较 0.3^0.2 与 0.3^0.3 的大小（利用 y=0.3^x 的单调递减性）"
+    ],
+    "assessment_criteria": [
+      "能用定义法（取值-作差-定号）证明函数的单调性",
+      "能正确求出函数的单调区间",
+      "能利用单调性解决比较大小和不等式问题"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "单调性的概念在微积分诞生前就以直观形式存在。17 世纪牛顿和莱布尼茨创立微积分后，单调性可由导数符号精确判定，使这一概念成为连接代数与分析的重要桥梁。",
+    "related_theorems": [
+      "函数单调性判定定理",
+      "复合函数单调性法则（同增异减）"
+    ],
+    "common_misconceptions": [
+      "在多个单调区间之间用并集符号连接（如写成 (-∞,0]∪[0,+∞)）",
+      "证明单调性时只取特殊值而非任意值",
+      "混淆函数在某点递增与在区间上单调递增"
+    ]
+  },
+  {
+    "id": "parity",
+    "name": "函数奇偶性",
+    "description": "奇函数和偶函数的定义、图像对称性，以及奇偶性的判定方法。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 3,
+    "domain": "function",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解奇函数 f(-x) = -f(x) 和偶函数 f(-x) = f(x) 的定义",
+      "掌握奇偶函数图像的对称性（奇函数关于原点对称，偶函数关于 y 轴对称）",
+      "能用定义判断函数的奇偶性",
+      "理解定义域关于原点对称是函数具有奇偶性的必要条件"
+    ],
+    "examples": [
+      "f(x) = x^2 是偶函数，图像关于 y 轴对称",
+      "f(x) = x^3 是奇函数，图像关于原点对称",
+      "f(x) = x^2 + x 既非奇也非偶",
+      "f(x) = 0 既是奇函数又是偶函数（唯一一个）"
+    ],
+    "assessment_criteria": [
+      "能用定义判断函数是奇函数、偶函数还是非奇非偶",
+      "能利用奇偶性简化函数图像的绘制",
+      "能判断定义域不关于原点对称的函数无奇偶性"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "奇偶性的概念源于对函数图像对称性的观察。欧拉在 18 世纪系统研究了各类函数的对称性质，为后来的群论中对称性概念奠定了直觉基础。",
+    "related_theorems": [
+      "奇偶函数四则运算性质定理",
+      "奇函数在原点有定义则 f(0)=0"
+    ],
+    "common_misconceptions": [
+      "忽略定义域关于原点对称的前提条件",
+      "认为一个函数要么是奇函数要么是偶函数",
+      "认为奇函数一定通过原点（仅在原点有定义时成立）"
+    ]
+  },
+  {
+    "id": "exponential_function",
+    "name": "指数函数",
+    "description": "指数函数 y=a^x (a>0, a≠1) 的定义、图像和性质，指数运算法则。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 4,
+    "domain": "function",
+    "difficulty": 0.58,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解指数函数 y=a^x (a>0, a≠1) 的定义和定义域",
+      "掌握底数 a>1 和 0<a<1 时指数函数图像的差异",
+      "熟练运用指数运算法则进行计算和化简",
+      "能解决指数方程和指数不等式问题"
+    ],
+    "examples": [
+      "y = 2^x 过定点 (0,1)，在 R 上单调递增，值域 (0,+∞)",
+      "y = (1/2)^x 在 R 上单调递减",
+      "指数运算法则：a^(m+n) = a^m · a^n，(a^m)^n = a^(mn)",
+      "细菌繁殖模型：N(t) = N_0 · 2^(t/T)，T 为倍增时间"
+    ],
+    "assessment_criteria": [
+      "能画出 a>1 和 0<a<1 时指数函数的大致图像",
+      "能运用指数运算法则进行化简",
+      "能解基本的指数方程（如 2^x = 8）和不等式"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "指数函数的引入与对数表的编制密不可分。苏格兰数学家纳皮尔（John Napier）在 1614 年发明对数，被誉为'延长天文学家寿命的发明'。欧拉后来发现了指数函数与三角函数的深刻联系——欧拉公式 e^(iπ)+1=0，被誉为数学中最美的公式。",
+    "related_theorems": [
+      "指数运算法则",
+      "指数函数单调性定理"
+    ],
+    "common_misconceptions": [
+      "认为指数函数的底数可以是任意实数（必须 a>0 且 a≠1）",
+      "混淆指数函数与幂函数（a^x vs x^a）",
+      "认为 a^0 = 0（实际 a^0 = 1, a≠0）"
+    ]
+  },
+  {
+    "id": "logarithmic_function",
+    "name": "对数函数",
+    "description": "对数函数 y=log_a(x) 的定义、图像和性质，对数运算法则与换底公式。",
+    "prerequisites": [
+      "exponential_function"
+    ],
+    "abstraction_level": 4,
+    "domain": "function",
+    "difficulty": 0.62,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解对数是指数的逆运算，掌握对数函数的定义",
+      "掌握对数运算法则：积的对数、商的对数、幂的对数",
+      "理解换底公式并能灵活运用",
+      "能利用对数函数的单调性解对数方程和不等式"
+    ],
+    "examples": [
+      "y = log_2(x) 过定点 (1,0)，在 (0,+∞) 上单调递增",
+      "换底公式：log_a(b) = log_c(b) / log_c(a)",
+      "lg 100 = 2，ln e = 1",
+      "地震震级：M = lg(A/A_0)，每增加1级能量约增32倍"
+    ],
+    "assessment_criteria": [
+      "能画出对数函数的大致图像并指出关键性质",
+      "能运用对数运算法则和换底公式进行化简",
+      "能解基本的对数方程和不等式（注意定义域）"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "苏格兰数学家纳皮尔在 1614 年发表对数表，为简化天文计算而生。拉普拉斯说'对数的发明以缩短计算时间延长了天文学家的寿命'。布里格斯与纳皮尔合作将底数改为 10（常用对数）。自然对数底 e 由欧拉命名，e=2.71828... 是数学中最重要的常数之一。",
+    "related_theorems": [
+      "对数运算法则定理",
+      "换底公式",
+      "指数与对数的互逆关系定理"
+    ],
+    "common_misconceptions": [
+      "认为 log_a(M+N) = log_a(M) + log_a(N)（对数没有分配律）",
+      "解对数方程时忘记检验定义域（真数必须为正）",
+      "混淆 log_a(b) 与 log_b(a) 的关系（互为倒数）"
+    ]
+  },
+  {
+    "id": "power_function",
+    "name": "幂函数",
+    "description": "幂函数 y=x^a 的定义、图像和性质，不同指数下幂函数的图像特征。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 3,
+    "domain": "function",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解幂函数 y=x^a 的定义及指数 a 对图像的影响",
+      "掌握常见幂函数（a=1,2,3,1/2,-1）的图像和性质",
+      "能判断幂函数在第一象限的单调性",
+      "能比较不同幂函数的图像特征"
+    ],
+    "examples": [
+      "y = x^2（抛物线），y = x^3（立方抛物线）",
+      "y = x^(1/2)（即 y=√x），定义域 [0,+∞)",
+      "y = x^(-1)（即 y=1/x），双曲线",
+      "所有幂函数图像都过定点 (1,1)"
+    ],
+    "assessment_criteria": [
+      "能画出常见幂函数的图像并描述性质",
+      "能判断幂函数在第一象限的单调性",
+      "能比较同底数不同指数或同指数不同底数的函数值大小"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "幂函数是最古老的函数类型之一。古希腊阿基米德在研究杠杆和浮力时已隐含使用幂的关系。17 世纪笛卡尔引入坐标系后，幂函数的图像得以精确绘制，成为研究曲线性质的起点。",
+    "related_theorems": [
+      "幂函数单调性定理",
+      "幂运算法则"
+    ],
+    "common_misconceptions": [
+      "混淆幂函数 y=x^a 与指数函数 y=a^x",
+      "忽略幂函数定义域随指数变化而变化（如 x^(1/2) 要求 x≥0）",
+      "认为所有幂函数都通过原点（x^(-1) 不通过原点）"
+    ]
+  },
+  {
+    "id": "trig_definition",
+    "name": "任意角三角函数",
+    "description": "任意角的定义（正角、负角、零角），弧度制，以及任意角的正弦、余弦、正切定义。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 3,
+    "domain": "trigonometry",
+    "difficulty": 0.52,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解任意角的概念和弧度制，能进行角度与弧度的互化",
+      "掌握用单位圆定义 sin、cos、tan 的方法",
+      "能确定三角函数在各象限的符号",
+      "掌握同角三角函数的基本关系式（平方关系和商数关系）"
+    ],
+    "examples": [
+      "角度转弧度：180° = π rad，30° = π/6 rad",
+      "sin(π/6) = 1/2, cos(π/3) = 1/2, tan(π/4) = 1",
+      "第二象限中 sin>0, cos<0, tan<0",
+      "同角关系：sin^2(α) + cos^2(α) = 1, tan(α) = sin(α)/cos(α)"
+    ],
+    "assessment_criteria": [
+      "能正确进行角度与弧度的转换",
+      "能求任意角的三角函数值",
+      "能利用同角关系式进行三角函数的化简和求值"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "三角学源于古希腊天文学。喜帕恰斯（Hipparchus，约公元前 150 年）编制了第一张弦表。欧拉在 1748 年引入弧度制和单位圆定义，将三角函数从三角形工具提升为周期函数，是三角学的革命性贡献。",
+    "related_theorems": [
+      "同角三角函数基本关系式",
+      "弧长公式 l = |α|·r",
+      "诱导公式"
+    ],
+    "common_misconceptions": [
+      "混淆角度制和弧度制（如认为 sin 30 与 sin 30° 相同）",
+      "三角函数值符号判断错误（各象限符号混淆）",
+      "认为 sin^2(α) = sin(α^2)（前者是 [sin(α)]^2）"
+    ]
+  },
+  {
+    "id": "trig_identities",
+    "name": "三角恒等变换",
+    "description": "两角和与差的三角公式，二倍角公式，以及三角恒等式的证明与化简技巧。",
+    "prerequisites": [
+      "trig_definition"
+    ],
+    "abstraction_level": 5,
+    "domain": "trigonometry",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握两角和与差的正弦、余弦、正切公式",
+      "掌握二倍角公式和半角公式",
+      "能灵活运用辅助角公式进行化简",
+      "能证明基本的三角恒等式"
+    ],
+    "examples": [
+      "两角差余弦：cos(α-β) = cosα·cosβ + sinα·sinβ",
+      "二倍角：sin(2α) = 2sinα·cosα, cos(2α) = cos²α - sin²α",
+      "辅助角公式：a·sinα + b·cosα = √(a²+b²)·sin(α+φ)，其中 tanφ = b/a",
+      "证明：sin²α + cos²α = 1（由定义直接得出）"
+    ],
+    "assessment_criteria": [
+      "能熟练运用和差角公式和二倍角公式进行化简",
+      "能用辅助角公式将表达式化为单一三角函数",
+      "能完成基本的三角恒等式证明"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "三角恒等式的系统化归功于阿拉伯数学家阿尔·巴塔尼（约 900 年）和波斯数学家纳西尔·丁·图西（约 1250 年）。韦达（Vieta）在 16 世纪发现了大量三角恒等式。欧拉用复指数统一了所有三角公式，展现了数学的统一之美。",
+    "related_theorems": [
+      "两角和差公式（加法定理）",
+      "二倍角公式",
+      "辅助角公式"
+    ],
+    "common_misconceptions": [
+      "认为 sin(α+β) = sinα + sinβ（三角函数没有分配律）",
+      "使用二倍角公式时混淆 cos(2α) 的三种形式",
+      "辅助角公式中相位角 φ 的象限判断错误"
+    ]
+  },
+  {
+    "id": "trig_function_images",
+    "name": "三角函数图像",
+    "description": "正弦、余弦、正切函数的图像，周期性、最值，以及 y=A·sin(ωx+φ) 的图像变换。",
+    "prerequisites": [
+      "trig_definition"
+    ],
+    "abstraction_level": 4,
+    "domain": "trigonometry",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "能画出 y=sin(x)、y=cos(x)、y=tan(x) 的图像",
+      "理解周期、振幅、频率、相位的含义",
+      "掌握 y=A·sin(ωx+φ) 图像的变换方法（振幅、周期、相位变换）",
+      "能由图像确定函数的解析式"
+    ],
+    "examples": [
+      "y = sin(x) 的周期为 2π，值域 [-1,1]",
+      "y = tan(x) 的周期为 π，在 x=π/2+kπ 处无定义",
+      "y = 3sin(2x + π/6) 的振幅为 3，周期为 π，初相为 π/6",
+      "简谐运动模型：x(t) = A·sin(ωt + φ)"
+    ],
+    "assessment_criteria": [
+      "能正确画出基本三角函数的图像",
+      "能通过振幅、周期、相位变换画出 y=A·sin(ωx+φ) 的图像",
+      "能由给定图像确定 A、ω、φ 的值"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "三角函数图像的研究与波动现象密不可分。18 世纪欧拉和伯努利在研究弦振动问题时发现任何波都可以分解为正弦波的叠加——这就是后来傅里叶分析的思想萌芽。如今三角函数图像是信号处理、声学和光学的核心工具。",
+    "related_theorems": [
+      "三角函数周期定理",
+      "正弦型函数变换定理"
+    ],
+    "common_misconceptions": [
+      "认为正切函数的周期是 2π（实际为 π）",
+      "相位变换方向错误（y=sin(x+φ) 是向左平移 φ，不是向右）",
+      "由图像确定初相 φ 时忽略范围限制"
+    ]
+  },
+  {
+    "id": "sequence_concept",
+    "name": "数列概念",
+    "description": "数列的定义、通项公式与递推公式，数列的分类（有界/无界、递增/递减）。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 3,
+    "domain": "sequences",
+    "difficulty": 0.48,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解数列是定义在正整数集上的特殊函数",
+      "掌握通项公式和递推公式的概念与区别",
+      "能由递推公式求数列的前若干项",
+      "能判断数列的单调性和有界性"
+    ],
+    "examples": [
+      "数列 1, 4, 9, 16, 25, ... 的通项公式 a_n = n^2",
+      "斐波那契数列：a_1=1, a_2=1, a_n = a_{n-1} + a_{n-2}",
+      "数列 {(-1)^n} 是摆动数列",
+      "银行复利模型：A_n = A_0(1+r)^n"
+    ],
+    "assessment_criteria": [
+      "能写出给定数列的通项公式或递推公式",
+      "能由递推公式计算数列的指定项",
+      "能判断数列的单调性和有界性"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "数列的研究源远流长。斐波那契在 1202 年的《算盘书》中提出著名的兔子繁殖问题，诞生了斐波那契数列。后来发现该数列与黄金比例 φ=(1+√5)/2 密切相关：a_n 的通项公式中竟然含有无理数，令人惊叹。",
+    "related_theorems": [
+      "斐波那契通项公式（比奈公式）",
+      "数列单调性判定定理"
+    ],
+    "common_misconceptions": [
+      "将数列的项与项数混淆",
+      "认为所有数列都有通项公式（有些数列只能递推定义）",
+      "将递推公式与通项公式混为一谈"
+    ]
+  },
+  {
+    "id": "arithmetic_sequence",
+    "name": "等差数列",
+    "description": "等差数列的定义、通项公式、前 n 项和公式，以及等差中项的概念。",
+    "prerequisites": [
+      "sequence_concept"
+    ],
+    "abstraction_level": 4,
+    "domain": "sequences",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握等差数列的定义和判定方法",
+      "熟练运用通项公式 a_n = a_1 + (n-1)d 和求和公式",
+      "理解等差中项的概念及性质",
+      "能解决等差数列的实际应用问题"
+    ],
+    "examples": [
+      "通项公式：a_n = a_1 + (n-1)d，其中 d 为公差",
+      "前 n 项和：S_n = n(a_1 + a_n)/2 = na_1 + n(n-1)d/2",
+      "1+2+3+...+100 = 5050（高斯童年故事）",
+      "等差中项：若 a, b, c 成等差数列，则 2b = a + c"
+    ],
+    "assessment_criteria": [
+      "能由已知条件求等差数列的通项公式",
+      "能正确运用求和公式计算前 n 项和",
+      "能运用等差数列的性质解决综合问题"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "相传高斯 10 岁时，老师让学生计算 1+2+...+100。高斯瞬间发现首尾配对法（1+100=101, 2+99=101, ...），得出 5050。这个等差数列求和的故事是数学史上的经典佳话，展现了数学思维的力量。",
+    "related_theorems": [
+      "等差数列通项公式",
+      "等差数列求和公式",
+      "等差中项定理"
+    ],
+    "common_misconceptions": [
+      "在使用求和公式 S_n = n(a_1+a_n)/2 时混淆 a_n 与 a_1",
+      "混淆等差数列的公差 d 与项数 n",
+      "求和公式中选择不当的形式导致计算复杂化"
+    ]
+  },
+  {
+    "id": "geometric_sequence",
+    "name": "等比数列",
+    "description": "等比数列的定义、通项公式、前 n 项和公式，以及等比中项和无穷等比数列求和。",
+    "prerequisites": [
+      "sequence_concept"
+    ],
+    "abstraction_level": 4,
+    "domain": "sequences",
+    "difficulty": 0.58,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握等比数列的定义和公比的概念",
+      "熟练运用通项公式和求和公式（注意 q≠1 和 q=1 的区别）",
+      "理解等比中项的概念及性质",
+      "能解决等比数列的实际应用问题（如复利、折旧）"
+    ],
+    "examples": [
+      "通项公式：a_n = a_1 · q^(n-1)，其中 q 为公比",
+      "前 n 项和：S_n = a_1(1-q^n)/(1-q)（q≠1），S_n = na_1（q=1）",
+      "无穷等比求和：S = a_1/(1-q)（当 |q|<1 时）",
+      "复利模型：本利和 A = P(1+r)^n"
+    ],
+    "assessment_criteria": [
+      "能由已知条件求等比数列的通项公式",
+      "能正确区分 q=1 和 q≠1 的求和公式",
+      "能计算无穷等比数列的和（|q|<1 时）"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "等比数列的无穷求和 S=a/(1-r) 蕴含了芝诺悖论的思想。芝诺的'阿基里斯追龟'悖论正是等比数列求和的直观化：阿基里斯每步追赶剩余距离的一半，无限步后恰好追上乌龟。这一悖论困扰古希腊人两千余年，直到微积分严密化才彻底解决。",
+    "related_theorems": [
+      "等比数列通项公式",
+      "等比数列求和公式",
+      "无穷等比数列求和定理"
+    ],
+    "common_misconceptions": [
+      "使用求和公式时忘记讨论公比 q=1 的情况",
+      "忽略等比数列各项不能为零（首项和公比都不能为零）",
+      "无穷等比求和时忘记条件 |q|<1"
+    ]
+  },
+  {
+    "id": "basic_inequality",
+    "name": "基本不等式",
+    "description": "重要不等式 a²+b²≥2ab，基本不等式 √(ab)≤(a+b)/2（均值不等式）及其应用。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 4,
+    "domain": "inequality",
+    "difficulty": 0.57,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握重要不等式 a²+b²≥2ab 及其证明",
+      "理解均值不等式 √(ab)≤(a+b)/2 的几何意义",
+      "能运用均值不等式求函数的最值",
+      "理解等号成立的条件及其重要性"
+    ],
+    "examples": [
+      "当 a>0, b>0 时，a+b≥2√(ab)，等号当且仅当 a=b 时成立",
+      "求 x+1/x (x>0) 的最小值：由均值不等式 x+1/x≥2，最小值为 2",
+      "已知 x>0, y>0, x+y=4，求 xy 的最大值：xy≤((x+y)/2)²=4",
+      "几何意义：半圆中弦≤直径"
+    ],
+    "assessment_criteria": [
+      "能运用均值不等式证明不等式",
+      "能用均值不等式求最值并验证等号条件",
+      "能判断均值不等式使用的前提（各项为正、和或积为定值）"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "均值不等式连接了算术平均数和几何平均数，其几何直觉可追溯到古希腊。欧几里得《几何原本》卷 II 已含 a²+b²≥2ab 的几何证明。柯西在 1821 年推广为著名的柯西-施瓦茨不等式，成为现代分析学的基石。",
+    "related_theorems": [
+      "均值不等式（AM-GM 不等式）",
+      "柯西-施瓦茨不等式",
+      "重要不等式 a²+b²≥2ab"
+    ],
+    "common_misconceptions": [
+      "使用均值不等式求最值时忘记验证等号成立的条件",
+      "忽略各项必须为正数的前提条件",
+      "在和不定时错误使用均值不等式求最值"
+    ]
+  },
+  {
+    "id": "linear_programming",
+    "name": "简单线性规划",
+    "description": "二元一次不等式表示的平面区域，线性目标函数在约束条件下的最值问题。",
+    "prerequisites": [
+      "basic_inequality"
+    ],
+    "abstraction_level": 5,
+    "domain": "inequality",
+    "difficulty": 0.68,
+    "is_milestone": false,
+    "learning_objectives": [
+      "能用不等式组表示平面区域并画出可行域",
+      "理解线性目标函数的概念和几何意义",
+      "掌握求线性目标函数最值的图解法",
+      "能解决简单的线性规划实际应用问题"
+    ],
+    "examples": [
+      "约束条件 x≥0, y≥0, x+y≤4，画出可行域为三角形区域",
+      "在约束 x+2y≤8, 3x+y≤9, x≥0, y≥0 下求 z=2x+3y 的最大值",
+      "最优解在顶点处取得（线性规划基本定理）",
+      "生产计划问题：在资源约束下最大化利润"
+    ],
+    "assessment_criteria": [
+      "能正确画出不等式组表示的可行域",
+      "能用图解法求线性目标函数的最值",
+      "能将实际问题转化为线性规划模型并求解"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "线性规划诞生于二战期间。苏联数学家康托罗维奇（1939 年）和美国数学家丹齐格（1947 年发单纯形法）各自独立创立了线性规划理论。康托罗维奇因此获得 1975 年诺贝尔经济学奖。如今线性规划广泛应用于物流、金融和工业优化。",
+    "related_theorems": [
+      "线性规划基本定理（最优解在顶点取得）",
+      "可行域凸性定理"
+    ],
+    "common_misconceptions": [
+      "认为最优解一定在可行域内部取得（实际在边界顶点）",
+      "画可行域时混淆不等号方向对应的区域",
+      "忽略目标函数 Z 的几何意义（等值线的截距）"
+    ]
+  },
+  {
+    "id": "space_geometry",
+    "name": "空间几何体",
+    "description": "柱、锥、台、球的结构特征，表面积与体积公式，三视图与直观图。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 3,
+    "domain": "geometry",
+    "difficulty": 0.52,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握棱柱、棱锥、棱台、圆柱、圆锥、圆台、球的结构特征",
+      "能运用表面积和体积公式进行计算",
+      "理解三视图（正视图、侧视图、俯视图）的投影关系",
+      "能用斜二测画法画空间图形的直观图"
+    ],
+    "examples": [
+      "球体积 V = (4/3)πR³，表面积 S = 4πR²",
+      "圆锥体积 V = (1/3)πr²h",
+      "棱台体积 V = (1/3)h(S_1 + S_2 + √(S_1·S_2))",
+      "由三视图还原空间几何体"
+    ],
+    "assessment_criteria": [
+      "能识别空间几何体的类型并描述其结构特征",
+      "能正确计算空间几何体的表面积和体积",
+      "能根据三视图判断几何体的形状和尺寸"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "球体积公式 V=(4/3)πR³ 的推导是古代数学的巅峰成就。阿基米德用'穷竭法'证明了球的体积是外接圆柱体积的 2/3。中国古代数学家祖暅（祖冲之之子）在 5 世纪提出'幂势既同则积不容异'原理（祖暅原理），比卡瓦列里原理早一千年。",
+    "related_theorems": [
+      "祖暅原理（等幂等积定理）",
+      "球体积和表面积公式"
+    ],
+    "common_misconceptions": [
+      "混淆棱锥和棱台的结构特征",
+      "计算体积时忘记系数（如圆锥体积忘记 1/3）",
+      "三视图中'长对正、高平齐、宽相等'的对应关系判断错误"
+    ]
+  },
+  {
+    "id": "point_line_plane",
+    "name": "点线面位置关系",
+    "description": "空间中点、直线、平面的位置关系，平行与垂直的判定定理和性质定理。",
+    "prerequisites": [
+      "space_geometry"
+    ],
+    "abstraction_level": 4,
+    "domain": "geometry",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解空间中点、线、面的基本位置关系",
+      "掌握线面平行、面面平行的判定定理和性质定理",
+      "掌握线面垂直、面面垂直的判定定理和性质定理",
+      "能运用三垂线定理解决空间角问题"
+    ],
+    "examples": [
+      "线面平行判定：若平面外一条直线与平面内一条直线平行，则该直线与此平面平行",
+      "线面垂直判定：若一条直线与平面内两条相交直线都垂直，则该直线垂直于该平面",
+      "三垂线定理：平面内的直线与斜线垂直当且仅当与斜线在平面内的射影垂直",
+      "面面垂直判定：若一个平面过另一个平面的垂线，则两平面垂直"
+    ],
+    "assessment_criteria": [
+      "能正确运用平行和垂直的判定定理进行证明",
+      "能求线线角、线面角和二面角",
+      "能判断空间中点、线、面的位置关系"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "空间几何的系统化始于欧几里得《几何原本》。19 世纪高斯和黎曼发展了非欧几何，挑战了欧几里得第五公设。希尔伯特在 1899 年的《几何基础》中给出了欧氏几何的严格公理体系，使空间推理变得完全严密。",
+    "related_theorems": [
+      "线面平行判定与性质定理",
+      "线面垂直判定与性质定理",
+      "三垂线定理及逆定理",
+      "面面垂直判定与性质定理"
+    ],
+    "common_misconceptions": [
+      "将平面几何结论直接推广到空间（如认为垂直于同一直线的两直线平行）",
+      "线面垂直判定中忽略'两条相交直线'的条件",
+      "求二面角时平面角的选择不当"
+    ]
+  },
+  {
+    "id": "spatial_vector",
+    "name": "空间向量",
+    "description": "空间向量的概念、加减运算、数量积，以及用向量法解决立体几何问题。",
+    "prerequisites": [
+      "point_line_plane"
+    ],
+    "abstraction_level": 5,
+    "domain": "geometry",
+    "difficulty": 0.72,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解空间向量的概念和坐标表示",
+      "掌握空间向量的加减运算和数量积运算",
+      "能运用向量法证明平行和垂直关系",
+      "能用向量法计算空间角和空间距离"
+    ],
+    "examples": [
+      "向量 a·b = |a||b|cosθ，θ 为两向量夹角",
+      "用向量法证明线面垂直：a = λb + μc（b, c 是平面内两不共线向量）",
+      "两点间距离公式：|AB| = √((x₂-x₁)²+(y₂-y₁)²+(z₂-z₁)²)",
+      "用向量法求二面角：转化为两法向量的夹角"
+    ],
+    "assessment_criteria": [
+      "能进行空间向量的坐标运算",
+      "能用向量法证明空间中的平行和垂直关系",
+      "能用向量法求线面角、二面角和点到平面的距离"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "向量概念由哈密顿和格拉斯曼在 19 世纪 40 年代独立发展。哈密顿发明四元数时发现了向量乘法的非交换性。吉布斯和亥维赛将向量从四元数中独立出来，形成了今天使用的向量分析，成为物理学和工程学的核心工具。",
+    "related_theorems": [
+      "向量数量积定义定理",
+      "共线向量定理",
+      "共面向量定理"
+    ],
+    "common_misconceptions": [
+      "混淆向量数量积（标量）与向量积（向量）",
+      "认为 a·b = 0 推出 a = 0 或 b = 0（实际只能推出垂直）",
+      "用法向量求二面角时忽略角与二面角的互补关系"
+    ]
+  },
+  {
+    "id": "coordinate_system",
+    "name": "平面直角坐标系",
+    "description": "平面直角坐标系的建立，点的坐标，两点间距离公式和中点公式。",
+    "prerequisites": [],
+    "abstraction_level": 1,
+    "domain": "analytic_geometry",
+    "difficulty": 0.35,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解平面直角坐标系的基本结构（原点、坐标轴、象限）",
+      "掌握两点间距离公式和中点公式",
+      "能将几何问题转化为代数问题",
+      "理解坐标系是数形结合的桥梁"
+    ],
+    "examples": [
+      "点 A(3,4) 到原点距离为 √(3²+4²)=5",
+      "线段 AB 中点 M = ((x₁+x₂)/2, (y₁+y₂)/2)",
+      "用坐标法证明三角形中位线定理",
+      "坐标平移变换：将原点移至 (h,k)"
+    ],
+    "assessment_criteria": [
+      "能正确确定点的坐标和象限",
+      "能运用距离公式和中点公式解决问题",
+      "能用坐标法解决简单的几何证明问题"
+    ],
+    "estimated_minutes": 40,
+    "historical_context": "1637 年笛卡尔在《方法论》附录《几何》中引入坐标系，将代数与几何统一，开创了解析几何。据说笛卡尔卧床时观察天花板上的苍蝇，想到用两个数确定平面上点的位置，这便是坐标系的灵感来源。这一发明被誉为'数学史上最伟大的进步之一'。",
+    "related_theorems": [
+      "两点间距离公式",
+      "中点公式",
+      "坐标平移变换定理"
+    ],
+    "common_misconceptions": [
+      "混淆 x 坐标和 y 坐标的顺序（横纵颠倒）",
+      "距离公式中忘记开平方根",
+      "认为坐标系是唯一固定的（实际上可平移和旋转）"
+    ]
+  },
+  {
+    "id": "line_equation",
+    "name": "直线方程",
+    "description": "直线的点斜式、斜截式、两点式、截距式方程，两直线平行与垂直的判定。",
+    "prerequisites": [
+      "coordinate_system"
+    ],
+    "abstraction_level": 2,
+    "domain": "analytic_geometry",
+    "difficulty": 0.42,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握直线方程的各种形式及适用条件",
+      "理解斜率的概念及其几何意义",
+      "掌握两直线平行和垂直的斜率条件",
+      "能求两直线的交点坐标和夹角"
+    ],
+    "examples": [
+      "点斜式：y - y₁ = k(x - x₁)",
+      "斜截式：y = kx + b，其中 k 为斜率，b 为 y 轴截距",
+      "两直线平行：k₁ = k₂ 且 b₁ ≠ b₂；垂直：k₁·k₂ = -1",
+      "两点 A(1,2), B(3,6) 确定的直线斜率 k = (6-2)/(3-1) = 2"
+    ],
+    "assessment_criteria": [
+      "能根据条件选择适当形式写出直线方程",
+      "能判断两直线平行或垂直并求距离",
+      "能求两直线的交点"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "斜率（slope）的概念源于对山坡倾斜程度的直观描述。费马和笛卡尔各自独立发展了解析几何，但笛卡尔的著作更早发表。直线的斜截式方程 y=kx+b 是解析几何中最基本的方程之一，连接了代数与几何。",
+    "related_theorems": [
+      "直线方程五种形式",
+      "两直线平行与垂直判定定理",
+      "点到直线的距离公式"
+    ],
+    "common_misconceptions": [
+      "斜率不存在时（垂直于 x 轴的直线）仍使用点斜式",
+      "两直线平行时只比较斜率而忽略截距",
+      "混淆倾斜角与斜率的关系（k=tanα，α∈[0,π)）"
+    ]
+  },
+  {
+    "id": "circle_equation",
+    "name": "圆的方程",
+    "description": "圆的标准方程和一般方程，点与圆、直线与圆的位置关系判定。",
+    "prerequisites": [
+      "line_equation"
+    ],
+    "abstraction_level": 3,
+    "domain": "analytic_geometry",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "掌握圆的标准方程 (x-a)²+(y-b)²=r² 和一般方程",
+      "能根据条件求圆的方程（待定系数法）",
+      "掌握点与圆、直线与圆的位置关系判定方法",
+      "能求圆的切线方程和切线长"
+    ],
+    "examples": [
+      "圆心 (2,-3)，半径 5 的圆方程：(x-2)²+(y+3)²=25",
+      "一般方程 x²+y²+Dx+Ey+F=0 中圆心为 (-D/2,-E/2)",
+      "直线到圆心距离 d 与半径 r 比较：d<r 相交，d=r 相切，d>r 相离",
+      "过圆上一点 P(x₀,y₀) 的切线方程"
+    ],
+    "assessment_criteria": [
+      "能根据不同条件求圆的方程",
+      "能判断直线与圆的位置关系并求交点",
+      "能求过圆上或圆外一点的切线方程"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "圆是最完美的几何图形，古希腊数学家对其研究最为深入。阿波罗尼奥斯（约公元前 200 年）著有《圆锥曲线论》，系统研究了圆和其他圆锥曲线。解析几何诞生后，圆的方程成为连接代数与几何的优美桥梁。",
+    "related_theorems": [
+      "圆的标准方程与一般方程",
+      "直线与圆位置关系判定定理",
+      "切线长定理"
+    ],
+    "common_misconceptions": [
+      "由一般方程求圆心时符号错误（应为 -D/2 而非 D/2）",
+      "求切线时忽略切线可能在圆外或圆上的区别",
+      "判断直线与圆位置关系时混淆距离 d 与半径 r 的大小关系"
+    ]
+  },
+  {
+    "id": "conic_sections",
+    "name": "圆锥曲线",
+    "description": "椭圆、双曲线、抛物线的定义、标准方程、几何性质，及圆锥曲线的统一定义。",
+    "prerequisites": [
+      "circle_equation"
+    ],
+    "abstraction_level": 5,
+    "domain": "analytic_geometry",
+    "difficulty": 0.75,
+    "is_milestone": true,
+    "learning_objectives": [
+      "掌握椭圆、双曲线、抛物线的定义和标准方程",
+      "理解离心率、准线、渐近线等几何性质",
+      "能用待定系数法求圆锥曲线方程",
+      "理解圆锥曲线的统一定义（焦点-准线定义）"
+    ],
+    "examples": [
+      "椭圆方程：x²/a² + y²/b² = 1 (a>b>0)，离心率 e=c/a (0<e<1)",
+      "双曲线方程：x²/a² - y²/b² = 1，渐近线 y=±(b/a)x，离心率 e=c/a (e>1)",
+      "抛物线方程：y²=2px (p>0)，焦点 (p/2,0)，准线 x=-p/2",
+      "行星轨道为椭圆（开普勒第一定律）"
+    ],
+    "assessment_criteria": [
+      "能根据定义和条件求圆锥曲线的标准方程",
+      "能计算圆锥曲线的离心率、焦点、准线等几何量",
+      "能判断给定方程表示哪种圆锥曲线"
+    ],
+    "estimated_minutes": 80,
+    "historical_context": "古希腊数学家阿波罗尼奥斯（约公元前 200 年）系统研究了用平面截圆锥得到的曲线，命名为圆锥曲线。17 世纪开普勒发现行星轨道是椭圆，伽利略发现抛物线描述了抛体运动。圆锥曲线从纯几何对象变成了描述宇宙规律的语言，是数学与物理的完美交汇。",
+    "related_theorems": [
+      "圆锥曲线统一定义定理（焦点-准线）",
+      "椭圆第一和第二定义",
+      "双曲线渐近线定理"
+    ],
+    "common_misconceptions": [
+      "混淆椭圆和双曲线的标准方程形式（+ 号与 - 号）",
+      "椭圆中误认为 a 总是大于 b（取决于焦点在 x 轴还是 y 轴）",
+      "抛物线中混淆开口方向与方程中变量的一次/二次关系"
+    ]
+  },
+  {
+    "id": "probability_hs",
+    "name": "概率（古典概型）",
+    "description": "随机事件、概率的统计定义与古典定义，古典概型的计算方法。",
+    "prerequisites": [
+      "set_operations"
+    ],
+    "abstraction_level": 3,
+    "domain": "statistics",
+    "difficulty": 0.5,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解随机事件、必然事件、不可能事件的概念",
+      "掌握概率的古典定义和基本性质",
+      "能运用排列组合知识计算古典概型的概率",
+      "理解互斥事件和对立事件的概念及加法公式"
+    ],
+    "examples": [
+      "掷骰子出现偶数的概率：3/6 = 1/2",
+      "从 52 张扑克中抽到 A 的概率：4/52 = 1/13",
+      "互斥事件加法公式：P(A∪B) = P(A) + P(B)",
+      "对立事件：P(A) + P(A̅) = 1"
+    ],
+    "assessment_criteria": [
+      "能正确计算古典概型的概率",
+      "能判断事件是否互斥并运用加法公式",
+      "能运用排列组合简化概率计算"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "概率论起源于 17 世纪赌徒的问题。1654 年帕斯卡与费马通信讨论赌金分配问题，被视为概率论的诞生。帕斯卡赌注——'即使只有微小概率上帝存在，信教的期望收益也大于不信'——是早期期望值思想的体现。惠更斯在 1657 年出版了第一本概率论著作。",
+    "related_theorems": [
+      "古典概型概率公式",
+      "互斥事件加法公式",
+      "对立事件概率公式"
+    ],
+    "common_misconceptions": [
+      "计算古典概率时分子或分母计数错误（排列与组合混淆）",
+      "将互斥事件与独立事件混淆",
+      "认为概率小的事件不会发生"
+    ]
+  },
+  {
+    "id": "conditional_probability",
+    "name": "条件概率与独立性",
+    "description": "条件概率的定义，全概率公式，贝叶斯公式，以及事件独立性的概念。",
+    "prerequisites": [
+      "probability_hs"
+    ],
+    "abstraction_level": 5,
+    "domain": "statistics",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解条件概率 P(A|B) = P(AB)/P(B) 的定义",
+      "掌握乘法公式和全概率公式",
+      "理解事件独立性的定义和判定方法",
+      "能初步运用贝叶斯公式进行推断"
+    ],
+    "examples": [
+      "条件概率：两骰子和为 7 的条件下，第一颗为 3 的概率是 1/6",
+      "全概率公式：P(B) = Σ P(A_i)·P(B|A_i)",
+      "贝叶斯公式：P(A|B) = P(B|A)·P(A)/P(B)",
+      "医学检测：灵敏度与特异度的贝叶斯推断"
+    ],
+    "assessment_criteria": [
+      "能计算条件概率并运用乘法公式",
+      "能判断事件是否独立",
+      "能运用全概率公式和贝叶斯公式解决实际问题"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "贝叶斯公式以英国牧师托马斯·贝叶斯（1702-1761）命名，他去世后论文才被发表。这一公式是'从结果推断原因'的数学工具，在 20 世纪成为机器学习和人工智能的理论基石。如今贝叶斯方法已广泛应用于垃圾邮件过滤、医学诊断和搜索引擎等领域。",
+    "related_theorems": [
+      "条件概率定义",
+      "全概率公式",
+      "贝叶斯公式",
+      "乘法公式"
+    ],
+    "common_misconceptions": [
+      "混淆 P(A|B) 与 P(B|A)（检察官谬误的根源）",
+      "认为互斥事件就是独立事件（实际互斥通常意味着不独立）",
+      "全概率公式中忘记完备事件组的条件"
+    ]
+  },
+  {
+    "id": "random_variable",
+    "name": "随机变量",
+    "description": "离散型随机变量的概念、分布列、期望与方差，以及常见分布（二项分布、正态分布）。",
+    "prerequisites": [
+      "conditional_probability"
+    ],
+    "abstraction_level": 6,
+    "domain": "statistics",
+    "difficulty": 0.82,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解随机变量的概念及其与随机事件的区别",
+      "掌握离散型随机变量的分布列、期望 E(X) 和方差 D(X) 的计算",
+      "掌握二项分布 B(n,p) 的概念和计算",
+      "了解正态分布 N(μ,σ²) 的基本性质和 3σ 原则"
+    ],
+    "examples": [
+      "掷骰子的随机变量 X（点数），E(X) = 3.5",
+      "二项分布：n 次独立试验中成功 k 次的概率 C(n,k)·p^k·(1-p)^(n-k)",
+      "正态分布的 3σ 原则：约 99.7% 的数据落在 (μ-3σ, μ+3σ) 内",
+      "E(X) = Σ x_i·p_i，D(X) = E(X²) - [E(X)]²"
+    ],
+    "assessment_criteria": [
+      "能写出离散型随机变量的分布列",
+      "能计算随机变量的期望和方差",
+      "能识别并计算二项分布问题",
+      "能运用正态分布的 3σ 原则进行估算"
+    ],
+    "estimated_minutes": 75,
+    "historical_context": "随机变量的概念由俄罗斯数学家柯尔莫哥洛夫在 1933 年的《概率论基础》中公理化。正态分布被称为'上帝的曲线'，高斯在研究天文测量误差时发现。棣莫弗在 1733 年首次导出正态分布，是中心极限定理的最早形式。高尔顿板（豆子实验）直观展现了正态分布的诞生过程。",
+    "related_theorems": [
+      "期望的线性性质定理",
+      "二项分布的期望与方差定理",
+      "正态分布 3σ 原则",
+      "中心极限定理（初步了解）"
+    ],
+    "common_misconceptions": [
+      "混淆随机变量与其取值（X 是变量，x 是具体值）",
+      "计算方差时忘记减去期望的平方：D(X)≠E(X²)",
+      "混淆二项分布与几何分布（前者是 n 次中成功次数，后者是首次成功所需次数）"
+    ]
+  },
+  {
+    "id": "statistics_hs",
+    "name": "统计与抽样",
+    "description": "抽样方法（简单随机抽样、分层抽样、系统抽样），样本特征数（均值、方差、标准差）。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 3,
+    "domain": "statistics",
+    "difficulty": 0.48,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解总体、个体、样本、样本量的概念",
+      "掌握三种基本抽样方法及其适用场景",
+      "能计算样本均值、方差和标准差",
+      "理解用样本估计总体的基本思想"
+    ],
+    "examples": [
+      "简单随机抽样：抽签法、随机数表法",
+      "分层抽样：按比例从各层抽取（如按年级分层调查全校身高）",
+      "系统抽样：每隔 k 个抽取一个（如从 1000 人中抽 50 人，间隔 20）",
+      "样本方差 s² = (1/n)Σ(x_i - x̄)²"
+    ],
+    "assessment_criteria": [
+      "能根据实际情况选择合适的抽样方法",
+      "能正确计算样本均值、方差和标准差",
+      "能理解样本统计量与总体参数的关系"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "统计学在 20 世纪迅速发展。英国统计学家费舍尔奠定了现代统计推断理论。1936 年美国《文学文摘》杂志因抽样偏差错误预测总统选举结果，而盖洛普用科学抽样正确预测，这一事件成为统计抽样史上的经典案例，彰显了抽样方法的重要性。",
+    "related_theorems": [
+      "大数定律（样本均值依概率收敛于总体均值）",
+      "样本均值与方差的计算公式"
+    ],
+    "common_misconceptions": [
+      "混淆总体与样本（如将样本均值当作总体均值）",
+      "分层抽样中各层抽样比例计算错误",
+      "系统抽样中起始点的选择有偏（非随机）"
+    ]
+  },
+  {
+    "id": "limit_concept",
+    "name": "极限概念",
+    "description": "数列极限与函数极限的直观理解和形式化定义，极限的运算法则。",
+    "prerequisites": [
+      "function_concept_hs"
+    ],
+    "abstraction_level": 4,
+    "domain": "calculus",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解数列极限和函数极限的直观含义（趋近思想）",
+      "掌握极限的四则运算法则",
+      "能计算基本函数的极限（包括无穷大和无穷小）",
+      "理解两个重要极限及其应用"
+    ],
+    "examples": [
+      "lim(n→∞) (1+1/n)^n = e",
+      "lim(x→0) sin(x)/x = 1",
+      "lim(x→∞) (3x²+1)/(x²+2) = 3",
+      "无穷小等价替换：x→0 时 sin(x) ~ x, ln(1+x) ~ x"
+    ],
+    "assessment_criteria": [
+      "能计算基本函数的极限",
+      "能运用极限的四则运算法则",
+      "能运用两个重要极限求解相关问题"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "极限思想的萌芽可追溯到古希腊阿基米德的'穷竭法'。17 世纪牛顿和莱布尼茨利用无穷小量创立微积分，但无穷小的逻辑基础长期受到质疑（贝克莱主教称其为'已死量的幽灵'）。19 世纪柯西和魏尔斯特拉斯用 ε-δ 语言严格定义极限，为微积分奠定了坚实逻辑基础。",
+    "related_theorems": [
+      "极限四则运算法则",
+      "夹逼定理（Squeeze Theorem）",
+      "两个重要极限"
+    ],
+    "common_misconceptions": [
+      "认为极限值就是函数值（极限可以不等于函数值）",
+      "混淆 lim(x→a) 与 lim(x→a⁺) 和 lim(x→a⁻)（左右极限）",
+      "无穷小替换时忽略条件（必须 x→0 且为乘除法中的因子）"
+    ]
+  },
+  {
+    "id": "derivative_concept",
+    "name": "导数概念",
+    "description": "导数的定义（极限观点）、几何意义（切线斜率）和物理意义（瞬时变化率）。",
+    "prerequisites": [
+      "limit_concept"
+    ],
+    "abstraction_level": 5,
+    "domain": "calculus",
+    "difficulty": 0.72,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解导数是函数在某点的瞬时变化率",
+      "掌握导数的极限定义 f'(x) = lim(Δx→0) [f(x+Δx)-f(x)]/Δx",
+      "理解导数的几何意义：曲线在该点切线的斜率",
+      "能根据定义求基本函数的导数"
+    ],
+    "examples": [
+      "由定义求 f(x)=x² 的导数：f'(x)=2x",
+      "切线方程：y - f(x₀) = f'(x₀)(x - x₀)",
+      "瞬时速度是位移函数对时间的导数",
+      "f(x)=c（常数）的导数为 0"
+    ],
+    "assessment_criteria": [
+      "能用定义法求简单函数的导数",
+      "能利用导数求曲线的切线方程",
+      "能解释导数的物理意义和几何意义"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "微积分的发明权之争是数学史上最著名的公案。牛顿在 1665-1666 年间发明了'流数法'，莱布尼茨在 1675 年左右独立发展了微分学，且符号体系更优。两人的追随者激烈争抢优先权，导致英国数学与欧洲大陆数学长期隔绝。如今公认两人独立发明，莱布尼茨的 dy/dx 符号沿用至今。",
+    "related_theorems": [
+      "导数定义定理",
+      "可导与连续的关系定理（可导必连续，连续未必可导）",
+      "切线斜率定理"
+    ],
+    "common_misconceptions": [
+      "认为连续函数一定可导（如 |x| 在 x=0 处连续但不可导）",
+      "将平均变化率与瞬时变化率混淆",
+      "求切线方程时用错切点坐标"
+    ]
+  },
+  {
+    "id": "derivative_rules",
+    "name": "导数运算法则",
+    "description": "基本初等函数的导数公式，导数的四则运算法则和复合函数求导法则（链式法则）。",
+    "prerequisites": [
+      "derivative_concept"
+    ],
+    "abstraction_level": 5,
+    "domain": "calculus",
+    "difficulty": 0.7,
+    "is_milestone": false,
+    "learning_objectives": [
+      "熟记基本初等函数的导数公式",
+      "掌握导数的四则运算法则（和差积商）",
+      "掌握复合函数的链式求导法则",
+      "能综合运用求导法则计算复杂函数的导数"
+    ],
+    "examples": [
+      "基本公式：(x^n)'=nx^(n-1), (e^x)'=e^x, (lnx)'=1/x, (sinx)'=cosx",
+      "乘法法则：(uv)'=u'v+uv'",
+      "链式法则：[f(g(x))]'=f'(g(x))·g'(x)",
+      "求 (x²+1)^3 的导数：3(x²+1)²·2x = 6x(x²+1)²"
+    ],
+    "assessment_criteria": [
+      "能熟练运用基本导数公式",
+      "能正确运用四则运算法则求导",
+      "能运用链式法则求复合函数的导数"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "求导法则的系统化归功于莱布尼茨的符号体系。莱布尼茨用 dy/dx 表示导数，使得乘法法则 d(uv)=u·dv+v·du 看起来自然合理。链式法则的发现使得复合函数求导变得机械化，大大简化了微积分的运算，是微积分从'艺术'变为'技术'的关键一步。",
+    "related_theorems": [
+      "导数四则运算法则",
+      "链式法则（Chain Rule）",
+      "基本初等函数导数公式表"
+    ],
+    "common_misconceptions": [
+      "乘法法则误用为 (uv)'=u'v'（正确为 u'v+uv'）",
+      "链式法则中漏乘内层函数的导数",
+      "商的求导法则符号错误"
+    ]
+  },
+  {
+    "id": "derivative_applications",
+    "name": "导数的应用",
+    "description": "利用导数研究函数的单调性、极值与最值，以及导数在实际优化问题中的应用。",
+    "prerequisites": [
+      "derivative_rules"
+    ],
+    "abstraction_level": 6,
+    "domain": "calculus",
+    "difficulty": 0.85,
+    "is_milestone": false,
+    "learning_objectives": [
+      "能利用导数符号判断函数的单调性",
+      "掌握求函数极值和最值的方法",
+      "能利用导数证明不等式",
+      "能解决实际优化问题（如用料最省、利润最大）"
+    ],
+    "examples": [
+      "f'(x)>0 则单调递增，f'(x)<0 则单调递减",
+      "极值点条件：f'(x₀)=0 且 f' 在 x₀ 两侧变号",
+      "用导数证明：x>0 时 e^x > 1+x",
+      "用料最省问题：给定体积求表面积最小的圆柱形罐尺寸"
+    ],
+    "assessment_criteria": [
+      "能用导数确定函数的单调区间",
+      "能正确求函数的极值和闭区间上的最值",
+      "能构造函数利用导数证明不等式",
+      "能将实际问题转化为函数最值问题并用导数求解"
+    ],
+    "estimated_minutes": 75,
+    "historical_context": "导数的应用是微积分'改变世界'的体现。费马在 17 世纪就用类似导数的方法求极值。导数最优化理论在二战后蓬勃发展，线性规划、最优控制论、机器学习中的梯度下降法都根植于导数的极值思想。如今从火箭轨道设计到神经网络训练，导数的应用无处不在。",
+    "related_theorems": [
+      "函数单调性导数判定定理",
+      "极值第一充分条件（导数变号）",
+      "极值第二充分条件（二阶导数判定）",
+      "费马引理（极值点处导数为零）"
+    ],
+    "common_misconceptions": [
+      "认为 f'(x₀)=0 的点一定是极值点（需验证变号）",
+      "混淆极值与最值（极值是局部概念，最值是全局概念）",
+      "求最值时忘记与端点值比较"
+    ]
+  },
+  {
+    "id": "complex_numbers",
+    "name": "复数",
+    "description": "复数的概念、几何表示、代数运算，以及复数的三角形式和指数形式。",
+    "prerequisites": [
+      "set_theory"
+    ],
+    "abstraction_level": 4,
+    "domain": "algebra",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解复数的概念和虚数单位 i 的意义（i²=-1）",
+      "掌握复数的代数形式 z=a+bi 和几何表示",
+      "能进行复数的加减乘除运算",
+      "了解复数的三角形式和模、幅角的概念"
+    ],
+    "examples": [
+      "复数 z = 3+4i，模 |z| = √(3²+4²) = 5",
+      "复数乘法：(1+i)(2-i) = 3+i",
+      "复数除法：(1+i)/(1-i) = i",
+      "三角形式：z = r(cosθ + i·sinθ)"
+    ],
+    "assessment_criteria": [
+      "能进行复数的四则运算",
+      "能求复数的模和共轭复数",
+      "能在复平面中表示复数并进行几何解释"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "复数的发现史充满戏剧性。16 世纪卡尔达诺在解三次方程时遇到了负数开平方，称其为'诡辩量'。高斯在 1831 年引入复平面（高斯平面），赋予复数几何直观。欧拉发现了 e^(iθ)=cosθ+i·sinθ（欧拉公式），将指数函数与三角函数统一。复数从'数学怪物'变成了现代物理（量子力学、电学）不可或缺的工具。",
+    "related_theorems": [
+      "欧拉公式 e^(iθ)=cosθ+i·sinθ",
+      "复数模的性质 |z₁·z₂|=|z₁|·|z₂|",
+      "棣莫弗定理 (cosθ+i·sinθ)^n = cos(nθ)+i·sin(nθ)"
+    ],
+    "common_misconceptions": [
+      "认为虚数不是'真正的数'（复数是实数的自然推广）",
+      "复数比较大小（复数没有大小关系，只有模可以比较）",
+      "共轭复数运算中符号错误（z·z̄=|z|² 而非 0）"
+    ]
+  }
+]

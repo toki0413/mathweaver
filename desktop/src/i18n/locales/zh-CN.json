@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "MathWeaver",
+    "subtitle": "多智能体数学认知操作系统"
+  },
+  "mode": {
+    "dialogue": "对话",
+    "interview": "面试",
+    "proof": "证明",
+    "graph": "图谱"
+  },
+  "action": {
+    "send": "发送",
+    "save": "保存",
+    "load": "加载",
+    "export": "导出"
+  },
+  "status": {
+    "loading": "加载中…",
+    "error": "出错了",
+    "ready": "就绪"
+  },
+  "onboarding": {
+    "welcome": "欢迎使用 MathWeaver",
+    "step1": "第 1 步：认识 MathWeaver",
+    "step2": "第 2 步：三种学习模式",
+    "step3": "第 3 步：如何开始",
+    "step4": "第 4 步：配置你的 AI"
+  },
+  "settings": {
+    "title": "设置",
+    "llm": "大语言模型配置",
+    "about": "关于"
+  }
+}
