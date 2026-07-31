@@ -889,7 +889,8 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
     <div class="stat-pill"><span class="n">7</span><span class="l">Agent + Orchestrator</span></div>
     <div class="stat-pill"><span class="n">4</span><span class="l">场耦合引擎</span></div>
     <div class="stat-pill"><span class="n">4</span><span class="l">层 Z3 Fallback</span></div>
-    <div class="stat-pill"><span class="n">44.7k</span><span class="l">行代码</span></div>
+    <div class="stat-pill"><span class="n">56k</span><span class="l">行代码</span></div>
+    <div class="stat-pill"><span class="n">509</span><span class="l">测试用例 · 100% 通过</span></div>
   </div>
 
   <div class="col2" style="margin-top: 0.7rem;">
@@ -928,12 +929,56 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
   <p class="note" style="margin-top: 0.5rem;">前端 Electron + React (桌面离线 / Web mock shim); 降级策略 WebGL→SVG · Manim→SVG · LLM→规则; 状态管理 Zustand。</p>
 </section>
 
-<!-- 12. 路线图 -->
+<!-- 12. 工程质量与可靠性 -->
+<section class="slide content-slide dense">
+  <h2>工程质量与可靠性 <span class="tag tag-built">v0.3.0</span></h2>
+  <p class="lead">从"能跑"到"可靠"。v0.3.0 系统性修复了 LLM 协议一致性、Agent 异常隔离、Token 追踪与连接复用——每一项都有测试覆盖。</p>
+
+  <div class="col2">
+    <div>
+      <h3>LLM 协议一致性</h3>
+      <ul class="bullet-list">
+        <li><strong>extract_content()</strong> 统一辅助函数, 兼容 dataclass 与 dict 响应</li>
+        <li>全代码库 11 处调用点统一替换, 零协议分歧</li>
+        <li>根因: LLMResponse 数据类与遗留 dict 返回值的混用</li>
+      </ul>
+
+      <h3 style="margin-top: 0.7rem;">Agent 异常隔离</h3>
+      <ul class="bullet-list">
+        <li><strong>_safe_agent_run()</strong> 包装器: Agent 崩溃不再传播到 Orchestrator</li>
+        <li>异常自动记录 + trace span 标记 ERROR</li>
+        <li>调用方决定降级策略 (跳过/回退/报错)</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>LLM 客户端韧性</h3>
+      <ul class="bullet-list">
+        <li><strong>指数退避重试</strong>: 429/5xx 自动重试, 最多 3 次</li>
+        <li><strong>连接池复用</strong>: httpx.AsyncClient 单例, 减少 TCP 握手开销</li>
+        <li>Token 使用量从硬编码 0 改为从响应累积追踪</li>
+      </ul>
+
+      <h3 style="margin-top: 0.7rem;">CI/CD 流水线</h3>
+      <div class="flow">
+        <span class="step io">push</span><span class="arrow">›</span>
+        <span class="step">ruff lint</span><span class="arrow">›</span>
+        <span class="step">509 tests</span><span class="arrow">›</span>
+        <span class="step">typecheck</span><span class="arrow">›</span>
+        <span class="step">E2E</span><span class="arrow">›</span>
+        <span class="step formal">tag → release</span>
+      </div>
+      <p class="note">GitHub Actions: backend (Python 3.11) + desktop (Electron) + E2E (Playwright) + release (三平台构建)</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13. 路线图 -->
 <section class="slide content-slide dense">
   <h2>下一步</h2>
 
   <div class="timeline">
-    <div class="tl-item"><div class="dot"></div><div class="date">2026 Q3</div><div class="label">L2/L3 fallback 接入<br>眼动校准转稳定</div></div>
+    <div class="tl-item"><div class="dot"></div><div class="date">2026 Q3 ✓</div><div class="label">v0.3.0 发布<br>协议一致性 + CI/CD</div></div>
     <div class="tl-item future"><div class="dot"></div><div class="date">2026 Q4</div><div class="label">种子用户<br>GitHub 100★, 20 试用者</div></div>
     <div class="tl-item future"><div class="dot"></div><div class="date">2027 Q1</div><div class="label">首批教研合作<br>1–2 院校 × 30 学生</div></div>
     <div class="tl-item future"><div class="dot"></div><div class="date">2027 Q3</div><div class="label">论文产出 + 扩展<br>线代/数论 DAG 联动</div></div>
@@ -976,7 +1021,7 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
 <!-- Navigation -->
 <div class="nav">
   <button id="prev" title="上一页 (←)">‹</button>
-  <span class="counter" id="counter">1 / 13</span>
+  <span class="counter" id="counter">1 / 14</span>
   <button id="next" title="下一页 (→)">›</button>
 </div>
 <div class="hint">← → 翻页 · F 全屏</div>
