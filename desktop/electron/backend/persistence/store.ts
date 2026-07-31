@@ -23,6 +23,9 @@
 
 import Database from 'better-sqlite3'
 import type { FourFieldState, StudentProfile } from '../types'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('Persistence')
 
 // ---------------------------------------------------------------------------
 // Schema DDL
@@ -150,6 +153,10 @@ function _entryHash(entry: Record<string, unknown>): string {
  *
  * 使用 better-sqlite3（同步 API），默认使用内存数据库便于测试。
  * 使用文件系统路径可实现持久存储。
+ *
+ * 如果 better-sqlite3 原生模块加载失败（例如目标平台缺少预编译二进制，
+ * 或系统缺少编译工具链），StateStore 会自动回退到内存模式并记录警告，
+ * 保证应用不会因此崩溃。持久化功能在回退模式下不可用。
  */
 export class StateStore {
   /** 数据库文件路径 */
@@ -158,16 +165,42 @@ export class StateStore {
   /** better-sqlite3 数据库实例 */
   private _db: Database.Database | null
 
+  /** 当原生模块加载失败时为 true，此时使用内存回退模式 */
+  private _fallbackMode: boolean = false
+
   /**
    * @param dbPath  SQLite 数据库文件路径。默认 ':memory:'（内存数据库，适合测试）。
    *                 使用文件系统路径可实现持久存储。
    */
   constructor(dbPath: string = ':memory:') {
     this.dbPath = dbPath
-    this._db = new Database(dbPath)
-    // 启用外键约束（SQLite 默认关闭）
-    this._db.pragma('foreign_keys = ON')
-    this.initSchema()
+    try {
+      this._db = new Database(dbPath)
+      // 启用外键约束（SQLite 默认关闭）
+      this._db.pragma('foreign_keys = ON')
+      this.initSchema()
+    } catch (err) {
+      // better-sqlite3 原生模块可能因以下原因加载失败：
+      //   - 目标平台/架构无预编译二进制
+      //   - 系统缺少 python3/make/g++ 导致 npm rebuild 失败
+      //   - Electron ABI 不匹配
+      // 回退到内存模式，保证应用可用（持久化功能降级）。
+      log.error('better-sqlite3 initialization failed, falling back to in-memory mode', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+      this._fallbackMode = true
+      this._db = new Database(':memory:')
+      this._db.pragma('foreign_keys = ON')
+      this.initSchema()
+    }
+  }
+
+  /**
+   * 返回是否处于回退模式（原生模块加载失败）。
+   * 调用方可据此向用户显示持久化功能降级的提示。
+   */
+  get isFallbackMode(): boolean {
+    return this._fallbackMode
   }
 
   // -- schema -------------------------------------------------------------
@@ -354,7 +387,7 @@ export class StateStore {
       )
       .all(sessionId) as { entry_json: string; entry_hash: string }[]
 
-    return rows.map((row) => {
+    return rows.map(row => {
       const parsed = JSON.parse(row.entry_json) as Record<string, unknown>
       parsed['entry_hash'] = row.entry_hash
       return parsed
@@ -371,10 +404,7 @@ export class StateStore {
    * @param sessionId  会话 ID。
    * @param messages   消息对象数组。
    */
-  saveContextMessages(
-    sessionId: string,
-    messages: Record<string, unknown>[],
-  ): void {
+  saveContextMessages(sessionId: string, messages: Record<string, unknown>[]): void {
     if (!this._db) throw new Error('Database is closed')
 
     // 捕获 db 引用到局部变量，使 TypeScript 在事务闭包内能正确收窄类型
@@ -417,7 +447,7 @@ export class StateStore {
       )
       .all(sessionId) as { message_json: string }[]
 
-    return rows.map((row) => JSON.parse(row.message_json) as Record<string, unknown>)
+    return rows.map(row => JSON.parse(row.message_json) as Record<string, unknown>)
   }
 
   // -- lifecycle ----------------------------------------------------------

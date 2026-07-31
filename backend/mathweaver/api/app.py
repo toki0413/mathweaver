@@ -143,6 +143,107 @@ async def get_dag_nodes(level: str | None = None) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Historical narrative & cross-curriculum comparison (T-3.4 / T-3.5)
+# ---------------------------------------------------------------------------
+
+class HistoricalRequest(BaseModel):
+    query: str
+    node_id: str = "group_definition"
+    top_k: int = 3
+
+
+class CurriculumCompareRequest(BaseModel):
+    levels: list[str] = ["group_theory", "linear_algebra", "number_theory"]
+    concept_keyword: str = "isomorphism"
+
+
+@app.post("/api/historical/narrative")
+async def get_historical_narrative(req: HistoricalRequest) -> dict[str, Any]:
+    """Retrieve a historical narrative for a concept via RAG.
+
+    Uses the ``HistoricalAgent``'s BM25 retrieval to find relevant
+    mathematical-history entries, then returns a narrative summary plus
+    the raw retrieved entries.
+
+    Returns:
+        JSON with ``narrative`` (str), ``entries`` (list of
+        ``{title, content, score}``), ``node_id``, and
+        ``retrieval_method``.
+    """
+    from ..agents.historical import HistoricalAgent
+
+    agent = HistoricalAgent()
+    results = agent._retrieve(req.query, top_k=req.top_k)
+
+    if not results:
+        # Fallback: search using the node_id as query
+        results = agent._retrieve(req.node_id, top_k=req.top_k)
+
+    if results:
+        top = results[0]
+        narrative = top["content"]
+        entries = [
+            {
+                "title": r["title"],
+                "content": r["content"],
+                "score": r["score"],
+            }
+            for r in results
+        ]
+    else:
+        narrative = "暂无相关历史背景。"
+        entries = []
+
+    return {
+        "narrative": narrative,
+        "entries": entries,
+        "node_id": req.node_id,
+        "retrieval_method": "bm25",
+    }
+
+
+@app.post("/api/curriculum/compare")
+async def compare_curriculum_structures(req: CurriculumCompareRequest) -> dict[str, Any]:
+    """Compare how a concept appears across different curriculum levels.
+
+    Searches each specified curriculum DAG for nodes whose name or
+    description contains ``concept_keyword``, then returns a structured
+    comparison highlighting the concept's structural role in each
+    curriculum.
+
+    Returns:
+        JSON with ``comparisons`` (list of ``{level, concept_id,
+        concept_name, description, structural_type}``) and ``keyword``.
+    """
+    from ..dag.concept_dag import CURRICULUM_LEVELS
+
+    comparisons: list[dict[str, Any]] = []
+
+    for level in req.levels:
+        if level not in CURRICULUM_LEVELS:
+            continue
+        dag = get_dag(level)
+        matches = dag.search_nodes_by_keyword(req.concept_keyword)
+        for node in matches:
+            comparisons.append({
+                "level": level,
+                "concept_id": node.id,
+                "concept_name": node.name,
+                "description": node.description,
+                "structural_type": node.domain,
+            })
+
+    return {
+        "headline": (
+            f"跨课程对照 · 关键词「{req.concept_keyword}」"
+            f" · {len(comparisons)} 个匹配"
+        ),
+        "comparisons": comparisons,
+        "keyword": req.concept_keyword,
+    }
+
+
 @app.get("/api/curricula")
 async def list_curricula() -> dict[str, Any]:
     """List all available curriculum levels."""
@@ -401,6 +502,131 @@ async def submit_grill_answer(req: GrillAnswerRequest) -> dict[str, Any]:
     orch = get_orchestrator()
     result = await orch.process_student_input(req.answer)
     return result
+
+
+# --- NL→Z3 translation endpoint ---
+
+class NLToZ3Request(BaseModel):
+    claim: str = Field(..., min_length=1)
+
+
+@app.post("/api/conjecture/translate")
+async def nl_to_z3_translate(req: NLToZ3Request) -> dict[str, Any]:
+    """Translate a natural-language conjecture into a Z3 verification task.
+
+    Pipeline: NL → StructuredConjecture → Z3 → Verdict.
+    Uses the LLM (if configured) to parse the claim, then Z3 for
+    formal verification. Falls back to rule-based parsing offline.
+
+    Response structure:
+    - headline: human-readable summary of the verdict
+    - verdict: confirmed / refuted / undecidable
+    - counter_example: the refuting structure (if refuted)
+    - explanation: why Z3 reached this verdict
+    - smt_summary: the Z3 encoding used (human-readable)
+    - structured_parse: the parsed conjecture structure
+    """
+    from ..conjecture.nl_translator import NLToZ3Translator
+
+    llm = get_orchestrator().llm_client
+    translator = NLToZ3Translator(llm_client=llm)
+    result = await translator.translate_and_verify(req.claim)
+
+    verdict = result.verdict
+    if verdict == "confirmed":
+        headline = f"Z3 验证通过：猜想成立"
+    elif verdict == "refuted":
+        headline = f"Z3 找到反例：{result.counter_example}"
+    else:
+        headline = "Z3 无法判定此猜想"
+
+    return {
+        "headline": headline,
+        **result.to_dict(),
+    }
+
+
+# --- Manim animation endpoints ---
+
+@app.get("/api/animations")
+async def list_animations() -> dict[str, Any]:
+    """List all available pre-rendered animations.
+
+    Returns animation metadata including whether a video file
+    is available or if SVG frames should be used instead.
+    """
+    from ..animation.pipeline import get_animation_catalog
+
+    catalog = get_animation_catalog()
+    return {
+        "headline": f"动画库 · {len(catalog.animations)} 个动画",
+        "animations": catalog.list_ids(),
+    }
+
+
+@app.get("/api/animations/{anim_id}")
+async def get_animation(anim_id: str) -> dict[str, Any]:
+    """Get a specific animation's frame data (for SVG playback).
+
+    If a pre-rendered video exists, returns its path; otherwise
+    returns the SVG frames for client-side playback.
+    """
+    from ..animation.pipeline import get_animation_catalog
+
+    catalog = get_animation_catalog()
+    anim = catalog.get(anim_id)
+    if anim is None:
+        return structured_error(
+            status=404,
+            headline=f"未找到动画「{anim_id}」",
+            detail="该动画不在当前动画库中。",
+            recovery={
+                "suggestion": "查看可用动画列表",
+                "endpoint": "/api/animations",
+            },
+        )
+
+    return {
+        "headline": anim.title,
+        "id": anim.id,
+        "title": anim.title,
+        "description": anim.description,
+        "concept": anim.concept,
+        "duration_s": anim.duration_s,
+        "has_video": anim.video_path is not None,
+        "video_url": f"/api/animations/{anim_id}/video" if anim.video_path else None,
+        "frames": [
+            {
+                "svg": frame.svg,
+                "duration_ms": frame.duration_ms,
+                "caption": frame.caption,
+            }
+            for frame in anim.frames
+        ],
+        "manim_source": anim.manim_source if anim.manim_source else None,
+    }
+
+
+@app.get("/api/animations/{anim_id}/video")
+async def get_animation_video(anim_id: str):
+    """Stream a pre-rendered animation video file."""
+    from ..animation.pipeline import get_animation_catalog
+    from fastapi.responses import FileResponse
+
+    catalog = get_animation_catalog()
+    anim = catalog.get(anim_id)
+    if anim is None or anim.video_path is None:
+        return structured_error(
+            status=404,
+            headline=f"视频不可用",
+            detail="该动画尚未渲染为视频。请使用 SVG 帧播放，或在安装 Manim 后重新渲染。",
+        )
+
+    return FileResponse(
+        anim.video_path,
+        media_type="video/mp4",
+        filename=f"{anim_id}.mp4",
+    )
 
 
 # ---------------------------------------------------------------------------

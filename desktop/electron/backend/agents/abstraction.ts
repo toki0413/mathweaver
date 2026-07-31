@@ -27,7 +27,7 @@ export class AbstractionAgent extends BaseAgent {
     const inputType = (perceptionMeta['input_type'] as string) ?? 'question'
 
     if (inputType === 'cayley_table') {
-      const table = perceptionMeta['cayley_table'] as number[][] ?? []
+      const table = (perceptionMeta['cayley_table'] as number[][]) ?? []
       const n = (perceptionMeta['n'] as number) ?? 0
       return createAgentMessage(this.role, `辨认出 ${n} 元集合上的二元运算结构`, {
         confidence: 0.9,
@@ -50,7 +50,7 @@ export class AbstractionAgent extends BaseAgent {
       return createAgentMessage(this.role, resp.content, {
         confidence: 0.7,
         metadata: { structure_type: 'natural_language' },
-        tool_calls: (resp.tool_calls ?? []).map((tc) => ({
+        tool_calls: (resp.tool_calls ?? []).map(tc => ({
           id: tc.id,
           name: tc.name,
           arguments: tc.arguments,

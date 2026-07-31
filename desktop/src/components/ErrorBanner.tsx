@@ -18,8 +18,8 @@ function inferErrorLevel(message: string, headline: string): ErrorLevel {
  * 左侧边框颜色随错误类型变化（error 红 / warn 黄 / info 紫）。
  */
 export function ErrorBanner() {
-  const error = useStore((s) => s.error)
-  const clearError = useStore((s) => s.clearError)
+  const error = useStore(s => s.error)
+  const clearError = useStore(s => s.clearError)
 
   // 自动消失：每次出现新错误时启动 5 秒倒计时
   useEffect(() => {

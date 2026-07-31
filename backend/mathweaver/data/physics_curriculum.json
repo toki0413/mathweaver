@@ -1,0 +1,444 @@
+[
+  {
+    "id": "kinematics_1d",
+    "name": "一维运动学",
+    "description": "位置、速度、加速度的数学描述——导数的物理化身",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "mechanics",
+    "difficulty": 0.3,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解位置函数 x(t) 是时间的函数，速度 v(t) = dx/dt 是位置的导数",
+      "理解加速度 a(t) = dv/dt = d²x/dt² 是速度的导数",
+      "掌握匀加速运动的代数公式 v = v₀ + at, x = x₀ + v₀t + ½at²"
+    ],
+    "examples": [
+      "自由落体：v(t) = -gt, x(t) = -½gt²（g ≈ 9.8 m/s²）",
+      "匀速运动：v = const, x(t) = x₀ + vt（导数为常数）",
+      "刹车距离：从 v₀ 减速到 0，距离 d = v₀²/(2a)"
+    ],
+    "assessment_criteria": [
+      "能从位置函数求导得到速度和加速度",
+      "能用匀加速公式解决一维运动问题",
+      "理解导数的物理意义：速度是位置的变化率"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "Galileo（1638年）首次用数学描述运动，将物理从哲学思辨转变为可计算的学科。Newton 和 Leibniz 发明微积分后，运动学有了精确的数学语言：速度即导数，位移即积分。",
+    "related_theorems": [
+      "微积分基本定理（运动学视角）",
+      "匀加速运动方程组"
+    ],
+    "common_misconceptions": [
+      "认为速度大则加速度也大（加速度是速度的变化率，与速度本身无关）",
+      "混淆平均速度与瞬时速度"
+    ]
+  },
+  {
+    "id": "vectors_in_physics",
+    "name": "物理中的向量",
+    "description": "力、速度、加速度的向量表示与运算——向量代数的物理应用",
+    "prerequisites": [
+      "kinematics_1d"
+    ],
+    "abstraction_level": 1,
+    "domain": "mechanics",
+    "difficulty": 0.35,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解力是向量，满足向量加法的平行四边形法则",
+      "掌握力的正交分解：F = Fₓî + Fʸĵ",
+      "理解向量点积在计算功时的应用：W = F·d"
+    ],
+    "examples": [
+      "斜面上重力分解：G = mg(sinθî + cosθĵ)（θ为倾角）",
+      "三力平衡：F₁ + F₂ + F₃ = 0（向量闭合三角形）",
+      "力的合成：|F| = √(Fₓ² + Fʸ²)，方向 θ = arctan(Fʸ/Fₓ)"
+    ],
+    "assessment_criteria": [
+      "能用向量加法求合力",
+      "能将力分解到指定坐标轴",
+      "能用点积计算力做的功"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "向量概念由 Hamilton（1843年）在研究四元数时发展，Gibbs 和 Heaviside 将其简化为现代向量分析，立刻被物理学界采纳用于描述力、电场和磁场。",
+    "related_theorems": [
+      "向量加法交换律",
+      "正交分解唯一性定理"
+    ],
+    "common_misconceptions": [
+      "认为力可以直接用标量相加（忽略方向）",
+      "混淆向量的模长与各分量之和"
+    ]
+  },
+  {
+    "id": "kinematics_2d",
+    "name": "二维运动学与抛体运动",
+    "description": "抛体运动的参数方程与轨迹——参数方程与二次函数的物理实现",
+    "prerequisites": [
+      "vectors_in_physics"
+    ],
+    "abstraction_level": 1,
+    "domain": "mechanics",
+    "difficulty": 0.4,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解抛体运动的参数方程：x(t) = v₀cosθ·t, y(t) = v₀sinθ·t - ½gt²",
+      "掌握消参得到轨迹方程 y = x·tanθ - g·x²/(2v₀²cos²θ)（二次曲线/抛物线）",
+      "理解运动独立性原理：水平匀速运动与竖直匀加速运动叠加"
+    ],
+    "examples": [
+      "最大射程：θ = 45°时 R = v₀²/g",
+      "45°+θ 和 45°-θ 两个角度射程相同（二次函数对称性）",
+      "飞行时间 T = 2v₀sinθ/g（令 y(t) = 0 求根）"
+    ],
+    "assessment_criteria": [
+      "能写出抛体运动的参数方程并消参得轨迹方程",
+      "能计算射程、最大高度和飞行时间",
+      "理解抛物线的数学性质与物理运动的对应"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "Galileo 发现抛体轨迹为抛物线，这是数学函数首次被用来精确描述自然现象。这一发现标志着近代物理学的诞生——自然的语言是数学。",
+    "related_theorems": [
+      "运动独立性原理",
+      "抛物线轨迹方程"
+    ],
+    "common_misconceptions": [
+      "认为 heavier 物体落得更快（忽略空气阻力后所有物体加速度相同）",
+      "混淆抛体的水平速度与合速度"
+    ]
+  },
+  {
+    "id": "newtons_laws",
+    "name": "牛顿三定律",
+    "description": "F = ma 的数学结构——微分方程在力学中的核心地位",
+    "prerequisites": [
+      "kinematics_2d"
+    ],
+    "abstraction_level": 2,
+    "domain": "mechanics",
+    "difficulty": 0.5,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解牛顿第二定律 F = ma 本质是二阶常微分方程 m·d²x/dt² = F(x, v, t)",
+      "掌握惯性系的概念与伽利略变换（坐标变换的物理意义）",
+      "理解牛顿第三定律的向量性质：F₁₂ = -F₂₁"
+    ],
+    "examples": [
+      "自由落体：m·d²y/dt² = -mg，解为 y(t) = y₀ + v₀t - ½gt²",
+      "弹簧振子：m·d²x/dt² = -kx，解为 x(t) = A·cos(ωt + φ)（ω = √(k/m)）",
+      "带电粒子在磁场中：F = qv×B（叉积的物理应用）"
+    ],
+    "assessment_criteria": [
+      "能从牛顿第二定律出发建立运动微分方程",
+      "能求解简单的一阶和二阶常微分方程",
+      "理解力作为向量满足叠加原理"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "Newton 在《自然哲学的数学原理》（1687年）中提出三定律，将物理定律首次写成数学方程的形式。F = ma 本质是一个微分方程，标志着物理从此成为数学的应用领域。",
+    "related_theorems": [
+      "牛顿第二定律（微分方程形式）",
+      "伽利略相对性原理"
+    ],
+    "common_misconceptions": [
+      "认为力是维持运动的原因（力是改变运动的原因）",
+      "将 F = ma 理解为代数等式而非微分方程"
+    ]
+  },
+  {
+    "id": "work_energy",
+    "name": "功与能",
+    "description": "功的线积分与能量守恒——微积分基本定理的物理体现",
+    "prerequisites": [
+      "newtons_laws"
+    ],
+    "abstraction_level": 2,
+    "domain": "mechanics",
+    "difficulty": 0.5,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解功的定义 W = ∫F·dr 是向量点积的线积分",
+      "掌握动能定理：W_net = ΔKE = ½mv₂² - ½mv₁²（微积分基本定理的物理版本）",
+      "理解保守力与势能的关系：F = -∇U（梯度运算的物理意义）"
+    ],
+    "examples": [
+      "重力做功：W = mgh（恒力沿直线）",
+      "弹簧做功：W = ½kx²（变力积分 ∫₀ˣ kx' dx'）",
+      "保守力判据：∮F·dr = 0（环路积分为零）"
+    ],
+    "assessment_criteria": [
+      "能计算恒力和变力做的功",
+      "能运用动能定理和机械能守恒解题",
+      "理解保守力对应的势能函数"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "能量概念的数学化由 Lagrange（1788年）和 Hamilton（1834年）完成。功的积分定义 W = ∫F·dr 是微积分基本定理在物理中的直接体现：微分（力）的积分给出有限变化量（能量差）。",
+    "related_theorems": [
+      "动能定理（微积分基本定理的物理形式）",
+      "机械能守恒定律"
+    ],
+    "common_misconceptions": [
+      "认为功是向量（功是标量，是向量的点积）",
+      "混淆保守力与非保守力做功的路径依赖性"
+    ]
+  },
+  {
+    "id": "momentum",
+    "name": "动量与冲量",
+    "description": "动量守恒与碰撞——向量运算与积分在物理中的应用",
+    "prerequisites": [
+      "work_energy"
+    ],
+    "abstraction_level": 2,
+    "domain": "mechanics",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解动量 p = mv 是向量，冲量 J = ∫F dt 是力的时间积分",
+      "掌握动量定理：J = Δp = mΔv（向量形式的积分）",
+      "理解动量守恒定律：Σp_before = Σp_after（向量方程，各分量独立守恒）"
+    ],
+    "examples": [
+      "弹性碰撞：动量守恒 + 动能守恒（联立方程组）",
+      "非弹性碰撞：仅动量守恒（动能损失）",
+      "火箭方程：m·dv = -u·dm（变质量微分方程，Tsiolkovsky 方程）"
+    ],
+    "assessment_criteria": [
+      "能运用动量守恒解决碰撞问题",
+      "能计算冲量并理解其向量性质",
+      "能区分弹性碰撞与非弹性碰撞"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "动量概念由 Newton 在《原理》中首次提出（他称之为'运动的量'）。动量守恒是空间平移对称性的直接推论（Noether 定理），揭示了守恒律与对称性的深刻数学联系。",
+    "related_theorems": [
+      "动量守恒定律",
+      "Noether 定理（对称性与守恒律的对应）"
+    ],
+    "common_misconceptions": [
+      "认为碰撞中动能总是守恒",
+      "忽略动量的矢量性（只算大小不算方向）"
+    ]
+  },
+  {
+    "id": "rotational_motion",
+    "name": "旋转运动",
+    "description": "力矩、角动量与转动惯量——叉积与张量在力学中的应用",
+    "prerequisites": [
+      "momentum"
+    ],
+    "abstraction_level": 3,
+    "domain": "mechanics",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解力矩 τ = r × F 是向量叉积的物理应用",
+      "掌握角动量 L = r × p 与转动惯量 I = ∫r²dm（积分定义）",
+      "理解角动量守恒 τ = dL/dt = 0 ⟹ L = const"
+    ],
+    "examples": [
+      "力矩计算：τ = rF·sinθ（叉积的模长）",
+      "转动惯量：细杆 I = mL²/3, 圆盘 I = mR²/2（不同质量分布对应不同积分）",
+      "角动量守恒：花样滑冰运动员收手后旋转加快（I减小→ω增大）"
+    ],
+    "assessment_criteria": [
+      "能计算力矩和角动量（向量叉积）",
+      "能计算简单几何体的转动惯量",
+      "能运用角动量守恒定律分析问题"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "转动动力学由 Euler（1750年代）系统化。力矩作为叉积 τ = r × F 的定义体现了向量代数在物理中的力量——同一个数学结构（叉积）在不同物理情境中给出力矩、角动量和磁力。",
+    "related_theorems": [
+      "角动量守恒定律",
+      "平行轴定理"
+    ],
+    "common_misconceptions": [
+      "认为力矩和角动量是标量",
+      "混淆转动惯量与质量（转动惯量依赖质量分布）"
+    ]
+  },
+  {
+    "id": "oscillations",
+    "name": "简谐振动",
+    "description": "SHM 的微分方程与三角函数解——二阶常系数ODE的经典案例",
+    "prerequisites": [
+      "rotational_motion"
+    ],
+    "abstraction_level": 3,
+    "domain": "waves",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解简谐振动的微分方程 m·d²x/dt² = -kx 及其解 x(t) = A·cos(ωt + φ)",
+      "掌握角频率 ω = √(k/m) 与周期 T = 2π/ω 的关系",
+      "理解阻尼振动方程 m·d²x/dt² + b·dx/dt + kx = 0 及三种阻尼模式"
+    ],
+    "examples": [
+      "弹簧振子：x(t) = A·cos(√(k/m)·t + φ)",
+      "单摆小角度：θ̈ + (g/L)·sinθ ≈ θ̈ + (g/L)·θ = 0（线性化近似）",
+      "阻尼振动：x(t) = A·e^(-γt)·cos(ω't + φ)（欠阻尼情况）"
+    ],
+    "assessment_criteria": [
+      "能建立简谐振动的微分方程并求解",
+      "能计算周期、频率和角频率",
+      "能区分欠阻尼、临界阻尼和过阻尼"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "振动方程是最早被完整求解的微分方程之一。Huygens（1673年）研究单摆时发现其等时性。阻尼振动的三种模式对应二阶常系数ODE特征方程的判别式：Δ > 0（过阻尼）、Δ = 0（临界阻尼）、Δ < 0（欠阻尼）。",
+    "related_theorems": [
+      "简谐振动周期公式",
+      "阻尼振动特征方程判据"
+    ],
+    "common_misconceptions": [
+      "认为所有振动都是简谐的（只有恢复力正比于位移时才是）",
+      "忽略小角度近似在单摆中的重要性"
+    ]
+  },
+  {
+    "id": "wave_motion",
+    "name": "波动",
+    "description": "波方程与叠加原理——偏微分方程与三角函数的物理应用",
+    "prerequisites": [
+      "oscillations"
+    ],
+    "abstraction_level": 4,
+    "domain": "waves",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解波方程 ∂²u/∂t² = c²·∂²u/∂x² 是二阶偏微分方程",
+      "掌握行波解 u(x,t) = f(x ± ct) 与正弦波 y = A·sin(kx - ωt)",
+      "理解波的叠加原理与干涉/衍射现象（线性叠加的物理后果）"
+    ],
+    "examples": [
+      "行波：y(x,t) = A·sin(kx - ωt)，波速 v = ω/k",
+      "驻波：y(x,t) = 2A·sin(kx)·cos(ωt)（两行波叠加）",
+      "多普勒效应：f' = f·(v ± v_observer)/(v ∓ v_source)（频率变换）"
+    ],
+    "assessment_criteria": [
+      "能写出波方程并理解其偏微分方程结构",
+      "能用叠加原理分析干涉和驻波",
+      "理解波参数（波长、频率、波速）的数学关系"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "波方程由 d'Alembert（1747年）首次推导。叠加原理是线性偏微分方程的核心性质——正是因为波方程是线性的，多波叠加才满足简单的代数加法，这直接导致了干涉和衍射现象。",
+    "related_theorems": [
+      "波动方程",
+      "叠加原理（线性系统）"
+    ],
+    "common_misconceptions": [
+      "认为波传播需要介质传播物质（传播的是扰动，不是物质本身）",
+      "混淆行波与驻波的数学结构"
+    ]
+  },
+  {
+    "id": "electrostatics",
+    "name": "静电学",
+    "description": "库仑定律与电场——向量场与高斯定理的物理应用",
+    "prerequisites": [
+      "wave_motion"
+    ],
+    "abstraction_level": 4,
+    "domain": "electromagnetism",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解库仑定律 F = k·q₁q₂/r²（平方反比律的向量形式）",
+      "掌握电场 E = F/q 的向量场概念",
+      "理解高斯定理 ∮E·dA = Q/ε₀（向量场的面积分）"
+    ],
+    "examples": [
+      "点电荷电场：E = k·q/r²·r̂（球对称向量场）",
+      "均匀带电球面：内部 E = 0，外部 E = k·Q/r²（高斯定理应用）",
+      "电偶极子：远场 E ∝ 1/r³（多极展开的一阶项）"
+    ],
+    "assessment_criteria": [
+      "能计算点电荷和简单电荷分布的电场",
+      "能运用高斯定理求解对称电场",
+      "理解电场作为向量场的数学性质"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "Coulomb（1785年）用扭秤实验确立了平方反比律。Faraday 引入场线概念后，Maxwell（1865年）将电场和磁场统一为向量场并用偏微分方程描述。高斯定理是向量分析中的散度定理在物理中的直接应用。",
+    "related_theorems": [
+      "库仑定律",
+      "高斯定理（散度定理的物理形式）"
+    ],
+    "common_misconceptions": [
+      "认为电场线是真实的物理实体（只是数学表示工具）",
+      "混淆电场强度与电势"
+    ]
+  },
+  {
+    "id": "electromagnetism",
+    "name": "电磁学与麦克斯韦方程组",
+    "description": "四个偏微分方程统一电与磁——向量微积分的巅峰成就",
+    "prerequisites": [
+      "electrostatics"
+    ],
+    "abstraction_level": 5,
+    "domain": "electromagnetism",
+    "difficulty": 0.75,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解麦克斯韦方程组的四个偏微分方程（散度与旋度）",
+      "掌握法拉第定律 ∇×E = -∂B/∂t（旋度的物理意义）",
+      "理解电磁波方程 ∂²E/∂t² = c²·∇²E 的推导与光速 c = 1/√(μ₀ε₀)"
+    ],
+    "examples": [
+      "安培定律：∮B·dl = μ₀I（环路积分）",
+      "法拉第定律：EMF = -dΦ/dt（磁通量变化产生电动势）",
+      "电磁波：E(x,t) = E₀·sin(kx - ωt)，c = ω/k = 1/√(μ₀ε₀)"
+    ],
+    "assessment_criteria": [
+      "能写出麦克斯韦方程组的积分和微分形式",
+      "理解散度和旋度在物理中的意义",
+      "能从麦克斯韦方程推导电磁波的存在性"
+    ],
+    "estimated_minutes": 80,
+    "historical_context": "Maxwell 在 1865 年将 Coulomb、Ampère、Faraday 的实验定律统一为四个偏微分方程，并预言了电磁波的存在。这一成就标志着向量微积分（散度、旋度、梯度）在物理中的终极应用——所有电磁现象都被归约为少数几个微分方程。Einstein 称之为'自 Newton 以来物理学最深刻的事件'。",
+    "related_theorems": [
+      "麦克斯韦方程组",
+      "电磁波方程"
+    ],
+    "common_misconceptions": [
+      "认为电场和磁场是完全独立的（变化的电场产生磁场，反之亦然）",
+      "忽略位移电流项的物理意义"
+    ]
+  },
+  {
+    "id": "quantum_basics",
+    "name": "量子力学基础",
+    "description": "波函数与算符——线性代数与概率论在微观世界的应用",
+    "prerequisites": [
+      "electromagnetism"
+    ],
+    "abstraction_level": 6,
+    "domain": "quantum",
+    "difficulty": 0.85,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解波函数 ψ 是复值函数，|ψ|² 给出概率密度（概率论的推广）",
+      "掌握薛定谔方程 iℏ·∂ψ/∂t = Ĥψ（复数偏微分方程）",
+      "理解可观测量对应厄米算符，本征值即测量值（线性代数特征值问题）"
+    ],
+    "examples": [
+      "一维势阱：Eₙ = n²π²ℏ²/(2mL²)（驻波边界条件→离散能级）",
+      "谐振子：Eₙ = (n + ½)ℏω（零点能源于不确定性原理）",
+      "氢原子能级：Eₙ = -13.6/n² eV（库仑势+球谐函数）"
+    ],
+    "assessment_criteria": [
+      "能写出薛定谔方程并理解其复数偏微分方程结构",
+      "能求解一维无限深势阱问题",
+      "理解量子态作为向量在希尔伯特空间中的表示"
+    ],
+    "estimated_minutes": 90,
+    "historical_context": "量子力学的数学框架由 Heisenberg（矩阵力学，1925）和 Schrödinger（波动力学，1926）独立建立。两者被证明等价——矩阵力学是线性代数，波动力学是偏微分方程，统一于希尔伯特空间中的算符理论。Dirac 指出：'量子力学本质上就是无穷维线性代数。'",
+    "related_theorems": [
+      "薛定谔方程",
+      "不确定性原理 Δx·Δp ≥ ℏ/2"
+    ],
+    "common_misconceptions": [
+      "认为波函数本身是物理量（只有|ψ|²有物理意义）",
+      "认为量子力学是不确定的（演化是确定的，测量才有概率性）"
+    ]
+  }
+]

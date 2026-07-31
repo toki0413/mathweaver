@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react'
+import { useState, useMemo, memo, useEffect, useRef } from 'react'
 
 // ---------------------------------------------------------------------------
 // CurriculumMapper
@@ -67,7 +67,7 @@ const COLUMN_LABELS: { key: SortKey; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 const CURRICULUM_DATA: Record<string, CurriculumEntry[]> = {
-  '中国课程标准': [
+  中国课程标准: [
     {
       conceptId: 'group_definition',
       conceptName: '群的定义',
@@ -255,6 +255,45 @@ const CURRICULUM_DATA: Record<string, CurriculumEntry[]> = {
 }
 
 const FRAMEWORKS: string[] = Object.keys(CURRICULUM_DATA)
+
+// ---------------------------------------------------------------------------
+// T-3.5: 跨课程结构对照数据（fallback 硬编码）
+//
+// 当后端 /api/curriculum/compare 不可用时使用此数据。展示同一结构概念在
+// 不同数学分支中的对应表现，帮助学习者建立跨领域的类比。
+// ---------------------------------------------------------------------------
+
+export interface StructureComparisonEntry {
+  structure: string
+  group_theory: string
+  linear_algebra: string
+  number_theory: string
+  discrete_math: string
+}
+
+const STRUCTURE_COMPARISON: StructureComparisonEntry[] = [
+  {
+    structure: '同构 (Isomorphism)',
+    group_theory: '群同构：保持群运算的双射',
+    linear_algebra: '线性同构：保持向量空间结构的双射',
+    number_theory: '同余关系：保持算术性质的等价类',
+    discrete_math: '图同构：保持邻接关系的顶点双射',
+  },
+  {
+    structure: '核/正规子群',
+    group_theory: '正规子群：gNg\u207B\u00B9=N',
+    linear_algebra: '零空间/核：ker(T)',
+    number_theory: '理想：吸收乘法的子环',
+    discrete_math: '等价类：自反/对称/传递',
+  },
+  {
+    structure: '商结构',
+    group_theory: '商群 G/N',
+    linear_algebra: '商空间 V/W',
+    number_theory: '剩余类环 Z/nZ',
+    discrete_math: '商图/压缩图',
+  },
+]
 
 // ---------------------------------------------------------------------------
 // 内联样式（暗色主题，复用全局 CSS 变量，cw-cm- 前缀作用域）
@@ -583,11 +622,168 @@ const STYLES = `
   color: var(--muted);
   text-align: right;
 }
+
+/* --- T-3.5: 视图切换 tab --- */
+.cw-cm-view-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.cw-cm-view-tab {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cw-cm-view-tab:hover { color: var(--ink); }
+.cw-cm-view-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- T-3.5: 结构对照视图 --- */
+.cw-cm-compare-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.cw-cm-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 760px;
+}
+.cw-cm-compare-table thead th {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.cw-cm-compare-table thead th.cw-cm-compare-struct-th {
+  color: var(--accent);
+}
+.cw-cm-compare-table tbody tr {
+  border-bottom: 1px solid var(--border-subtle, hsl(222, 8%, 18%));
+  /* content-visibility: 长列表渲染优化（rendering-content-visibility） */
+  content-visibility: auto;
+  contain-intrinsic-size: 80px;
+}
+.cw-cm-compare-table tbody tr:last-child { border-bottom: none; }
+.cw-cm-compare-table tbody tr:hover { background: var(--bg3); }
+.cw-cm-compare-table td {
+  padding: 10px 12px;
+  color: var(--ink);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.cw-cm-compare-struct {
+  font-weight: 600;
+  color: var(--ink);
+  font-family: var(--serif);
+  white-space: nowrap;
+}
+.cw-cm-compare-cell {
+  font-size: 12px;
+  color: var(--ink);
+}
+.cw-cm-compare-loading {
+  text-align: center;
+  padding: 32px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.cw-cm-compare-note {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
 `
 
 // ---------------------------------------------------------------------------
 // 组件实现
 // ---------------------------------------------------------------------------
+
+// T-3.5: 跨课程结构对照表 — 独立 memoized 子组件（rerender-memo / rerender-no-inline-components）
+// 展示同一结构概念在不同数学分支中的对应表现，帮助建立跨领域类比。
+const COMPARE_COLUMNS: { key: keyof StructureComparisonEntry; label: string }[] = [
+  { key: 'structure', label: '结构概念' },
+  { key: 'group_theory', label: '群论' },
+  { key: 'linear_algebra', label: '线性代数' },
+  { key: 'number_theory', label: '数论' },
+  { key: 'discrete_math', label: '离散数学' },
+]
+
+interface StructureComparisonTableProps {
+  data: StructureComparisonEntry[]
+  loading: boolean
+  fromBackend: boolean
+}
+
+const StructureComparisonTable = memo(function StructureComparisonTable({
+  data,
+  loading,
+  fromBackend,
+}: StructureComparisonTableProps) {
+  if (loading) {
+    return <div className="cw-cm-compare-loading">正在从后端获取跨课程结构对照数据…</div>
+  }
+
+  return (
+    <>
+      <div className="cw-cm-compare-wrap">
+        <table className="cw-cm-compare-table">
+          <thead>
+            <tr>
+              {COMPARE_COLUMNS.map(col => (
+                <th
+                  key={col.key}
+                  className={col.key === 'structure' ? 'cw-cm-compare-struct-th' : ''}
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i}>
+                <td>
+                  <span className="cw-cm-compare-struct">{row.structure}</span>
+                </td>
+                <td className="cw-cm-compare-cell">{row.group_theory}</td>
+                <td className="cw-cm-compare-cell">{row.linear_algebra}</td>
+                <td className="cw-cm-compare-cell">{row.number_theory}</td>
+                <td className="cw-cm-compare-cell">{row.discrete_math}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="cw-cm-compare-note">
+        {fromBackend
+          ? '数据来源：后端 /api/curriculum/compare'
+          : '数据来源：内置 fallback（后端不可用）'}
+        {' · 同一结构概念在不同分支中的对应表现，帮助建立跨领域类比'}
+      </div>
+    </>
+  )
+})
+StructureComparisonTable.displayName = 'StructureComparisonTable'
 
 function CurriculumMapperBase() {
   const [framework, setFramework] = useState<string>(FRAMEWORKS[0])
@@ -597,13 +793,55 @@ function CurriculumMapperBase() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // T-3.5: 视图切换 tab（映射 / 对照）
+  const [view, setView] = useState<'mapping' | 'compare'>('mapping')
+
+  // T-3.5: 结构对照数据（后端优先，fallback 硬编码）
+  const [compareData, setCompareData] = useState<StructureComparisonEntry[]>(STRUCTURE_COMPARISON)
+  const [compareLoading, setCompareLoading] = useState(false)
+  const [compareFromBackend, setCompareFromBackend] = useState(false)
+  const compareFetchedRef = useRef(false)
+
+  // T-3.5: 切换到对照视图时，懒加载后端数据（如果可用）
+  useEffect(() => {
+    if (view !== 'compare' || compareFetchedRef.current) return
+    compareFetchedRef.current = true
+    let cancelled = false
+    setCompareLoading(true)
+    fetch('/api/curriculum/compare')
+      .then(res => {
+        if (!res.ok) throw new Error('compare API unavailable')
+        return res.json()
+      })
+      .then((data: StructureComparisonEntry[]) => {
+        if (cancelled) return
+        if (Array.isArray(data) && data.length > 0) {
+          setCompareData(data)
+          setCompareFromBackend(true)
+        }
+      })
+      .catch(() => {
+        // 后端不可用，使用 fallback 硬编码数据（已设为初始值）
+        if (!cancelled) {
+          setCompareData(STRUCTURE_COMPARISON)
+          setCompareFromBackend(false)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCompareLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [view])
+
   const entries = CURRICULUM_DATA[framework] ?? []
 
   // 过滤 + 排序
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
 
-    const matched = entries.filter((e) => {
+    const matched = entries.filter(e => {
       if (difficulty !== '全部' && e.difficulty !== difficulty) return false
       if (q) {
         const haystack = `${e.conceptName} ${e.curriculumTopic} ${e.standard}`.toLowerCase()
@@ -615,9 +853,7 @@ function CurriculumMapperBase() {
     const sorted = [...matched].sort((a, b) => {
       let cmp = 0
       if (sortKey === 'difficulty') {
-        cmp =
-          (DIFFICULTY_ORDER[a.difficulty] ?? 99) -
-          (DIFFICULTY_ORDER[b.difficulty] ?? 99)
+        cmp = (DIFFICULTY_ORDER[a.difficulty] ?? 99) - (DIFFICULTY_ORDER[b.difficulty] ?? 99)
       } else {
         cmp = String(a[sortKey]).localeCompare(String(b[sortKey]), 'zh-Hans-CN')
       }
@@ -635,7 +871,7 @@ function CurriculumMapperBase() {
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortKey(key)
       setSortDir('asc')
@@ -643,7 +879,7 @@ function CurriculumMapperBase() {
   }
 
   const handleRowToggle = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id))
+    setExpandedId(prev => (prev === id ? null : id))
   }
 
   const handleResetFilters = () => {
@@ -682,174 +918,202 @@ function CurriculumMapperBase() {
         将 MathWeaver 概念依赖图映射至标准课程框架（灵感源于 MathVizy 教材集成）
       </p>
 
-      {/* 工具栏 */}
-      <div className="cw-cm-toolbar">
-        <div className="cw-cm-field" style={{ flex: '0 0 auto' }}>
-          <span className="cw-cm-label">课程框架</span>
-          <select
-            className="cw-cm-select"
-            value={framework}
-            onChange={(e) => handleFrameworkChange(e.target.value)}
-            aria-label="选择课程框架"
-          >
-            {FRAMEWORKS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* T-3.5: 视图切换 tab */}
+      <div className="cw-cm-view-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'mapping'}
+          className={`cw-cm-view-tab${view === 'mapping' ? ' active' : ''}`}
+          onClick={() => setView('mapping')}
+        >
+          课程标准映射
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'compare'}
+          className={`cw-cm-view-tab${view === 'compare' ? ' active' : ''}`}
+          onClick={() => setView('compare')}
+        >
+          结构对照
+        </button>
+      </div>
 
-        <div className="cw-cm-field cw-cm-field-grow">
-          <span className="cw-cm-label">搜索</span>
-          <input
-            className="cw-cm-input"
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="按概念名称、课程主题或标准筛选…"
-            aria-label="搜索概念或课程主题"
-          />
-        </div>
-
-        <div className="cw-cm-field" style={{ flex: '0 0 auto' }}>
-          <span className="cw-cm-label">难度</span>
-          <div className="cw-cm-diff-group" role="group" aria-label="难度筛选">
-            {DIFFICULTY_FILTERS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                className={`cw-cm-diff-btn${difficulty === d ? ' active' : ''}`}
-                onClick={() => setDifficulty(d)}
-                aria-pressed={difficulty === d}
+      {/* T-3.5: 结构对照视图 */}
+      {view === 'compare' ? (
+        <StructureComparisonTable
+          data={compareData}
+          loading={compareLoading}
+          fromBackend={compareFromBackend}
+        />
+      ) : (
+        <>
+          <div className="cw-cm-toolbar">
+            <div className="cw-cm-field" style={{ flex: '0 0 auto' }}>
+              <span className="cw-cm-label">课程框架</span>
+              <select
+                className="cw-cm-select"
+                value={framework}
+                onChange={e => handleFrameworkChange(e.target.value)}
+                aria-label="选择课程框架"
               >
-                {d}
-              </button>
-            ))}
+                {FRAMEWORKS.map(f => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="cw-cm-field cw-cm-field-grow">
+              <span className="cw-cm-label">搜索</span>
+              <input
+                className="cw-cm-input"
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="按概念名称、课程主题或标准筛选…"
+                aria-label="搜索概念或课程主题"
+              />
+            </div>
+
+            <div className="cw-cm-field" style={{ flex: '0 0 auto' }}>
+              <span className="cw-cm-label">难度</span>
+              <div className="cw-cm-diff-group" role="group" aria-label="难度筛选">
+                {DIFFICULTY_FILTERS.map(d => (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`cw-cm-diff-btn${difficulty === d ? ' active' : ''}`}
+                    onClick={() => setDifficulty(d)}
+                    aria-pressed={difficulty === d}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* 统计 */}
-      <div className="cw-cm-stats">
-        <span>
-          共 <span className="cw-cm-stats-num">{entries.length}</span> 条映射
-        </span>
-        <span>
-          筛选后 <span className="cw-cm-stats-num">{filtered.length}</span> 条
-        </span>
-        <span>
-          当前框架：<span className="cw-cm-stats-num">{framework}</span>
-        </span>
-        {(search !== '' || difficulty !== '全部') && (
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              borderRadius: '3px',
-              color: 'var(--muted)',
-              fontFamily: 'var(--mono)',
-              fontSize: '10px',
-              padding: '1px 8px',
-              cursor: 'pointer',
-            }}
-          >
-            清除筛选
-          </button>
-        )}
-      </div>
-
-      {/* 表格 */}
-      <div className="cw-cm-table-wrap">
-        <table className="cw-cm-table">
-          <thead>
-            <tr>
-              {COLUMN_LABELS.map((col) => (
-                <th
-                  key={col.key}
-                  className={`cw-cm-th-sort${sortKey === col.key ? ' cw-cm-th-active' : ''}`}
-                  onClick={() => handleSort(col.key)}
-                  title={`按${col.label}排序`}
-                >
-                  {col.label}
-                  <span className="cw-cm-sort-ind">{sortIndicator(col.key)}</span>
-                </th>
-              ))}
-              <th className="cw-cm-th-nosort">标准</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="cw-cm-empty">
-                  没有符合条件的映射条目，请调整搜索或筛选条件
-                </td>
-              </tr>
+          {/* 统计 */}
+          <div className="cw-cm-stats">
+            <span>
+              共 <span className="cw-cm-stats-num">{entries.length}</span> 条映射
+            </span>
+            <span>
+              筛选后 <span className="cw-cm-stats-num">{filtered.length}</span> 条
+            </span>
+            <span>
+              当前框架：<span className="cw-cm-stats-num">{framework}</span>
+            </span>
+            {(search !== '' || difficulty !== '全部') && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  borderRadius: '3px',
+                  color: 'var(--muted)',
+                  fontFamily: 'var(--mono)',
+                  fontSize: '10px',
+                  padding: '1px 8px',
+                  cursor: 'pointer',
+                }}
+              >
+                清除筛选
+              </button>
             )}
-            {filtered.map((e) => {
-              const isOpen = expandedId === e.conceptId
-              const prereqs = e.prerequisites ?? []
-              // 返回数组而非 Fragment：满足「仅从 react 导入 useState/useMemo/memo」
-              // 的约束，同时为兄弟 <tr> 提供唯一 key（React 会自动展平嵌套数组）。
-              return [
-                <tr
-                  key={e.conceptId}
-                  className={`cw-cm-row${isOpen ? ' cw-cm-row-open' : ''}`}
-                  onClick={() => handleRowToggle(e.conceptId)}
-                  aria-expanded={isOpen}
-                >
-                  <td>
-                    <div className="cw-cm-concept">
-                      <span className="cw-cm-chevron">▶</span>
-                      <span>
-                        <span className="cw-cm-concept-name">{e.conceptName}</span>
-                        <br />
-                        <span className="cw-cm-concept-id">{e.conceptId}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td className="cw-cm-topic">{e.curriculumTopic}</td>
-                  <td className="cw-cm-grade">{e.grade}</td>
-                  <td>
-                    <span className={`cw-cm-difficulty ${difficultyClass(e.difficulty)}`}>
-                      {e.difficulty}
-                    </span>
-                  </td>
-                  <td className="cw-cm-standard">{e.standard}</td>
-                </tr>,
-                isOpen ? (
-                  <tr key={`${e.conceptId}-exp`} className="cw-cm-expand-row">
-                    <td colSpan={5} className="cw-cm-expand-cell">
-                      <div className="cw-cm-expand-inner">
-                        <div className="cw-cm-expand-label">
-                          前置概念（概念 DAG 入边依赖）
-                        </div>
-                        {prereqs.length > 0 ? (
-                          <div className="cw-cm-prereq-list">
-                            {prereqs.map((p) => (
-                              <span key={p} className="cw-cm-prereq-chip">
-                                {p}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="cw-cm-prereq-empty">
-                            该概念为基础入门，无前置依赖
-                          </div>
-                        )}
-                      </div>
+          </div>
+
+          {/* 表格 */}
+          <div className="cw-cm-table-wrap">
+            <table className="cw-cm-table">
+              <thead>
+                <tr>
+                  {COLUMN_LABELS.map(col => (
+                    <th
+                      key={col.key}
+                      className={`cw-cm-th-sort${sortKey === col.key ? ' cw-cm-th-active' : ''}`}
+                      onClick={() => handleSort(col.key)}
+                      title={`按${col.label}排序`}
+                    >
+                      {col.label}
+                      <span className="cw-cm-sort-ind">{sortIndicator(col.key)}</span>
+                    </th>
+                  ))}
+                  <th className="cw-cm-th-nosort">标准</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="cw-cm-empty">
+                      没有符合条件的映射条目，请调整搜索或筛选条件
                     </td>
                   </tr>
-                ) : null,
-              ]
-            })}
-          </tbody>
-        </table>
-      </div>
+                )}
+                {filtered.map(e => {
+                  const isOpen = expandedId === e.conceptId
+                  const prereqs = e.prerequisites ?? []
+                  // 返回数组而非 Fragment：满足「仅从 react 导入 useState/useMemo/memo」
+                  // 的约束，同时为兄弟 <tr> 提供唯一 key（React 会自动展平嵌套数组）。
+                  return [
+                    <tr
+                      key={e.conceptId}
+                      className={`cw-cm-row${isOpen ? ' cw-cm-row-open' : ''}`}
+                      onClick={() => handleRowToggle(e.conceptId)}
+                      aria-expanded={isOpen}
+                    >
+                      <td>
+                        <div className="cw-cm-concept">
+                          <span className="cw-cm-chevron">▶</span>
+                          <span>
+                            <span className="cw-cm-concept-name">{e.conceptName}</span>
+                            <br />
+                            <span className="cw-cm-concept-id">{e.conceptId}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="cw-cm-topic">{e.curriculumTopic}</td>
+                      <td className="cw-cm-grade">{e.grade}</td>
+                      <td>
+                        <span className={`cw-cm-difficulty ${difficultyClass(e.difficulty)}`}>
+                          {e.difficulty}
+                        </span>
+                      </td>
+                      <td className="cw-cm-standard">{e.standard}</td>
+                    </tr>,
+                    isOpen ? (
+                      <tr key={`${e.conceptId}-exp`} className="cw-cm-expand-row">
+                        <td colSpan={5} className="cw-cm-expand-cell">
+                          <div className="cw-cm-expand-inner">
+                            <div className="cw-cm-expand-label">前置概念（概念 DAG 入边依赖）</div>
+                            {prereqs.length > 0 ? (
+                              <div className="cw-cm-prereq-list">
+                                {prereqs.map(p => (
+                                  <span key={p} className="cw-cm-prereq-chip">
+                                    {p}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="cw-cm-prereq-empty">该概念为基础入门，无前置依赖</div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null,
+                  ]
+                })}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="cw-cm-footer">点击表头排序 · 点击行展开前置概念</div>
+          <div className="cw-cm-footer">点击表头排序 · 点击行展开前置概念</div>
+        </>
+      )}
     </div>
   )
 }

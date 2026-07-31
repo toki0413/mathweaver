@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..models.state import ConceptNode
+from ..llm.client import extract_content
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,7 @@ class QuestionGenerator:
             user_message=user_message,
             temperature=0.8,
         )
-        llm_text = resp.get("content", "") if isinstance(resp, dict) else str(resp)
+        llm_text = extract_content(resp)
 
         return self._parse_llm_response(llm_text, node, difficulty, q_type)
 

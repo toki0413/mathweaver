@@ -15,6 +15,7 @@ from mathweaver.counterexample.forge import (
     check_commutativity_cayley,
     verify_group_axioms_cayley,
 )
+from mathweaver.llm.client import LLMResponse
 
 # Known group: Z3 (cyclic group of order 3)
 # Cayley table for Z3: 0 is identity, addition mod 3
@@ -121,11 +122,10 @@ def _run(coro):
 
 
 class MockLLM:
-    """Mock LLM client for testing the forge's L2/L4 fallback paths.
+    """Mock LLM client for testing the forge's L2/L3/L4 fallback paths.
 
-    Returns a fixed response for every chat() call.
-    The forge code uses: resp.get("content", "") if isinstance(resp, dict) else str(resp)
-    So we return a dict with a "content" key.
+    Returns an LLMResponse (matching the real LLMClient protocol) with
+    a fixed content string for every chat() call.
     """
 
     def __init__(self, response_content: str):
@@ -139,14 +139,17 @@ class MockLLM:
             "system": system_prompt[:200],
             "user": user_message[:200],
         })
-        return {"content": self.response_content}
+        return LLMResponse(
+            content=self.response_content,
+            usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+        )
 
 
 class MockLLMSequence:
     """Mock LLM that returns different responses on successive calls.
 
-    Useful for testing L2→L4 fallthrough where the LLM is called
-    first by L2 (returning a Cayley table) and then by L4 (returning text).
+    Useful for testing L2→L3→L4 fallthrough where the LLM is called
+    first by L2 (returning a Cayley table) and then by L3/L4 (returning text).
     """
 
     def __init__(self, responses: list[str]):
@@ -163,7 +166,10 @@ class MockLLMSequence:
             "user": user_message[:200],
             "returned": content[:200],
         })
-        return {"content": content}
+        return LLMResponse(
+            content=content,
+            usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+        )
 
 
 # Tables for async tests
@@ -307,16 +313,16 @@ def test_generate_l2_non_commutative_table():
 
 
 def test_generate_l2_valid_group_falls_to_l4():
-    """L2 path: mock LLM returns a valid group, falls through to L4.
+    """L2 path: mock LLM returns a valid group, falls through L3 to L4.
 
     The mock returns Z3_TABLE (a valid group). L2:
-    1. "结合" in conjecture -> verify_associativity -> Z3 IS associative -> skip
-    2. Group axioms -> Z3 IS a group -> skip
-    3. "交换" in conjecture -> check_commutativity -> Z3 IS commutative -> skip
-    4. Falls through to L4.
+    1. "结合" in conjecture -> verify_associativity -> IS associative -> skip
+    2. Group axioms -> IS a group -> skip
+    3. "交换" in conjecture -> check_commutativity -> IS commutative -> skip
+    4. L2 returns failure (no violation found).
 
-    L4 uses the same mock LLM, which returns the JSON table again.
-    Since the text doesn't contain "反例"/"不成立"/"counter", L4 returns failure.
+    L3 calls LLM (same JSON table), no "反例"/"counter" keywords -> L3 fails.
+    L4 calls LLM (same JSON table), no "反例"/"counter" -> L4 returns failure.
     """
     table_json = json.dumps(Z3_TABLE)
     mock = MockLLM(table_json)
@@ -326,16 +332,17 @@ def test_generate_l2_valid_group_falls_to_l4():
         "所有运算都满足结合律且交换",
         context={},
     ))
-    # Falls through to L4
+    # Falls through L3 to L4
     assert result.level == FallbackLevel.L4_LLM_ONLY
-    assert mock.call_count == 2  # L2 called once, L4 called once
+    assert mock.call_count == 3  # L2 + L3 + L4 each called once
 
 
 def test_generate_l2_invalid_json_falls_to_l4():
-    """L2 path: mock LLM returns non-JSON text, falls through to L4.
+    """L2 path: mock LLM returns non-JSON text, falls through L3 to L4.
 
     The mock returns "This is not a Cayley table" which can't be parsed as JSON.
-    L2 fails to extract a Cayley table -> falls to L4.
+    L2 fails to extract a Cayley table -> L3 heuristic check also fails
+    (no logical chain markers, no term coverage) -> falls to L4.
     """
     mock = MockLLM("This is not a Cayley table. S3 is a counter-example.")
     forge = CounterExampleForge(llm_client=mock)
@@ -344,11 +351,12 @@ def test_generate_l2_invalid_json_falls_to_l4():
         "所有群都是交换群",
         context={},
     ))
-    # Falls through to L4 because L2 couldn't parse a Cayley table
+    # Falls through L3 to L4 because L2 couldn't parse a Cayley table
+    # and L3 heuristic verification also fails (no logical chain, no term coverage)
     assert result.level == FallbackLevel.L4_LLM_ONLY
     # L4 checks for "反例" in text — "counter" is in the text
     assert result.success is True
-    assert mock.call_count == 2  # L2 + L4
+    assert mock.call_count == 3  # L2 + L3 + L4 each called once
 
 
 # ===========================================================================
@@ -527,5 +535,95 @@ def test_fallback_level_values():
     """FallbackLevel enum should have all four levels."""
     assert FallbackLevel.L1_Z3.value == "L1: Z3 direct"
     assert FallbackLevel.L2_LLM_Z3.value == "L2: LLM + Z3 verify"
-    assert FallbackLevel.L3_LLM_LEAN.value == "L3: LLM + Lean verify"
+    assert FallbackLevel.L3_LLM_HEURISTIC.value == "L3: LLM + heuristic verify"
     assert FallbackLevel.L4_LLM_ONLY.value == "L4: LLM only"
+
+
+# ===========================================================================
+# Protocol Compatibility Tests
+# ===========================================================================
+
+def test_mock_llm_returns_llm_response():
+    """MockLLM should return LLMResponse objects, not plain dicts.
+
+    This ensures the forge's extract_content() works correctly with
+    the real LLMClient protocol (not just dict-shaped mocks).
+    """
+    mock = MockLLM("test content")
+    result = _run(mock.chat("sys", "user"))
+    assert isinstance(result, LLMResponse)
+    assert result.content == "test content"
+    assert result.usage is not None
+    assert result.usage.get("total_tokens") == 15
+
+
+def test_forge_handles_llm_response_protocol():
+    """Forge should correctly extract content from LLMResponse objects.
+
+    This is a regression test for the protocol mismatch bug where
+    forge.py used resp.get("content") on an LLMResponse dataclass.
+    """
+    mock = MockLLM(json.dumps(NON_ASSOC_TABLE))
+    forge = CounterExampleForge(llm_client=mock)
+
+    result = _run(forge.generate_counter_example(
+        "所有运算都满足结合律",
+        context={},
+    ))
+    # L2 should successfully extract the table from the LLMResponse
+    assert result.level == FallbackLevel.L2_LLM_Z3
+    assert result.success is True
+
+
+def test_forge_l3_handles_llm_response():
+    """L3 fallback should correctly extract content from LLMResponse."""
+    # MockLLM returns text that L3 heuristic will accept (has 反例 + 因为)
+    mock = MockLLM("这是反例。因为 S3 不满足交换律，所以猜想不成立。")
+    forge = CounterExampleForge(llm_client=mock)
+
+    result = _run(forge.generate_counter_example(
+        "所有群都是交换群",
+        context={},
+    ))
+    # L2 returns valid group (no counter-example found)
+    # L3 should extract content and pass heuristic check
+    assert result.success is True
+
+
+# ===========================================================================
+# Agent Exception Isolation Tests
+# ===========================================================================
+
+def test_agent_exception_does_not_crash_orchestrator():
+    """If an agent raises an exception, orchestrator should not crash.
+
+    Tests the _safe_agent_run exception isolation.
+    """
+    import asyncio
+    from mathweaver.orchestrator.engine import Orchestrator
+    from mathweaver.agents.base import AgentMessage, AgentContext
+    from mathweaver.models.state import AgentRole
+
+    # Create a crashing agent
+    class CrashingAgent:
+        role = AgentRole.PERCEPTION
+        def describe(self):
+            return {"name": "crash_agent", "role": "perception"}
+        async def run(self, ctx):
+            raise RuntimeError("Intentional test crash")
+        def call_tool(self, name, args):
+            pass
+        def register_tool(self, name, func):
+            pass
+
+    o = Orchestrator()
+    o.start_session("stu_crash", "CrashTest")
+
+    # Inject the crashing agent
+    o.agents["crash_test"] = CrashingAgent()
+
+    # The orchestrator should not crash — it should handle the error
+    # and produce a fallback response
+    result = asyncio.run(o.process_student_input("什么是群？"))
+    assert "response" in result
+    assert result["response"]  # non-empty response

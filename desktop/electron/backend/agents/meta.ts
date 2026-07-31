@@ -12,6 +12,9 @@ import type { AgentContext, AgentMessage } from '../types'
 import type { LLMClient } from '../llm/client'
 import { BaseAgent } from './base'
 import { AgentRole, createAgentMessage } from '../types'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('MetaAgent')
 
 // ---------------------------------------------------------------------------
 // Minimal ParameterLearner (replaces evolution/param_learner.ParameterLearner)
@@ -91,10 +94,7 @@ export class MetaEvolutionAgent extends BaseAgent {
   paramLearner: ParameterLearner
   private evolutionCount = 0
 
-  constructor(
-    llmClient: LLMClient | null = null,
-    paramLearner: ParameterLearner | null = null,
-  ) {
+  constructor(llmClient: LLMClient | null = null, paramLearner: ParameterLearner | null = null) {
     super(AgentRole.META, llmClient)
     this.paramLearner = paramLearner ?? new ParameterLearner()
   }
@@ -113,18 +113,14 @@ export class MetaEvolutionAgent extends BaseAgent {
     // Only evolve if we have enough data
     const evaluatedCount = (feedbackData['evaluated'] as number) ?? 0
     if (evaluatedCount < 1) {
-      return createAgentMessage(
-        this.role,
-        '尚未积累足够的反馈数据，暂不进行参数调整。',
-        {
-          metadata: {
-            meta_active: true,
-            evolution_count: this.evolutionCount,
-            evaluated_decisions: evaluatedCount,
-            reason: 'insufficient_data',
-          },
+      return createAgentMessage(this.role, '尚未积累足够的反馈数据，暂不进行参数调整。', {
+        metadata: {
+          meta_active: true,
+          evolution_count: this.evolutionCount,
+          evaluated_decisions: evaluatedCount,
+          reason: 'insufficient_data',
         },
-      )
+      })
     }
 
     // Evolve parameters
@@ -140,10 +136,11 @@ export class MetaEvolutionAgent extends BaseAgent {
     // Generate evolution report
     const report = this.generateReport(feedbackData, version, analysis)
 
-    console.info(
-      `MetaEvolution: v${version.version}, effectiveness=${version.effectiveness.toFixed(3)}, ` +
-        `prompt=${version.promptVariant}`,
-    )
+    log.info('MetaEvolution', {
+      version: version.version,
+      effectiveness: version.effectiveness.toFixed(3),
+      prompt: version.promptVariant,
+    })
 
     return createAgentMessage(this.role, report, {
       metadata: {
@@ -166,7 +163,8 @@ export class MetaEvolutionAgent extends BaseAgent {
     version: ParamVersion,
     metrics: Record<string, unknown>,
   ): Promise<string> {
-    const actionStats = (feedbackData['action_stats'] as Record<string, Record<string, number>>) ?? {}
+    const actionStats =
+      (feedbackData['action_stats'] as Record<string, Record<string, number>>) ?? {}
 
     const systemPrompt =
       '你是一位在课后复盘的教练。翻看今天每一回合的教学记录，' +
@@ -198,7 +196,9 @@ export class MetaEvolutionAgent extends BaseAgent {
       const resp = await this.llmClient!.chat(systemPrompt, userMessage, undefined, 0.5)
       return resp.content
     } catch (e) {
-      console.warn('MetaEvolution LLM analysis failed: %s', e)
+      log.warn('MetaEvolution LLM analysis failed', {
+        error: e instanceof Error ? e.message : String(e),
+      })
       return ''
     }
   }
@@ -217,7 +217,8 @@ export class MetaEvolutionAgent extends BaseAgent {
       `当前Prompt: ${version.promptVariant}`,
     ]
 
-    const actionStats = (feedbackData['action_stats'] as Record<string, Record<string, number>>) ?? {}
+    const actionStats =
+      (feedbackData['action_stats'] as Record<string, Record<string, number>>) ?? {}
     if (Object.keys(actionStats).length > 0) {
       lines.push('\n策略效果:')
       const sorted = Object.entries(actionStats).sort(

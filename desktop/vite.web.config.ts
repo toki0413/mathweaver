@@ -27,6 +27,18 @@ export default defineConfig({
     // Tell the renderer it's running in web mode (no Electron)
     'import.meta.env.VITE_IS_WEB': JSON.stringify('true'),
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
+      },
+    },
+  },
   build: {
     outDir: '../dist-web',
     emptyOutDir: true,

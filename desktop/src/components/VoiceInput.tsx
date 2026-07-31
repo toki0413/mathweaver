@@ -61,11 +61,7 @@ export interface VoiceInputProps {
 /** 静默超时：30 秒无任何结果则自动停止 */
 const SILENCE_TIMEOUT = 30_000
 
-function VoiceInputImpl({
-  onTranscript,
-  language = 'zh-CN',
-  disabled = false,
-}: VoiceInputProps) {
+function VoiceInputImpl({ onTranscript, language = 'zh-CN', disabled = false }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -81,8 +77,7 @@ function VoiceInputImpl({
   }, [onTranscript])
 
   const speechSupported =
-    typeof window !== 'undefined' &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+    typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
   const clearSilenceTimer = useCallback(() => {
     if (silenceTimerRef.current !== null) {
@@ -109,8 +104,7 @@ function VoiceInputImpl({
     if (disabled || !speechSupported) return
     setError(null)
 
-    const SpeechRecognitionClass =
-      window.SpeechRecognition || window.webkitSpeechRecognition
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognitionClass) return
 
     const recognition = new SpeechRecognitionClass()

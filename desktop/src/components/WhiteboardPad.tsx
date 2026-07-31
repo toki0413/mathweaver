@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent, ChangeEvent as ReactChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react'
+import type {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  ChangeEvent as ReactChangeEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 
 /**
  * WhiteboardPad — 自由绘制画布组件。
@@ -298,7 +303,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
         ctx.lineWidth = strokeWidth
       }
     },
-    [currentTool, currentColor, strokeWidth]
+    [currentTool, currentColor, strokeWidth],
   )
 
   /* -------- 将指针坐标换算为画布逻辑坐标（CSS 像素，已考虑 dpr 缩放） -------- */
@@ -363,7 +368,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
       setIsDrawing(false)
       pointRef.current = null
     },
-    [drawSegment]
+    [drawSegment],
   )
 
   /* -------- 文字工具：将输入框内容绘制到画布 -------- */
@@ -515,7 +520,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
       <div className="wb-toolbar" style={toolbarStyle}>
         {/* 工具选择 */}
         <div className="wb-group wb-tool-group" style={groupStyle}>
-          {TOOLS.map((t) => (
+          {TOOLS.map(t => (
             <button
               key={t.id}
               type="button"
@@ -533,7 +538,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
 
         {/* 调色板 */}
         <div className="wb-group wb-color-group" style={groupStyle}>
-          {COLORS.map((c) => (
+          {COLORS.map(c => (
             <button
               key={c.value}
               type="button"
@@ -554,23 +559,40 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
             max={8}
             step={1}
             value={strokeWidth}
-            onChange={(e) => setStrokeWidth(Number(e.target.value))}
+            onChange={e => setStrokeWidth(Number(e.target.value))}
             className="wb-width-slider"
             style={sliderStyle}
             aria-label="笔触粗细"
           />
-          <span className="wb-width-label" style={sliderLabelStyle}>{strokeWidth}px</span>
+          <span className="wb-width-label" style={sliderLabelStyle}>
+            {strokeWidth}px
+          </span>
         </div>
 
         {/* 操作按钮 */}
         <div className="wb-group wb-action-group" style={groupStyle}>
-          <button type="button" className="wb-action-btn wb-undo-btn" style={actionBtnStyle} onClick={handleUndo}>
+          <button
+            type="button"
+            className="wb-action-btn wb-undo-btn"
+            style={actionBtnStyle}
+            onClick={handleUndo}
+          >
             撤销
           </button>
-          <button type="button" className="wb-action-btn wb-clear-btn" style={actionBtnStyle} onClick={handleClear}>
+          <button
+            type="button"
+            className="wb-action-btn wb-clear-btn"
+            style={actionBtnStyle}
+            onClick={handleClear}
+          >
             清空
           </button>
-          <button type="button" className="wb-action-btn wb-export-btn" style={actionBtnStyle} onClick={handleExport}>
+          <button
+            type="button"
+            className="wb-action-btn wb-export-btn"
+            style={actionBtnStyle}
+            onClick={handleExport}
+          >
             导出 PNG
           </button>
         </div>
@@ -579,7 +601,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
         <div className="wb-group wb-status" style={groupStyle}>
           <span className="wb-status-dot" style={statusDotStyle(isDrawing)} />
           <span className="wb-status-label" style={statusLabelStyle}>
-            {isDrawing ? '绘制中' : `${TOOLS.find((t) => t.id === currentTool)?.label ?? ''}`}
+            {isDrawing ? '绘制中' : `${TOOLS.find(t => t.id === currentTool)?.label ?? ''}`}
           </span>
         </div>
       </div>

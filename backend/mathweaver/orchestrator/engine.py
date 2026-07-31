@@ -92,7 +92,7 @@ class Orchestrator:
         dag: ConceptDAG | None = None,
         forge: CounterExampleForge | None = None,
         llm_client: Any = None,
-        db_path: str = ":memory:",
+        db_path: str = "mathweaver.db",
         audit_path: str | None = None,
         topology: TopologyConfig | None = None,
         curriculum_level: str = "group_theory",
@@ -105,7 +105,6 @@ class Orchestrator:
         self.profile: StudentProfile | None = None
         self.phase: SessionPhase = SessionPhase.IDLE
         self.message_history: list[AgentMessage] = []
-        self._agent_handlers: dict[AgentRole, Callable] = {}
         self._session_start: datetime | None = None
         self.evidence_chain: EvidenceChain | None = None
         self.context_messages: list[ContextMessage] = []
@@ -205,6 +204,17 @@ class Orchestrator:
         if prev_state:
             try:
                 self.state = FourFieldState.model_validate(prev_state["state"])
+                # Validate that the restored current_node_id exists in the
+                # current DAG — stale state from a different curriculum level
+                # would cause grill sessions and routing to break.
+                restored_node = self.state.knowledge.current_node_id
+                if restored_node and not self.dag.get_node(restored_node):
+                    logger.warning(
+                        "Restored current_node_id '%s' not in DAG "
+                        "'%s', resetting to None",
+                        restored_node, self.curriculum_level,
+                    )
+                    self.state.knowledge.current_node_id = None
                 logger.info("Restored state for session %s", student_id)
             except Exception:
                 logger.warning("Failed to restore state, starting fresh")
@@ -356,28 +366,7 @@ class Orchestrator:
         logger.info("Rolled back to checkpoint %s", checkpoint_id)
         return True
 
-    # -- Agent Registration --
-
-    def register_agent(self, role: AgentRole, handler: Callable) -> None:
-        """Register an agent handler for a given role."""
-        self._agent_handlers[role] = handler
-
     # -- Message Routing (Single-Writer) --
-
-    def route_message(self, message: AgentMessage) -> None:
-        """Route a message from an agent. Orchestrator applies field updates."""
-        self.message_history.append(message)
-
-        # Single-writer: only orchestrator applies field updates
-        for field_name, updates in message.field_updates.items():
-            self._apply_field_update(field_name, updates)
-
-        logger.debug(
-            "Routed message from %s: %s (updates: %s)",
-            message.role.value,
-            message.content[:80],
-            list(message.field_updates.keys()),
-        )
 
     def _apply_field_update(self, field_name: str, updates: dict[str, Any]) -> None:
         """Apply a field update atomically (single-writer pattern).
@@ -519,6 +508,102 @@ class Orchestrator:
             next_phase=self.phase,
         )
 
+    def _execute_decision(self, decision: TeachingDecision) -> None:
+        """Execute the pedagogical decision, mutating orchestrator state.
+
+        This bridges the gap between make_decision() (which computes what to do)
+        and the actual state changes.  Previously the decision was only passed as
+        metadata; now it drives real transitions:
+
+        - advance:            actually move current_node_id to the next DAG node
+        - reduce_abstraction:  bump hint_level
+        - emotional_support:   bump hint_level
+        - provide_hint:       bump hint_level
+        - guided_discovery:    fade scaffold if appropriate
+        """
+        # Apply hint level change to interaction field
+        if decision.hint_level != self.state.interaction.current_hint_level:
+            old = self.state.interaction.current_hint_level
+            self.state.interaction.current_hint_level = decision.hint_level
+            logger.info(
+                "Decision '%s': hint_level %d -> %d",
+                decision.action, old, decision.hint_level,
+            )
+
+        # Advance: actually move the DAG pointer
+        if decision.action == "advance":
+            current = self.state.knowledge.current_node_id
+            if current:
+                dependents = self.dag.get_dependents(current)
+                if dependents:
+                    next_id = dependents[0]
+                    next_node = self.dag.get_node(next_id)
+                    if next_node:
+                        old_id = current
+                        self.state.knowledge.current_node_id = next_id
+                        # Store old id for response reporting
+                        self._last_advanced_from = old_id
+                        self._last_advanced_to = next_id
+                        # Reset mastery for the new node (student starts fresh)
+                        self.state.knowledge.mastery_estimate = 0.0
+                        # Clear prerequisite gaps for the new node
+                        self.state.knowledge.prerequisite_gaps = []
+                        # Reset consecutive correct counter
+                        self.state.interaction.consecutive_correct = 0
+                        logger.info(
+                            "DAG advance executed: %s -> %s (%s)",
+                            old_id, next_id, next_node.name,
+                        )
+
+        # Guided discovery: fade scaffold if threshold met
+        if decision.action == "guided_discovery":
+            if self.state.interaction.should_fade_scaffold:
+                self.state.interaction.hint_dependency = max(
+                    self.state.interaction.hint_dependency - 0.1, 0.0
+                )
+
+        # Apply phase transition
+        if decision.next_phase != SessionPhase.IDLE:
+            self.phase = decision.next_phase
+
+    # -- Agent Execution with Exception Isolation --
+
+    async def _safe_agent_run(
+        self,
+        agent_name: str,
+        ctx: AgentContext,
+        root_span_id: str,
+        span_id: str,
+    ) -> AgentMessage | None:
+        """Run an agent with exception isolation.
+
+        If the agent raises, log the error, end the trace span with ERROR
+        status, and return None. The caller decides how to handle the
+        failure (skip, fallback, or deliver error message).
+        """
+        agent = self.agents[agent_name]
+        try:
+            msg = await agent.run(ctx)
+            return msg
+        except Exception as e:
+            logger.error(
+                "Agent '%s' raised exception: %s: %s",
+                agent_name, type(e).__name__, e,
+                exc_info=True,
+            )
+            # End span with error status
+            if self.trace_collector is not None and span_id:
+                try:
+                    self.trace_collector.end_span(
+                        span_id,
+                        output_summary=f"[ERROR] {type(e).__name__}: {str(e)[:100]}",
+                        tool_calls=[],
+                        status=SpanStatus.ERROR,
+                    )
+                except Exception:
+                    pass  # Don't let trace errors mask the real error
+            return None
+
     # -- Teaching Loop --
 
     async def process_student_input(
@@ -636,6 +721,7 @@ class Orchestrator:
         max_iterations = self.topology.max_iterations
         called_agents: set[str] = set()
         session_id = self.profile.student_id if self.profile else "unknown"
+        total_tokens_used = 0  # Track LLM token usage across this turn
 
         # Pre-compute a default decision in case the loop exits early
         # (e.g., topology routes directly to exit without entering the deliver branch)
@@ -648,6 +734,10 @@ class Orchestrator:
         # 2.1: LLM generates task decomposition (not hardcoded)
         decomposition = await self._decompose_task(llm, student_input)
         full_trace.append({"phase": "decompose", "decomposition": decomposition.to_dict()})
+
+        # Track tokens from decomposition call (if using OpenAICompatibleClient)
+        if hasattr(llm, "_total_tokens"):
+            total_tokens_used = llm._total_tokens
 
         for iteration in range(max_iterations):
             # Ask LLM which agent to call next
@@ -678,6 +768,9 @@ class Orchestrator:
                 system_prompt=self._system_prompt(),
                 user_message=llm_input,
             )
+            # Accumulate token usage from LLM responses
+            if hasattr(llm_resp, "usage") and llm_resp.usage:
+                total_tokens_used += llm_resp.usage.get("total_tokens", 0)
 
             # LLM decides to deliver
             if llm_resp.next_action == "deliver" or iteration == max_iterations - 1:
@@ -687,6 +780,9 @@ class Orchestrator:
                 # Compute pedagogical decision BEFORE collaboration
                 # so the agent can adapt its style (reduce_abstraction, emotional_support, etc.)
                 decision = self.make_decision()
+
+                # Execute the decision: actually mutate state (hint level, DAG advance, etc.)
+                self._execute_decision(decision)
 
                 # S2: Record decision for effectiveness tracking
                 turn_id = f"turn_{len(self.metrics_collector._turns)}"
@@ -762,7 +858,20 @@ class Orchestrator:
                         input_summary=student_input[:200],
                     )
 
-                msg = await self.agents[exit_name].run(ctx)
+                msg = await self._safe_agent_run(exit_name, ctx, root_span_id, collab_span_id)
+                if msg is None:
+                    # Agent failed, but we still need to deliver a response
+                    from ..agents.base import AgentMessage
+                    from ..models.state import AgentRole
+                    msg = AgentMessage(
+                        role=AgentRole.COLLABORATION,
+                        content=(
+                            "抱歉，系统在生成回应时遇到了内部错误。"
+                            "请重新尝试你的问题。"
+                        ),
+                        confidence=0.1,
+                        metadata={"error_recovery": True},
+                    )
                 self.message_history.append(msg)
                 # 5.1: Publish agent message to bus
                 self.message_bus.publish(msg, from_agent=exit_name)
@@ -865,8 +974,27 @@ class Orchestrator:
                 metadata={"response_time_ms": rt_ms},
             )
 
-            # Run the agent
-            msg = await agent.run(ctx)
+            # Run the agent (with exception isolation)
+            msg = await self._safe_agent_run(next_agent_name, ctx, root_span_id, agent_span_id)
+            if msg is None:
+                # Agent failed — skip to next iteration or exit
+                logger.warning(
+                    "Agent '%s' failed, skipping (iteration %d)",
+                    next_agent_name, iteration,
+                )
+                # Record partial evidence of the failure
+                if self.evidence_chain is not None:
+                    self.evidence_chain.append(
+                        agent_name=next_agent_name,
+                        phase=phase_name.value,
+                        input_summary=student_input[:200],
+                        output_summary="[AGENT ERROR - skipped]",
+                        tool_calls=[],
+                        field_updates={},
+                        confidence=0.0,
+                        metadata={"error_recovery": True},
+                    )
+                continue
             self.message_history.append(msg)
             # 5.1: Publish agent message to bus
             self.message_bus.publish(msg, from_agent=next_agent_name)
@@ -994,7 +1122,7 @@ class Orchestrator:
             agent_calls=len(phase_trace),
             tool_calls=total_tool_calls,
             llm_calls=total_llm_calls,
-            tokens_used=0,  # MockLLMClient doesn't report tokens
+            tokens_used=total_tokens_used,
             agents_called=phase_trace,
             phase_trace=phase_trace,
             evidence_entries=len(self.evidence_chain) if self.evidence_chain is not None else 0,
@@ -1030,25 +1158,43 @@ class Orchestrator:
         except Exception as e:
             logger.warning("MetaEvolution agent failed: %s", e)
 
-        # DAG 自主推进: 当掌握度超过 ZPD 上界时，推荐下一概念
+        # DAG advance: report whether _execute_decision advanced the DAG pointer
         dag_advance = None
-        if self.state.knowledge.mastery_estimate >= self.state.knowledge.zpd_upper:
-            current = self.state.knowledge.current_node_id
-            if current:
-                # get_dependents returns nodes that depend on current (i.e., children)
-                dependents = self.dag.get_dependents(current)
-                if dependents:
-                    next_id = dependents[0]
-                    next_node = self.dag.get_node(next_id)
-                    if next_node:
-                        dag_advance = {
-                            "from": current,
-                            "to": next_id,
-                            "to_name": next_node.name,
-                            "to_description": next_node.description,
-                            "reason": f"掌握度 {self.state.knowledge.mastery_estimate:.0%} 超过 ZPD 上界 {self.state.knowledge.zpd_upper:.0%}",
-                        }
-                        logger.info("DAG advance available: %s -> %s", current, next_id)
+        if decision.action == "advance":
+            # _execute_decision already moved current_node_id to the next node.
+            # Report the advance so the frontend can update its UI.
+            new_id = self.state.knowledge.current_node_id
+            new_node = self.dag.get_node(new_id) if new_id else None
+            if new_node:
+                dag_advance = {
+                    "from": getattr(self, "_last_advanced_from", None),
+                    "to": new_id,
+                    "to_name": new_node.name,
+                    "to_description": new_node.description,
+                    "reason": decision.reason,
+                    "executed": True,
+                }
+                logger.info("DAG advance reported (already executed): -> %s", new_id)
+        else:
+            # Check if mastery is high but decision didn't advance
+            # (e.g., student not in flow).  Report as a recommendation.
+            if self.state.knowledge.mastery_estimate >= self.state.knowledge.zpd_upper:
+                current = self.state.knowledge.current_node_id
+                if current:
+                    dependents = self.dag.get_dependents(current)
+                    if dependents:
+                        next_id = dependents[0]
+                        next_node = self.dag.get_node(next_id)
+                        if next_node:
+                            dag_advance = {
+                                "from": current,
+                                "to": next_id,
+                                "to_name": next_node.name,
+                                "to_description": next_node.description,
+                                "reason": f"掌握度 {self.state.knowledge.mastery_estimate:.0%} 超过 ZPD 上界 {self.state.knowledge.zpd_upper:.0%}",
+                                "executed": False,
+                            }
+                            logger.info("DAG advance recommended (not executed): %s -> %s", current, next_id)
 
         return {
             "response": response_content,
@@ -1428,258 +1574,3 @@ class Orchestrator:
             "meta": SessionPhase.REFLECT,
         }
         return mapping.get(agent_name, SessionPhase.IDLE)
-
-    async def _run_agent(
-        self,
-        role: AgentRole,
-        student_input: str,
-        context: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Run an agent handler if registered, otherwise return placeholder."""
-        handler = self._agent_handlers.get(role)
-        if handler:
-            try:
-                result = handler(student_input, context, self.state)
-                # If the handler returns an AgentMessage, route it
-                if isinstance(result, AgentMessage):
-                    self.route_message(result)
-                    return {"content": result.content, "role": result.role.value}
-                return result
-            except Exception:
-                logger.exception("Agent %s failed", role.value)
-                return {"error": f"Agent {role.value} failed", "content": ""}
-        else:
-            # Default handlers for built-in agents
-            return await self._default_agent_handler(role, student_input, context)
-
-    async def _default_agent_handler(
-        self,
-        role: AgentRole,
-        student_input: str,
-        context: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Default handlers for agents when no custom handler is registered."""
-        if role == AgentRole.PERCEPTION:
-            return self._default_perception(student_input, context)
-        elif role == AgentRole.ABSTRACTION:
-            return self._default_abstraction(student_input, context)
-        elif role == AgentRole.COUNTER_EXAMPLE:
-            return self._default_counter_example(student_input, context)
-        elif role == AgentRole.EPISTEMIC:
-            return self._default_epistemic(student_input, context)
-        elif role == AgentRole.HISTORICAL:
-            return self._default_historical(student_input, context)
-        elif role == AgentRole.COLLABORATION:
-            return self._default_collaboration(student_input, context)
-        return {"content": ""}
-
-    # -- Default Agent Implementations --
-
-    def _default_perception(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Perception Agent: parse student input, detect math content."""
-        text = student_input.strip()
-
-        # Detect Cayley table input
-        if text.startswith("[") and text.endswith("]"):
-            try:
-                import json
-                table = json.loads(text)
-                if (
-                    isinstance(table, list)
-                    and all(isinstance(r, list) for r in table)
-                ):
-                    n = len(table)
-                    if all(
-                        isinstance(v, int) and 0 <= v < n
-                        for r in table for v in r
-                    ):
-                        return {
-                            "input_type": "cayley_table",
-                            "cayley_table": table,
-                            "n": n,
-                            "content": f"检测到 {n}×{n} 运算表输入",
-                        }
-            except (json.JSONDecodeError, ValueError):
-                pass
-
-        # Detect conjecture
-        conjecture_keywords = ["所有", "任", "每个", "一定", "必然", "总是", "all", "every", "must"]
-        is_conjecture = any(kw in text.lower() for kw in conjecture_keywords)
-
-        return {
-            "input_type": "conjecture" if is_conjecture else "question",
-            "content": text,
-            "is_conjecture": is_conjecture,
-        }
-
-    def _default_abstraction(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Abstraction Agent: extract formal structure from perception."""
-        perception = context.get("perception", {})
-
-        if perception.get("input_type") == "cayley_table":
-            table = perception["cayley_table"]
-            return {
-                "structure_type": "binary_operation",
-                "cayley_table": table,
-                "n": perception["n"],
-                "content": f"抽象为 {perception['n']} 元集合上的二元运算",
-            }
-
-        return {
-            "structure_type": "natural_language",
-            "content": student_input,
-        }
-
-    def _default_counter_example(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Counter-Example Agent: use Z3 to verify or find counter-examples."""
-        abstraction = context.get("abstraction", {})
-
-        if abstraction.get("structure_type") == "binary_operation":
-            table = abstraction.get("cayley_table")
-
-            # Check group axioms
-            axioms_result = self.forge.check_group_axioms(table)
-            assoc_result = self.forge.verify_associativity(table)
-            comm_result = self.forge.check_commutativity(table)
-
-            return {
-                "is_group": not axioms_result.success,
-                "group_violation": axioms_result.counter_example if axioms_result.success else None,
-                "associativity_violation": assoc_result.counter_example if assoc_result.success else None,
-                "commutativity_violation": comm_result.counter_example if comm_result.success else None,
-                "level": axioms_result.level.value,
-                "content": self._format_verification_response(
-                    axioms_result, assoc_result, comm_result
-                ),
-            }
-
-        return {
-            "is_group": None,
-            "content": "无可验证的形式化结构",
-        }
-
-    def _format_verification_response(
-        self,
-        axioms: CounterExampleResult,
-        assoc: CounterExampleResult,
-        comm: CounterExampleResult,
-    ) -> str:
-        """Format the counter-example verification result as a pedagogical response."""
-        if not axioms.success:
-            # It IS a group
-            if not comm.success:
-                return "恭喜！你的运算表满足群的全部四条公理，而且是一个交换群（Abel 群）。"
-            else:
-                return (
-                    "你的运算表满足群的全部四条公理。\n\n"
-                    f"但它不是交换群：{comm.counter_example}\n\n"
-                    "你能想到一个非交换群的例子吗？"
-                )
-        else:
-            # It's NOT a group
-            return (
-                f"让我们看看你的运算表。\n\n"
-                f"Z3 验证发现：{axioms.explanation}\n\n"
-                "想想看，哪条群公理没有被满足？"
-            )
-
-    def _default_epistemic(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Epistemic Agent: diagnose cognitive state and estimate mastery."""
-        verify = context.get("verify", {})
-
-        # Simple heuristic: if verification passed, increase mastery
-        if verify.get("is_group"):
-            mastery_delta = 0.1
-            self.state.interaction.consecutive_correct += 1
-        elif verify.get("is_group") is False:
-            mastery_delta = -0.05
-            self.state.interaction.consecutive_correct = 0
-            self.state.cognitive.backtrack_count += 1
-        else:
-            mastery_delta = 0.0
-
-        # Update cognitive state estimation
-        if self.state.cognitive.is_overloaded:
-            self.state.cognitive.state = CognitiveState.OVERLOAD
-        elif self.state.emotional.in_flow:
-            self.state.emotional.state = EmotionalState.FLOW
-
-        # Update emotional state based on interaction patterns
-        if self.state.interaction.consecutive_correct >= 3:
-            self.state.emotional.flow_score = min(
-                self.state.emotional.flow_score + 0.1, 1.0
-            )
-            self.state.emotional.state = EmotionalState.FLOW
-        elif self.state.cognitive.backtrack_count > 2:
-            self.state.emotional.anxiety_index = min(
-                self.state.emotional.anxiety_index + 0.1, 1.0
-            )
-            if self.state.emotional.anxiety_index > 0.65:
-                self.state.emotional.state = EmotionalState.ANXIOUS
-
-        return {
-            "mastery_delta": mastery_delta,
-            "cognitive_load": self.state.cognitive.cognitive_load,
-            "emotional_state": self.state.emotional.state.value,
-            "consecutive_correct": self.state.interaction.consecutive_correct,
-            "content": f"认知诊断：掌握度变化 {mastery_delta:+.2f}",
-        }
-
-    def _default_historical(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Historical Agent: provide math history context."""
-        node_id = self.state.knowledge.current_node_id
-        node = self.dag.get_node(node_id) if node_id else None
-
-        if node and node_id == "group_definition":
-            return {
-                "content": (
-                    "群的公理化定义由伽罗瓦在 1830 年代研究多项式方程根的对称性时提出。"
-                    "他发现方程根的置换结构本身就构成一个群。"
-                    "这一发现最终导致了抽象代数的诞生，也解决了困扰数学家 300 年的五次方程求根问题。"
-                )
-            }
-        elif node and node_id == "associativity":
-            return {
-                "content": (
-                    "结合律看似\"显然\"，但并非所有运算都满足。"
-                    "减法就不满足：(3-2)-1 = 0, 但 3-(2-1) = 2。"
-                    "你能在你的运算表里找到类似的反例吗？"
-                )
-            }
-
-        return {"content": ""}
-
-    def _default_collaboration(self, student_input: str, context: dict[str, Any]) -> dict[str, Any]:
-        """Collaboration Agent: synthesize the final pedagogical response."""
-        decision = context.get("decision", {})
-        verify = context.get("verify", {})
-
-        # Base response from verification
-        base_response = verify.get("content", "")
-
-        # Apply decision
-        action = decision.get("action", "continue")
-        hint_level = decision.get("hint_level", 0)
-
-        if action == "reduce_abstraction":
-            prefix = "让我们退一步，用更具体的方式来看这个问题。\n\n"
-        elif action == "emotional_support":
-            prefix = "别担心，探索数学概念的过程中遇到困难是很正常的。\n\n"
-        elif action == "advance":
-            prefix = "很好！你已经掌握了这个概念。让我们继续下一个。\n\n"
-        elif action == "provide_hint":
-            hints = [
-                "提示：检查每一行是否都包含每个元素恰好一次。",
-                "提示：找到那个满足 e*a = a*e = a 的元素。",
-                "提示：对每个元素 a，找到使 a*b = e 的 b。",
-            ]
-            prefix = f"{hints[min(hint_level, len(hints)-1)]}\n\n"
-        else:
-            prefix = ""
-
-        return {
-            "content": prefix + base_response,
-            "hint_level": hint_level,
-            "action": action,
-            "decision_reason": decision.get("reason", ""),
-        }

@@ -362,12 +362,7 @@ const STYLES = `
 }
 `
 
-function PatternBuilderBase({
-  elements,
-  size,
-  table,
-  onPatternComplete,
-}: PatternBuilderProps) {
+function PatternBuilderBase({ elements, size, table, onPatternComplete }: PatternBuilderProps) {
   // --- 核心状态（useState）---
   const [droppedA, setDroppedA] = useState<number | null>(null)
   const [droppedB, setDroppedB] = useState<number | null>(null)
@@ -395,8 +390,8 @@ function PatternBuilderBase({
       const r = table[a]?.[b]
       if (typeof r !== 'number') return
       const entry: OperationEntry = { id: idRef.current++, a, b, result: r }
-      setOperationLog((prev) => [...prev, entry])
-      setTestedPairs((prev) => {
+      setOperationLog(prev => [...prev, entry])
+      setTestedPairs(prev => {
         const next = new Set(prev)
         next.add(pairKey(a, b))
         return next
@@ -429,25 +424,19 @@ function PatternBuilderBase({
   )
 
   // --- HTML5 拖放处理器 ---
-  const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, value: number) => {
-      e.dataTransfer.setData('text/plain', String(value))
-      e.dataTransfer.effectAllowed = 'copy'
-    },
-    [],
-  )
+  const handleDragStart = useCallback((e: DragEvent<HTMLButtonElement>, value: number) => {
+    e.dataTransfer.setData('text/plain', String(value))
+    e.dataTransfer.effectAllowed = 'copy'
+  }, [])
 
-  const handleSlotDragOver = useCallback(
-    (e: DragEvent<HTMLDivElement>, slot: 'a' | 'b') => {
-      e.preventDefault() // 允许放置
-      e.dataTransfer.dropEffect = 'copy'
-      setDragOverSlot(slot)
-    },
-    [],
-  )
+  const handleSlotDragOver = useCallback((e: DragEvent<HTMLDivElement>, slot: 'a' | 'b') => {
+    e.preventDefault() // 允许放置
+    e.dataTransfer.dropEffect = 'copy'
+    setDragOverSlot(slot)
+  }, [])
 
   const handleSlotDragLeave = useCallback((slot: 'a' | 'b') => {
-    setDragOverSlot((cur) => (cur === slot ? null : cur))
+    setDragOverSlot(cur => (cur === slot ? null : cur))
   }, [])
 
   const handleSlotDrop = useCallback(
@@ -464,7 +453,7 @@ function PatternBuilderBase({
 
   // --- 点击替代拖拽 ---
   const handleElementClick = useCallback((value: number) => {
-    setSelectedElement((cur) => (cur === value ? null : value))
+    setSelectedElement(cur => (cur === value ? null : value))
   }, [])
 
   const handleSlotClick = useCallback(
@@ -565,7 +554,7 @@ function PatternBuilderBase({
         <h3 className="pb-panel-title">元素池</h3>
         <p className="pb-hint">拖拽或点选元素放入工作台</p>
         <div className="pb-pool-grid">
-          {elements.map((el) => {
+          {elements.map(el => {
             const isSelected = selectedElement === el
             const isIdentity = identityFound.has(el)
             const cls = [
@@ -580,7 +569,7 @@ function PatternBuilderBase({
                 key={el}
                 type="button"
                 draggable
-                onDragStart={(e) => handleDragStart(e, el)}
+                onDragStart={e => handleDragStart(e, el)}
                 onClick={() => handleElementClick(el)}
                 className={cls}
                 aria-label={`元素 ${el}${isIdentity ? '（已发现幺元）' : ''}`}
@@ -617,9 +606,9 @@ function PatternBuilderBase({
               .join(' ')}
             role="button"
             tabIndex={0}
-            onDragOver={(e) => handleSlotDragOver(e, 'a')}
+            onDragOver={e => handleSlotDragOver(e, 'a')}
             onDragLeave={() => handleSlotDragLeave('a')}
-            onDrop={(e) => handleSlotDrop(e, 'a')}
+            onDrop={e => handleSlotDrop(e, 'a')}
             onClick={() => handleSlotClick('a')}
           >
             <span className="pb-slot-label">a</span>
@@ -640,9 +629,9 @@ function PatternBuilderBase({
               .join(' ')}
             role="button"
             tabIndex={0}
-            onDragOver={(e) => handleSlotDragOver(e, 'b')}
+            onDragOver={e => handleSlotDragOver(e, 'b')}
             onDragLeave={() => handleSlotDragLeave('b')}
-            onDrop={(e) => handleSlotDrop(e, 'b')}
+            onDrop={e => handleSlotDrop(e, 'b')}
             onClick={() => handleSlotClick('b')}
           >
             <span className="pb-slot-label">b</span>
@@ -652,10 +641,7 @@ function PatternBuilderBase({
           <span className="pb-equals">=</span>
 
           {/* 结果（key 随槽位变化以重放淡入动画）*/}
-          <div
-            className="pb-result"
-            key={`${droppedA ?? 'x'}-${droppedB ?? 'x'}`}
-          >
+          <div className="pb-result" key={`${droppedA ?? 'x'}-${droppedB ?? 'x'}`}>
             {result !== null ? (
               <span className="pb-result-value">{result}</span>
             ) : (
@@ -707,9 +693,7 @@ function PatternBuilderBase({
             </div>
             <div className="pb-stat">
               <span className="pb-stat-label">对角线 a*a</span>
-              <span
-                className={`pb-stat-value ${allSquaresTested ? 'pb-ok' : ''}`}
-              >
+              <span className={`pb-stat-value ${allSquaresTested ? 'pb-ok' : ''}`}>
                 {allSquaresTested ? '完整 ✓' : `${diagonalTestedCount} / ${size}`}
               </span>
             </div>
@@ -717,9 +701,7 @@ function PatternBuilderBase({
               <span className="pb-stat-label">
                 {allSquaresTested ? '阿贝尔性' : '交换性（预判）'}
               </span>
-              <span className={`pb-stat-value ${commutativity.cls}`}>
-                {commutativity.text}
-              </span>
+              <span className={`pb-stat-value ${commutativity.cls}`}>{commutativity.text}</span>
             </div>
           </div>
 
@@ -728,7 +710,7 @@ function PatternBuilderBase({
             {identityFound.size === 0 ? (
               <span className="pb-empty-inline">尚未发现</span>
             ) : (
-              Array.from(identityFound).map((e) => (
+              Array.from(identityFound).map(e => (
                 <span key={e} className="pb-identity-chip">
                   <span className="pb-identity-star">★</span>
                   {e}

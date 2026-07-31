@@ -95,8 +95,7 @@ export class EpistemicAgent extends BaseAgent {
 
     // Struggling detection
     const isStruggling =
-      state.cognitive.backtrack_count > 2 ||
-      (!isGroup && state.cognitive.backtrack_count > 1)
+      state.cognitive.backtrack_count > 2 || (!isGroup && state.cognitive.backtrack_count > 1)
 
     // Scaffolding fade
     const shouldFade = consecutive >= state.interaction.scaffold_fade_threshold
@@ -125,14 +124,7 @@ export class EpistemicAgent extends BaseAgent {
         state.interaction.struggle_duration_s + rtMs / 1000
     }
 
-    const diagnosis = this.diagnose(
-      z,
-      isGroup,
-      hasVerification,
-      consecutive,
-      emotionalState,
-      inZpd,
-    )
+    const diagnosis = this.diagnose(z, isGroup, hasVerification, consecutive, emotionalState, inZpd)
 
     return createAgentMessage(this.role, diagnosis, {
       confidence: 0.85,

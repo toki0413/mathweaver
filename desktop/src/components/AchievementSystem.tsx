@@ -1,11 +1,24 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { CSSProperties, FC } from 'react'
-import { SparkleIcon, StarIcon, GraduationIcon, CrownIcon, DumbbellIcon, type IconProps } from './Icons'
+import {
+  SparkleIcon,
+  StarIcon,
+  GraduationIcon,
+  CrownIcon,
+  DumbbellIcon,
+  type IconProps,
+} from './Icons'
+import { ACHIEVEMENTS, checkAchievements, getMissions, type AgeLevel } from '../utils/ageAdapt'
 
-interface Props {
+interface AchievementSystemProps {
   consecutiveCorrect: number
   masteryEstimate: number // 0..1
   questionsAsked: number
+  // 引导任务数据（来自 GuidedDiscoveryPanel，用于"冒险成就"分组）
+  guidedMissionsCompleted?: number
+  guidedStarsCollected?: number
+  guidedModesCompleted?: number
+  ageLevel?: AgeLevel
 }
 
 interface Badge {
@@ -41,7 +54,11 @@ export function AchievementSystem({
   consecutiveCorrect,
   masteryEstimate,
   questionsAsked,
-}: Props) {
+  guidedMissionsCompleted = 0,
+  guidedStarsCollected = 0,
+  guidedModesCompleted = 0,
+  ageLevel,
+}: AchievementSystemProps) {
   const [showCelebration, setShowCelebration] = useState(false)
   const [lastStreak, setLastStreak] = useState(consecutiveCorrect)
   const [lastMastery, setLastMastery] = useState(0)
@@ -49,10 +66,7 @@ export function AchievementSystem({
 
   // 监听连对次数，当其“上升至”里程碑（3/5/10）时触发庆祝
   useEffect(() => {
-    if (
-      consecutiveCorrect > lastStreak &&
-      STREAK_MILESTONES.includes(consecutiveCorrect)
-    ) {
+    if (consecutiveCorrect > lastStreak && STREAK_MILESTONES.includes(consecutiveCorrect)) {
       setCelebrationText(`连对 ${consecutiveCorrect} 次!`)
       setShowCelebration(true)
     }
@@ -64,10 +78,7 @@ export function AchievementSystem({
   // 庆祝遮罩 2.5s 后自动消失
   useEffect(() => {
     if (!showCelebration) return
-    const timer = window.setTimeout(
-      () => setShowCelebration(false),
-      CELEBRATION_DURATION
-    )
+    const timer = window.setTimeout(() => setShowCelebration(false), CELEBRATION_DURATION)
     return () => window.clearTimeout(timer)
   }, [showCelebration])
 
@@ -77,7 +88,7 @@ export function AchievementSystem({
     return () => cancelAnimationFrame(id)
   }, [masteryEstimate])
 
-  // 徽章计算（按条件判定是否点亮）
+  // 徽章计算（按条件判定是否点亮）— "学习成就"分组，基于后端数据
   const badges = useMemo<Badge[]>(
     () => [
       { id: 'beginner', label: '初学者', icon: SparkleIcon, earned: questionsAsked >= 1 },
@@ -86,17 +97,26 @@ export function AchievementSystem({
       { id: 'master', label: '大师', icon: CrownIcon, earned: masteryEstimate > 0.7 },
       { id: 'persistent', label: '坚持不懈', icon: DumbbellIcon, earned: questionsAsked >= 10 },
     ],
-    [questionsAsked, consecutiveCorrect, masteryEstimate]
+    [questionsAsked, consecutiveCorrect, masteryEstimate],
   )
+
+  // "冒险成就"分组：基于 ageAdapt 的 ACHIEVEMENTS，用引导任务数据计算解锁状态
+  const guidedUnlocked = useMemo(() => {
+    const totalMissions = ageLevel ? getMissions(ageLevel).length : 0
+    return new Set(
+      checkAchievements(
+        guidedMissionsCompleted,
+        guidedStarsCollected,
+        guidedModesCompleted,
+        totalMissions,
+      ),
+    )
+  }, [guidedMissionsCompleted, guidedStarsCollected, guidedModesCompleted, ageLevel])
 
   // 掌握度环：百分比、颜色区间、环偏移量
   const masteryPercent = Math.round(masteryEstimate * 100)
   const ringColor =
-    masteryPercent < 30
-      ? 'var(--err)'
-      : masteryPercent <= 60
-        ? 'var(--warn)'
-        : 'var(--ok)'
+    masteryPercent < 30 ? 'var(--err)' : masteryPercent <= 60 ? 'var(--warn)' : 'var(--ok)'
   const ringOffset = RING_CIRCUMFERENCE - lastMastery * RING_CIRCUMFERENCE
 
   // 距下一里程碑的进度：连对 5 次 或 掌握度 +10%，取更接近完成者展示
@@ -104,9 +124,7 @@ export function AchievementSystem({
     const nextStreak = Math.ceil((consecutiveCorrect + 1) / 5) * 5
     const prevStreak = nextStreak - 5
     const streakProgress =
-      nextStreak === prevStreak
-        ? 1
-        : (consecutiveCorrect - prevStreak) / (nextStreak - prevStreak)
+      nextStreak === prevStreak ? 1 : (consecutiveCorrect - prevStreak) / (nextStreak - prevStreak)
 
     const clampedMastery = Math.min(Math.max(masteryEstimate, 0), 1)
     let masteryProgress: number
@@ -224,9 +242,22 @@ export function AchievementSystem({
         </div>
       </div>
 
-      {/* 成就徽章：已点亮 / 未解锁 */}
+      {/* 成就徽章 — 分两组：学习成就（后端数据）+ 冒险成就（引导任务） */}
+
+      {/* 学习成就 — 原有 badges，基于后端数据 */}
+      <div
+        style={{
+          fontSize: '0.72rem',
+          color: 'var(--muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          margin: '10px 0 6px',
+        }}
+      >
+        学习成就
+      </div>
       <div className="badge-grid">
-        {badges.map((badge) => {
+        {badges.map(badge => {
           const BadgeIcon = badge.icon
           return (
             <div
@@ -241,6 +272,48 @@ export function AchievementSystem({
           )
         })}
       </div>
+
+      {/* 冒险成就 — ageAdapt ACHIEVEMENTS，基于引导任务数据 */}
+      {ageLevel && (
+        <>
+          <div
+            style={{
+              fontSize: '0.72rem',
+              color: 'var(--muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              margin: '12px 0 6px',
+            }}
+          >
+            冒险成就
+          </div>
+          <div className="badge-grid">
+            {ACHIEVEMENTS.map(a => {
+              const unlocked = guidedUnlocked.has(a.id)
+              return (
+                <div
+                  key={a.id}
+                  className={`achievement-badge ${unlocked ? 'badge-earned' : 'badge-locked'}`}
+                  title={`${a.title[ageLevel]} — ${a.desc[ageLevel]}`}
+                >
+                  <div
+                    className="badge-icon"
+                    style={{
+                      fontSize: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {unlocked ? a.icon : '🔒'}
+                  </div>
+                  <div className="badge-label">{a.title[ageLevel]}</div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* 距下一里程碑的进度条 */}
       <div className="progress-milestone">

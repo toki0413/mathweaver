@@ -98,9 +98,7 @@ function buildS3Table(): number[][] {
     const row: number[] = []
     for (let j = 0; j < 6; j++) {
       const prod = composePerms(S3_PERMS[i], S3_PERMS[j])
-      const idx = S3_PERMS.findIndex(
-        (p) => p[0] === prod[0] && p[1] === prod[1] && p[2] === prod[2]
-      )
+      const idx = S3_PERMS.findIndex(p => p[0] === prod[0] && p[1] === prod[1] && p[2] === prod[2])
       row.push(idx)
     }
     table.push(row)
@@ -134,7 +132,7 @@ function buildGroup(type: GroupType, n: number): GroupData {
       return {
         type,
         order: 4,
-        table: KLEIN_TABLE.map((r) => [...r]),
+        table: KLEIN_TABLE.map(r => [...r]),
         labels: [...KLEIN_LABELS],
       }
     case 's3':
@@ -177,11 +175,7 @@ function makeRng(seed: number): () => number {
  * - 小阶群（n^3 ≤ 预算）退化为全量检验，结果确定。
  * - 一旦发现违反即返回 fail 并记录反例三元组。
  */
-function checkAssociativity(
-  table: number[][],
-  n: number,
-  closureOk: boolean
-): AssocResult {
+function checkAssociativity(table: number[][], n: number, closureOk: boolean): AssocResult {
   if (!closureOk) {
     return { status: 'unknown', sampled: 0, exhaustive: false, violation: null }
   }
@@ -197,15 +191,10 @@ function checkAssociativity(
   const triples: Array<[number, number, number]> = []
   if (exhaustive) {
     for (let a = 0; a < n; a++)
-      for (let b = 0; b < n; b++)
-        for (let c = 0; c < n; c++) triples.push([a, b, c])
+      for (let b = 0; b < n; b++) for (let c = 0; c < n; c++) triples.push([a, b, c])
   } else {
     for (let k = 0; k < sampleBudget; k++) {
-      triples.push([
-        Math.floor(rng() * n),
-        Math.floor(rng() * n),
-        Math.floor(rng() * n),
-      ])
+      triples.push([Math.floor(rng() * n), Math.floor(rng() * n), Math.floor(rng() * n)])
     }
   }
   for (const [a, b, c] of triples) {
@@ -227,11 +216,7 @@ function checkAssociativity(
 }
 
 /** 交换性：遍历检查 a*b === b*a。封闭性不满足时返回 unknown。 */
-function checkCommutativity(
-  table: number[][],
-  n: number,
-  closureOk: boolean
-): PropStatus {
+function checkCommutativity(table: number[][], n: number, closureOk: boolean): PropStatus {
   if (!closureOk) return 'unknown'
   for (let a = 0; a < n; a++) {
     for (let b = a + 1; b < n; b++) {
@@ -245,11 +230,7 @@ function checkCommutativity(
 }
 
 /** 幺元：找到满足 e*a = a*e = a 的元素 e。封闭性不满足时返回 null。 */
-function findIdentity(
-  table: number[][],
-  n: number,
-  closureOk: boolean
-): number | null {
+function findIdentity(table: number[][], n: number, closureOk: boolean): number | null {
   if (!closureOk) return null
   for (let e = 0; e < n; e++) {
     let ok = true
@@ -271,11 +252,7 @@ function findIdentity(
 }
 
 /** 逆元：在已知幺元的前提下，检查每个元素是否存在逆元。无幺元时返回 unknown。 */
-function checkInverses(
-  table: number[][],
-  n: number,
-  identity: number | null
-): InverseResult {
+function checkInverses(table: number[][], n: number, identity: number | null): InverseResult {
   if (identity === null) {
     return { status: 'unknown', inverses: new Map() }
   }
@@ -331,7 +308,7 @@ function cyclicGenerators(n: number): number[] {
 
 /** 循环群 Z_n 的全部子群：对应 n 的每个约数 d，唯一子群 ⟨n/d⟩，阶为 d。 */
 function cyclicSubgroups(n: number, labels: string[]): SubgroupInfo[] {
-  return divisors(n).map((d) => {
+  return divisors(n).map(d => {
     const step = n / d
     const elems: string[] = []
     for (let k = 0; k < d; k++) {
@@ -366,10 +343,7 @@ const S3_SUBGROUPS: SubgroupInfo[] = [
 // 展示元数据
 // ---------------------------------------------------------------------------
 
-const STATUS_META: Record<
-  PropStatus,
-  { symbol: string; label: string; cls: string }
-> = {
+const STATUS_META: Record<PropStatus, { symbol: string; label: string; cls: string }> = {
   pass: { symbol: '✓', label: '满足', cls: 'ie-prop-pass' },
   fail: { symbol: '✗', label: '不满足', cls: 'ie-prop-fail' },
   unknown: { symbol: '?', label: '未确定', cls: 'ie-prop-unknown' },
@@ -654,39 +628,26 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
   const sliderDisabled = groupType !== 'cyclic'
 
   // 当前群数据（运算表 + 标签）。
-  const group = useMemo(
-    () => buildGroup(groupType, effectiveOrder),
-    [groupType, effectiveOrder]
-  )
+  const group = useMemo(() => buildGroup(groupType, effectiveOrder), [groupType, effectiveOrder])
 
   // --- 实时性质检测（依赖运算表） ---
-  const closureOk = useMemo(
-    () => checkClosure(group.table, group.order),
-    [group]
-  )
+  const closureOk = useMemo(() => checkClosure(group.table, group.order), [group])
   const assoc = useMemo(
     () => checkAssociativity(group.table, group.order, closureOk),
-    [group, closureOk]
+    [group, closureOk],
   )
   const comm = useMemo(
     () => checkCommutativity(group.table, group.order, closureOk),
-    [group, closureOk]
+    [group, closureOk],
   )
   const identity = useMemo(
     () => findIdentity(group.table, group.order, closureOk),
-    [group, closureOk]
+    [group, closureOk],
   )
-  const inv = useMemo(
-    () => checkInverses(group.table, group.order, identity),
-    [group, identity]
-  )
+  const inv = useMemo(() => checkInverses(group.table, group.order, identity), [group, identity])
 
   // 幺元状态：封闭性不满足时无法判定 → unknown。
-  const identityStatus: PropStatus = !closureOk
-    ? 'unknown'
-    : identity !== null
-      ? 'pass'
-      : 'fail'
+  const identityStatus: PropStatus = !closureOk ? 'unknown' : identity !== null ? 'pass' : 'fail'
 
   // 是否为群：任一 fail 即 fail；任一 unknown 且无 fail 即 unknown；否则 pass。
   const isGroup: PropStatus = useMemo(() => {
@@ -697,8 +658,8 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
       identityStatus,
       inv.status,
     ]
-    if (statuses.some((s) => s === 'fail')) return 'fail'
-    if (statuses.some((s) => s === 'unknown')) return 'unknown'
+    if (statuses.some(s => s === 'fail')) return 'fail'
+    if (statuses.some(s => s === 'unknown')) return 'unknown'
     return 'pass'
   }, [closureOk, assoc.status, comm, identityStatus, inv.status])
 
@@ -707,7 +668,7 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
   // --- 生成元 ---
   const generators = useMemo<string[]>(() => {
     if (groupType === 'cyclic') {
-      return cyclicGenerators(group.order).map((g) => group.labels[g])
+      return cyclicGenerators(group.order).map(g => group.labels[g])
     }
     return []
   }, [groupType, group])
@@ -761,18 +722,14 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
             ? `全量 ${assoc.sampled} 组通过`
             : `采样 ${assoc.sampled} 组通过`
           : assoc.status === 'fail'
-            ? `违反: (${assoc.violation?.map((x) => group.labels[x]).join(', ') ?? ''})`
+            ? `违反: (${assoc.violation?.map(x => group.labels[x]).join(', ') ?? ''})`
             : '封闭性未满足',
     },
     {
       name: '交换性',
       status: comm,
       note:
-        comm === 'pass'
-          ? '∀a,b: a·b = b·a'
-          : comm === 'fail'
-            ? '存在 a·b ≠ b·a'
-            : '封闭性未满足',
+        comm === 'pass' ? '∀a,b: a·b = b·a' : comm === 'fail' ? '存在 a·b ≠ b·a' : '封闭性未满足',
     },
     {
       name: '幺元',
@@ -813,16 +770,14 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
       <style>{STYLES}</style>
 
       <h3 className="ie-title">群性质探索器</h3>
-      <p className="ie-subtitle">
-        拖动滑块改变群的阶，实时观察运算表与群公理的满足情况
-      </p>
+      <p className="ie-subtitle">拖动滑块改变群的阶，实时观察运算表与群公理的满足情况</p>
 
       {/* 控制区：群类型选择 + 阶滑块 */}
       <div className="ie-controls">
         <div className="ie-control-group">
           <span className="ie-control-label">群类型</span>
           <div className="ie-type-tabs" role="tablist" aria-label="群类型">
-            {(Object.keys(GROUP_TYPE_META) as GroupType[]).map((t) => (
+            {(Object.keys(GROUP_TYPE_META) as GroupType[]).map(t => (
               <button
                 key={t}
                 type="button"
@@ -857,11 +812,11 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
             </span>
           </div>
           {sliderDisabled ? (
-            <span className="ie-fixed-note">
-              此群阶固定为 {typeMeta.fixedOrder}，滑块已禁用
-            </span>
+            <span className="ie-fixed-note">此群阶固定为 {typeMeta.fixedOrder}，滑块已禁用</span>
           ) : (
-            <span className="ie-type-desc">范围 {MIN_N}–{MAX_N}，生成 Zₙ 运算表</span>
+            <span className="ie-type-desc">
+              范围 {MIN_N}–{MAX_N}，生成 Zₙ 运算表
+            </span>
           )}
         </div>
       </div>
@@ -912,7 +867,7 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
           <div>
             <div className="ie-section-title">群公理检测</div>
             <div className="ie-props">
-              {propItems.map((p) => {
+              {propItems.map(p => {
                 const meta = STATUS_META[p.status]
                 return (
                   <div className="ie-prop" key={p.name}>
@@ -967,7 +922,9 @@ function InteractiveExplorerBase({ onGroupChange }: InteractiveExplorerProps) {
                   <span className="ie-subgroup-label">{sg.label}</span>
                   <span className="ie-subgroup-order">阶 {sg.order}</span>
                   <span className="ie-subgroup-elems">
-                    {'{'}{sg.elements.join(', ')}{'}'}
+                    {'{'}
+                    {sg.elements.join(', ')}
+                    {'}'}
                   </span>
                 </div>
               ))}

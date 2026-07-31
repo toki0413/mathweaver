@@ -22,7 +22,7 @@ export function CollapsibleSection({
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen)
 
-  const toggle = useCallback(() => setOpen((p) => !p), [])
+  const toggle = useCallback(() => setOpen(p => !p), [])
 
   return (
     <div className={`collapsible-section ${open ? 'open' : ''}`}>
@@ -32,11 +32,7 @@ export function CollapsibleSection({
         {hint && <span className="collapsible-hint">{hint}</span>}
         {badge && <span className="collapsible-badge">{badge}</span>}
       </button>
-      {open && (
-        <div className="collapsible-body">
-          {children}
-        </div>
-      )}
+      {open && <div className="collapsible-body">{children}</div>}
     </div>
   )
 }

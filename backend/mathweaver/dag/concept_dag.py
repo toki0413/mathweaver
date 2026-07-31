@@ -1,6 +1,6 @@
 """Math concept DAG with multi-level curriculum support.
 
-Loads concept dependency graphs from JSON data files. Supports eight
+Loads concept dependency graphs from JSON data files. Supports ten
 curriculum levels:
   - elementary (小学, grades 1-6)
   - middle_school (初中, grades 7-9)
@@ -10,6 +10,16 @@ curriculum levels:
   - discrete_math (离散数学, university year 1-2)
   - number_theory (数论, university year 2)
   - group_theory (大学抽象代数, university year 2-3)
+  - physics (物理 — 数学的延伸, university year 1-3)
+  - chemistry (化学 — 数学的延伸, university year 1-3)
+
+Design philosophy:
+  Physics, chemistry, and computer science are extensions of mathematics.
+  Each concept in these fields is grounded in a mathematical foundation:
+    - Physics: calculus (derivatives/integrals), ODEs, vector analysis
+    - Chemistry: linear algebra (LCAO), group theory (symmetry),
+      differential equations (kinetics), thermodynamics (multivariable calc)
+    - Computer science: discrete math (graphs, combinatorics, complexity)
 
 Each level is a separate JSON file in the data/ directory.
 """
@@ -27,6 +37,8 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # Supported curriculum levels, ordered by progression.
+# Physics and chemistry come after the math foundations — they ARE math
+# applied to the natural world.
 CURRICULUM_LEVELS = [
     "elementary",
     "middle_school",
@@ -36,6 +48,8 @@ CURRICULUM_LEVELS = [
     "discrete_math",
     "number_theory",
     "group_theory",
+    "physics",
+    "chemistry",
 ]
 
 # Human-readable labels for each level
@@ -48,6 +62,8 @@ CURRICULUM_LABELS = {
     "discrete_math": "离散数学（大学）",
     "number_theory": "数论（大学）",
     "group_theory": "群论（大学）",
+    "physics": "物理（数学的延伸）",
+    "chemistry": "化学（数学的延伸）",
 }
 
 
@@ -161,7 +177,7 @@ GROUP_THEORY_SEED: list[dict] = [
     {
         "id": "inverse_element",
         "name": "逆元",
-        "description": "对每个元素 a，存在 a⁻¹ 使 a·a⁻¹ = e",
+        "description": "对每个元素 a，存在 a⁻¹ 使 a·a⁻¹ = a⁻¹·a = e",
         "prerequisites": ["identity_element", "associativity"],
         "abstraction_level": 2,
         "domain": "algebra",
@@ -212,7 +228,7 @@ GROUP_THEORY_SEED: list[dict] = [
         "id": "lagrange_theorem",
         "name": "拉格朗日定理",
         "description": "子群的阶整除群的阶",
-        "prerequisites": ["subgroup", "cyclic_group"],
+        "prerequisites": ["subgroup", "cosets", "group_order"],
         "abstraction_level": 5,
         "domain": "algebra",
         "difficulty": 0.75,
@@ -282,6 +298,27 @@ class ConceptDAG:
 
     def get_milestone_nodes(self) -> list[ConceptNode]:
         return [n for n in self._nodes.values() if n.is_milestone]
+
+    def search_nodes_by_keyword(self, keyword: str) -> list[ConceptNode]:
+        """Search for nodes whose name or description contains a keyword.
+
+        The search is case-insensitive and matches substrings, so
+        ``"isomorphism"`` matches a node named "Group Isomorphism" and
+        ``"同构"`` matches a node whose description mentions "同构".
+
+        Args:
+            keyword: The search term (matched against ``node.name`` and
+                ``node.description``, case-insensitively).
+
+        Returns:
+            A list of matching ``ConceptNode`` objects (possibly empty).
+        """
+        kw = keyword.lower()
+        return [
+            node for node in self._nodes.values()
+            if kw in node.name.lower()
+            or kw in node.description.lower()
+        ]
 
     def get_node_count(self) -> int:
         return len(self._nodes)

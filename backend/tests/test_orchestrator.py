@@ -307,7 +307,7 @@ def test_get_curriculum_info_returns_current_and_available(engine):
     assert "current_summary" in info
     assert info["current_summary"]["total_concepts"] > 0
     available = info["available"]
-    assert len(available) == 8  # 8 curriculum levels
+    assert len(available) == 10  # 10 curriculum levels
     assert {c["level"] for c in available} == {
         "elementary",
         "middle_school",
@@ -317,6 +317,8 @@ def test_get_curriculum_info_returns_current_and_available(engine):
         "discrete_math",
         "number_theory",
         "group_theory",
+        "physics",
+        "chemistry",
     }
 
 

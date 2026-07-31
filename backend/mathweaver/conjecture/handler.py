@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..counterexample.forge import CounterExampleForge
+from .known_groups import KNOWN_GROUPS
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class ConjectureResult:
     counter_example: str | None = None
     explanation: str = ""
     socratic_prompt: str = ""
+    node_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -38,27 +40,14 @@ class ConjectureResult:
             "counter_example": self.counter_example,
             "explanation": self.explanation,
             "socratic_prompt": self.socratic_prompt,
+            "node_id": self.node_id,
         }
 
 
-# Known test structures for common conjectures
-_TEST_GROUPS = {
-    # Small groups as Cayley tables for testing conjectures
-    "z2": [[0, 1], [1, 0]],                    # Z2, order 2, abelian
-    "z3": [[0, 1, 2], [1, 2, 0], [2, 0, 1]],   # Z3, order 3, abelian
-    "z4": [[0,1,2,3],[1,2,3,0],[2,3,0,1],[3,0,1,2]],  # Z4, order 4, abelian
-    "klein": [[0,1,2,3],[1,0,3,2],[2,3,0,1],[3,2,1,0]],  # Klein 4-group, abelian
-    "s3": [[0,1,2,3,4,5],[1,0,3,2,5,4],[2,4,0,5,1,3],
-           [3,5,1,4,0,2],[4,2,5,0,3,1],[5,3,4,1,2,0]],  # S3, order 6, non-abelian
-    "z6": [[0,1,2,3,4,5],[1,2,3,4,5,0],[2,3,4,5,0,1],
-           [3,4,5,0,1,2],[4,5,0,1,2,3],[5,0,1,2,3,4]],  # Z6, abelian
-    "z7": [[0,1,2,3,4,5,6],[1,2,3,4,5,6,0],[2,3,4,5,6,0,1],
-           [3,4,5,6,0,1,2],[4,5,6,0,1,2,3],[5,6,0,1,2,3,4],
-           [6,0,1,2,3,4,5]],  # Z7, order 7 (prime), abelian
-    "q8": [[0,1,2,3,4,5,6,7],[1,0,4,5,2,3,7,6],[2,4,5,0,6,7,1,3],
-           [3,5,0,4,7,6,2,1],[4,6,7,1,5,0,3,2],[5,7,6,0,3,1,4,2],
-           [6,2,3,7,0,4,5,1],[7,3,1,6,4,2,0,5]],  # Q8 quaternion, non-abelian
-}
+# Known group Cayley tables — imported from the single source of truth.
+# _TEST_GROUPS is kept as a backward-compatible alias for existing imports.
+# To add or modify group data, edit known_groups.py instead.
+_TEST_GROUPS = KNOWN_GROUPS
 
 
 class ConjectureHandler:
@@ -92,6 +81,7 @@ class ConjectureHandler:
     def _extract_claim(self, text: str) -> str | None:
         """Extract the conjecture claim from student text."""
         # Pattern: "我猜..." / "猜想..." / "所有...都..." / "...一定..."
+        # Extended with question-form patterns: "是否...", "会不会...", "...吗"
         patterns = [
             r"我猜(.+)",
             r"猜想(.+)",
@@ -102,6 +92,10 @@ class ConjectureHandler:
             r"(.+?)一定(.+)",
             r"(.+?)必然(.+)",
             r"(.+?)总是(.+)",
+            # New question-form patterns (checked after specific forms)
+            r"是否(.+)",
+            r"会不会(.+)",
+            r"(.+?)吗",
         ]
         for pat in patterns:
             m = re.search(pat, text)
@@ -205,3 +199,181 @@ class ConjectureHandler:
             explanation="无法用已知结构验证这个猜想。请尝试更具体的陈述。",
             socratic_prompt="你能把猜想写得更具体吗？比如「所有N阶群都是交换群」？",
         )
+
+    # ------------------------------------------------------------------
+    # Node-aware conjecture testing (T-3.2)
+    # ------------------------------------------------------------------
+
+    def test_conjecture_for_node(
+        self,
+        claim: str,
+        node_id: str,
+        node_context: dict[str, Any] | None = None,
+    ) -> ConjectureResult:
+        """Test a conjecture in the context of a specific DAG node.
+
+        Dynamically selects a verification strategy based on the node's
+        domain:
+
+        - **Group theory** (node_id contains ``"group"`` or domain is
+          ``"group_theory"``): delegates to the existing Cayley-table
+          based ``_test_claim`` which uses Z3-backed verification.
+        - **Linear algebra** (domain is ``"linear_algebra"``): attempts
+          a lightweight matrix-based check for commutativity-style
+          claims; otherwise returns ``undecidable`` with a guiding
+          Socratic prompt.
+        - **Other domains**: returns ``undecidable`` with a Socratic
+          prompt that encourages the student to test concrete examples.
+
+        Args:
+            claim: The student's raw text containing a conjecture. This
+                is first passed through ``_extract_claim`` to normalise
+                the claim form.
+            node_id: The DAG node identifier the student is currently
+                exploring (e.g. ``"group_definition"``).
+            node_context: Optional dict with keys such as ``"name"``,
+                ``"description"``, ``"domain"``, ``"related_concepts"``.
+
+        Returns:
+            ConjectureResult with ``node_id`` populated.
+        """
+        node_context = node_context or {}
+        extracted = self._extract_claim(claim)
+        if not extracted:
+            return ConjectureResult(
+                claim=claim[:100],
+                verdict="undecidable",
+                explanation="无法识别猜想内容。请用「我猜...」或「所有...都是...」的格式描述。",
+                socratic_prompt=self._generate_socratic_prompt_for_node(
+                    node_id, node_context
+                ),
+                node_id=node_id,
+            )
+
+        domain = node_context.get("domain", "")
+        is_group = (
+            "group" in node_id.lower()
+            or domain == "group_theory"
+            or "群" in node_context.get("name", "")
+        )
+        is_linear = (
+            domain == "linear_algebra"
+            or "linear" in node_id.lower()
+            or "矩阵" in node_context.get("name", "")
+            or "matrix" in node_id.lower()
+        )
+
+        if is_group:
+            # Delegate to existing Cayley-table verification
+            result = self._test_claim(extracted)
+            result.node_id = node_id
+            return result
+
+        if is_linear:
+            return self._test_linear_algebra_claim(extracted, node_id, node_context)
+
+        # Default: undecidable with Socratic guidance
+        return ConjectureResult(
+            claim=extracted,
+            verdict="undecidable",
+            explanation=(
+                f"当前概念「{node_context.get('name', node_id)}」所属领域"
+                f"暂不支持自动验证。请尝试用具体例子检验你的猜想。"
+            ),
+            socratic_prompt=self._generate_socratic_prompt_for_node(
+                node_id, node_context
+            ),
+            node_id=node_id,
+        )
+
+    def _test_linear_algebra_claim(
+        self,
+        claim: str,
+        node_id: str,
+        node_context: dict[str, Any],
+    ) -> ConjectureResult:
+        """Test a linear-algebra conjecture via concrete matrix checks.
+
+        Currently handles commutativity-style claims about matrix
+        multiplication (e.g. "矩阵乘法满足交换律") by testing with
+        concrete 2×2 matrices. Other claims return ``undecidable``
+        with a guiding Socratic prompt.
+        """
+        claim_lower = claim.lower()
+
+        # Conjecture: "矩阵乘法满足交换律" / "矩阵乘法可交换"
+        if ("交换" in claim or "commut" in claim_lower) and (
+            "矩阵" in claim or "matrix" in claim_lower
+        ):
+            # Counter-example: [[0,1],[0,0]] * [[0,0],[1,0]] != reverse
+            explanation = (
+                "取 A = [[0,1],[0,0]]，B = [[0,0],[1,0]]。"
+                "AB = [[1,0],[0,0]]，但 BA = [[0,0],[0,1]]，"
+                "所以 AB ≠ BA，矩阵乘法不满足交换律。"
+            )
+            return ConjectureResult(
+                claim=claim,
+                verdict="refuted",
+                counter_example="A=[[0,1],[0,0]], B=[[0,0],[1,0]]",
+                explanation=explanation,
+                socratic_prompt=(
+                    "你的猜想被具体的矩阵反例驳倒了。"
+                    "什么样的矩阵乘法才会满足交换律？"
+                ),
+                node_id=node_id,
+            )
+
+        # Conjecture: "矩阵乘法满足结合律"
+        if "结合" in claim and ("矩阵" in claim or "matrix" in claim_lower):
+            return ConjectureResult(
+                claim=claim,
+                verdict="confirmed",
+                explanation="矩阵乘法满足结合律：(AB)C = A(BC)，这由矩阵乘法的定义直接保证。",
+                socratic_prompt="正确！你能用矩阵乘法的定义证明结合律吗？",
+                node_id=node_id,
+            )
+
+        # Other linear algebra claims
+        return ConjectureResult(
+            claim=claim,
+            verdict="undecidable",
+            explanation="无法自动验证这个线性代数猜想。请尝试构造具体的矩阵来检验。",
+            socratic_prompt=self._generate_socratic_prompt_for_node(
+                node_id, node_context
+            ),
+            node_id=node_id,
+        )
+
+    def _generate_socratic_prompt_for_node(
+        self,
+        node_id: str,
+        node_context: dict[str, Any],
+    ) -> str:
+        """Generate a Socratic follow-up prompt tailored to the node context.
+
+        Args:
+            node_id: The DAG node identifier.
+            node_context: Dict with optional keys ``"name"``, ``"domain"``,
+                ``"description"``.
+
+        Returns:
+            A Socratic question string guiding the student toward
+            concrete verification.
+        """
+        domain = node_context.get("domain", "")
+        is_group = (
+            "group" in node_id.lower()
+            or domain == "group_theory"
+            or "群" in node_context.get("name", "")
+        )
+        is_linear = (
+            domain == "linear_algebra"
+            or "linear" in node_id.lower()
+            or "矩阵" in node_context.get("name", "")
+        )
+
+        if is_group:
+            return "你可以试试在 Z₃ 或 S₃ 中验证这个猜想。"
+        if is_linear:
+            return "你可以构造一个具体的矩阵来检验。"
+        return "你能举一个具体的例子来检验吗？反例呢？"

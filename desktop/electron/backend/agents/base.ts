@@ -17,6 +17,9 @@
 
 import type { AgentContext, AgentMessage, AgentRole } from '../types'
 import type { LLMClient } from '../llm/client'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('Agent')
 
 // A tool is any callable with arbitrary arguments. Agents know the concrete
 // signature of the tools they register (3.3: whitelist enforced).
@@ -53,9 +56,10 @@ export abstract class BaseAgent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callTool(name: string, ...args: any[]): any {
     if (!this.tools.has(name)) {
-      console.warn(
-        `Agent ${this.role} attempted to call unregistered tool '${name}' (3.3 violation)`,
-      )
+      log.warn('Agent attempted to call unregistered tool (3.3 violation)', {
+        role: this.role,
+        tool: name,
+      })
       throw new Error(
         `Agent ${this.role} cannot call tool '${name}': ` +
           `not in whitelist [${[...this.tools.keys()].join(', ')}]`,
@@ -89,7 +93,7 @@ export abstract class BaseAgent {
     if (allowedTools !== undefined) {
       // 6.3: Child can only use tools that parent also has (permission递减)
       const parentTools = new Set(this.tools.keys())
-      const childAllowed = new Set(allowedTools.filter((t) => parentTools.has(t)))
+      const childAllowed = new Set(allowedTools.filter(t => parentTools.has(t)))
       // Remove any tools from child that parent doesn't have
       for (const toolName of [...child.tools.keys()]) {
         if (!childAllowed.has(toolName)) {
@@ -109,6 +113,7 @@ export abstract class BaseAgent {
   /** Return the delegation chain from root to this agent (6.3). */
   permissionChain(): string[] {
     const chain: string[] = []
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- safe: iterating parent chain, no callback involvement
     let current: BaseAgent | null = this
     while (current !== null) {
       chain.push(current.role)

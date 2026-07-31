@@ -60,6 +60,19 @@ export function GraphIcon(p: IconProps) {
   )
 }
 
+export function ModelIcon(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M3 3v18h18" />
+      <path d="M7 14l3-4 3 3 4-5" />
+      <circle cx="7" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="10" r="1" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="13" r="1" fill="currentColor" stroke="none" />
+      <circle cx="17" cy="8" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 /* === Actions === */
 
 export function SettingsIcon(p: IconProps) {
@@ -243,13 +256,30 @@ export function CommandIcon(p: IconProps) {
 
 export function getCommandIcon(iconName: string): React.FC<IconProps> | null {
   const map: Record<string, React.FC<IconProps>> = {
-    ChatIcon, FlameIcon, ProofIcon, GraphIcon,
-    SettingsIcon, BookIcon, CheckIcon, TrashIcon,
-    KeyboardIcon, InfoIcon,
-    TrophyIcon, SparkleIcon, CrownIcon, GraduationIcon,
-    AlertIcon, ZapIcon, SendIcon, CopyIcon,
-    ChevronDownIcon, ChevronRightIcon, CommandIcon,
-    StarIcon, DumbbellIcon,
+    ChatIcon,
+    FlameIcon,
+    ProofIcon,
+    GraphIcon,
+    ModelIcon,
+    SettingsIcon,
+    BookIcon,
+    CheckIcon,
+    TrashIcon,
+    KeyboardIcon,
+    InfoIcon,
+    TrophyIcon,
+    SparkleIcon,
+    CrownIcon,
+    GraduationIcon,
+    AlertIcon,
+    ZapIcon,
+    SendIcon,
+    CopyIcon,
+    ChevronDownIcon,
+    ChevronRightIcon,
+    CommandIcon,
+    StarIcon,
+    DumbbellIcon,
   }
   return map[iconName] ?? null
 }

@@ -8,6 +8,7 @@
 interface MathWeaverAPI {
   // App
   getAppInfo(): Promise<Record<string, unknown>>
+  getBackendUrl(): Promise<string>
 
   // Health
   health(): Promise<Record<string, unknown> | null>
@@ -38,15 +39,28 @@ interface MathWeaverAPI {
 
   // Proof
   getTheorems(level?: string): Promise<Record<string, unknown> | null>
-  submitProof(theoremId: string, steps: string[], level?: string): Promise<Record<string, unknown> | null>
+  submitProof(
+    theoremId: string,
+    steps: string[],
+    level?: string,
+  ): Promise<Record<string, unknown> | null>
 
   // Grill
   startGrill(studentId?: string, curriculumLevel?: string): Promise<Record<string, unknown> | null>
-  submitGrillAnswer(qid: string, answer: string, responseTimeMs?: number): Promise<Record<string, unknown> | null>
+  submitGrillAnswer(
+    qid: string,
+    answer: string,
+    responseTimeMs?: number,
+  ): Promise<Record<string, unknown> | null>
+
+  // Dynamic Content Generation
+  generateContent(req: Record<string, unknown>): Promise<Record<string, unknown> | null>
 
   // Settings
   getLLMConfig(): Promise<Record<string, unknown> | null>
-  setLLMConfig(config: Record<string, unknown>): Promise<{ success: boolean; config: Record<string, unknown> } | null>
+  setLLMConfig(
+    config: Record<string, unknown>,
+  ): Promise<{ success: boolean; config: Record<string, unknown> } | null>
   getLLMPresets(): Promise<Record<string, unknown>[] | null>
   getSetting(key: string): Promise<unknown>
   setSetting(key: string, value: unknown): Promise<boolean | null>
@@ -58,8 +72,9 @@ interface MathWeaverAPI {
   loadSession(): Promise<string | null>
   exportTable(data: string): Promise<string | null>
 
-  // IPC listeners
-  on(channel: string, callback: (data: unknown) => void): (() => void)
+  // Raw IPC bridge
+  send(channel: string, ...args: unknown[]): void
+  on(channel: string, callback: (data: unknown) => void): () => void
   invoke(channel: string, ...args: unknown[]): Promise<unknown>
 }
 

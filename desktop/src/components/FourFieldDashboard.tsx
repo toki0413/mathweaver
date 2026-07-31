@@ -62,18 +62,18 @@ const METRIC_EXPLANATIONS = {
     bad: '尚未掌握，需要更多基础练习',
   },
   zpd: {
-    title: '最近发展区',
+    title: '学习区间',
     desc: '学生的最佳学习难度区间',
-    good: '当前内容在最近发展区内',
+    good: '当前内容难度适中',
     warn: '接近上限，注意不要超载',
-    bad: '超出最近发展区，需要降低难度',
+    bad: '难度过高，需要降低难度',
   },
   in_zpd: {
-    title: '在最近发展区内',
-    desc: '当前学习内容是否落在学生的最近发展区内',
+    title: '难度是否适合',
+    desc: '当前学习内容的难度是否适合学生水平',
     good: '内容难度适中，最利于学习',
     warn: '处于边缘，注意调整',
-    bad: '超出或低于最近发展区，学习效率低',
+    bad: '难度过高或过低，学习效率低',
   },
   prerequisite_gaps: {
     title: '前置知识缺口',
@@ -204,7 +204,7 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
   if (!fields) {
     return (
       <div className="card">
-        <h2>四场状态</h2>
+        <h2>学习状态</h2>
         <div className="dashboard-empty">
           <div className="dashboard-empty-icon">{'\u25CB'}</div>
           <p>开始会话后显示认知状态</p>
@@ -215,11 +215,10 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
 
   const { knowledge: k, cognitive: c, emotional: e, interaction: i } = fields
 
-  const cls = (ok: boolean, warn?: boolean) =>
-    ok ? 'ok' : warn ? 'warn' : 'err'
+  const cls = (ok: boolean, warn?: boolean) => (ok ? 'ok' : warn ? 'warn' : 'err')
 
   const toggleSection = (section: string) => {
-    setExpandedSection((prev) => (prev === section ? null : section))
+    setExpandedSection(prev => (prev === section ? null : section))
   }
 
   // Shared interaction props for every field-item: hover tooltip + click-to-pin
@@ -229,7 +228,7 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
     onMouseLeave: () => setHoveredMetric(null),
     onFocus: () => setHoveredMetric(key),
     onBlur: () => setHoveredMetric(null),
-    onClick: () => setPinnedMetric((prev) => (prev === key ? null : key)),
+    onClick: () => setPinnedMetric(prev => (prev === key ? null : key)),
     tabIndex: 0,
     role: 'button',
     'aria-label': ariaLabel,
@@ -238,9 +237,7 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
 
   // Resolve which decision buttons apply to the current decision action
   const decisionButtons = decision
-    ? DECISION_BUTTONS.filter((b) =>
-        b.keys.some((kw) => decision.action.toLowerCase().includes(kw)),
-      )
+    ? DECISION_BUTTONS.filter(b => b.keys.some(kw => decision.action.toLowerCase().includes(kw)))
     : []
 
   const renderExplanation = (key: string) => {
@@ -268,7 +265,7 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
   return (
     <div className="card four-field-dashboard">
       <h2>
-        四场状态 <span className="card-hint">悬停查看、点击固定指标解释</span>
+        学习状态 <span className="card-hint">悬停查看指标详情</span>
       </h2>
 
       {decision && (
@@ -277,7 +274,7 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           <div className="decision-reason">{decision.reason}</div>
           {decisionButtons.length > 0 && (
             <div className="decision-actions">
-              {decisionButtons.map((b) => (
+              {decisionButtons.map(b => (
                 <button
                   key={b.action}
                   className={`decision-btn ${b.cls}`}
@@ -301,16 +298,30 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           role="button"
           tabIndex={0}
           aria-expanded={expandedSection === 'knowledge'}
-          onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSection('knowledge') } }}
+          onKeyDown={ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault()
+              toggleSection('knowledge')
+            }
+          }}
         >
-          <span className="field-section-toggle">{expandedSection === 'knowledge' ? '\u25BC' : '\u25B8'}</span>
+          <span className="field-section-toggle">
+            {expandedSection === 'knowledge' ? '\u25BC' : '\u25B8'}
+          </span>
           知识
-          <span className={`field-section-status ${k.ready_to_advance ? 'ok' : k.in_zpd ? 'warn' : 'err'}`}>
-            {k.ready_to_advance ? '可进阶' : k.in_zpd ? '在 ZPD' : '需基础'}
+          <span
+            className={`field-section-status ${k.ready_to_advance ? 'ok' : k.in_zpd ? 'warn' : 'err'}`}
+          >
+            {k.ready_to_advance ? '可以进阶了' : k.in_zpd ? '难度适中' : '需要补基础'}
           </span>
         </h3>
         <div className="field-panel">
-          <div {...metricProps('mastery_estimate', `掌握度: ${(k.mastery_estimate * 100).toFixed(0)}%`)}>
+          <div
+            {...metricProps(
+              'mastery_estimate',
+              `掌握度: ${(k.mastery_estimate * 100).toFixed(0)}%`,
+            )}
+          >
             <div className="label">掌握度</div>
             <div className={`value ${cls(k.mastery_estimate > 0.6, k.mastery_estimate > 0.3)}`}>
               {(k.mastery_estimate * 100).toFixed(0)}%
@@ -322,19 +333,23 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
               </div>
             </div>
           </div>
-          <div {...metricProps('zpd', `最近发展区: [${k.zpd_lower}, ${k.zpd_upper}]`)}>
-            <div className="label">ZPD</div>
+          <div {...metricProps('zpd', `学习区间: [${k.zpd_lower}, ${k.zpd_upper}]`)}>
+            <div className="label">学习区间</div>
             <div className={`value ${k.in_zpd ? 'warn' : 'err'}`}>
               [{k.zpd_lower}, {k.zpd_upper}]
             </div>
           </div>
-          <div {...metricProps('in_zpd', `在最近发展区内: ${k.in_zpd ? '是' : '否'}`)}>
-            <div className="label">在 ZPD</div>
+          <div {...metricProps('in_zpd', `难度是否适合: ${k.in_zpd ? '是' : '否'}`)}>
+            <div className="label">难度适合</div>
             <div className={`value ${k.in_zpd ? 'warn' : ''}`}>{k.in_zpd ? '是' : '否'}</div>
           </div>
-          <div {...metricProps('prerequisite_gaps', `前置知识缺口: ${k.prerequisite_gaps.length} 个`)}>
+          <div
+            {...metricProps('prerequisite_gaps', `前置知识缺口: ${k.prerequisite_gaps.length} 个`)}
+          >
             <div className="label">前置缺口</div>
-            <div className="value">{k.prerequisite_gaps.length > 0 ? `${k.prerequisite_gaps.length} 个` : '无'}</div>
+            <div className="value">
+              {k.prerequisite_gaps.length > 0 ? `${k.prerequisite_gaps.length} 个` : '无'}
+            </div>
           </div>
         </div>
         {expandedSection === 'knowledge' && (
@@ -361,16 +376,25 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           role="button"
           tabIndex={0}
           aria-expanded={expandedSection === 'cognitive'}
-          onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSection('cognitive') } }}
+          onKeyDown={ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault()
+              toggleSection('cognitive')
+            }
+          }}
         >
-          <span className="field-section-toggle">{expandedSection === 'cognitive' ? '\u25BC' : '\u25B8'}</span>
+          <span className="field-section-toggle">
+            {expandedSection === 'cognitive' ? '\u25BC' : '\u25B8'}
+          </span>
           认知
           <span className={`field-section-status ${!c.is_overloaded ? 'ok' : 'err'}`}>
             {c.state}
           </span>
         </h3>
         <div className="field-panel">
-          <div {...metricProps('cognitive_load', `认知负荷: ${(c.cognitive_load * 100).toFixed(0)}%`)}>
+          <div
+            {...metricProps('cognitive_load', `认知负荷: ${(c.cognitive_load * 100).toFixed(0)}%`)}
+          >
             <div className="label">负荷</div>
             <div className={`value ${cls(!c.is_overloaded, c.cognitive_load <= 0.7)}`}>
               {(c.cognitive_load * 100).toFixed(0)}%
@@ -384,7 +408,9 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           </div>
           <div {...metricProps('rt_zscore', `反应时 z 分数: ${c.rt_zscore.toFixed(2)}`)}>
             <div className="label">RT z</div>
-            <div className={`value ${c.rt_zscore > 1.5 ? 'err' : ''}`}>{c.rt_zscore.toFixed(2)}</div>
+            <div className={`value ${c.rt_zscore > 1.5 ? 'err' : ''}`}>
+              {c.rt_zscore.toFixed(2)}
+            </div>
           </div>
           <div {...metricProps('cognitive_state', `认知状态: ${c.state}`)}>
             <div className="label">状态</div>
@@ -392,7 +418,9 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           </div>
           <div {...metricProps('is_overloaded', `认知过载: ${c.is_overloaded ? '是' : '否'}`)}>
             <div className="label">过载</div>
-            <div className={`value ${c.is_overloaded ? 'err' : 'ok'}`}>{c.is_overloaded ? '是' : '否'}</div>
+            <div className={`value ${c.is_overloaded ? 'err' : 'ok'}`}>
+              {c.is_overloaded ? '是' : '否'}
+            </div>
           </div>
         </div>
         {expandedSection === 'cognitive' && (
@@ -403,7 +431,9 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
             </div>
             <div className="field-detail-row">
               <span className="field-detail-label">z 分数:</span>
-              <span className="field-detail-value">{c.rt_zscore > 1.5 ? '显著偏慢' : '正常范围'}</span>
+              <span className="field-detail-value">
+                {c.rt_zscore > 1.5 ? '显著偏慢' : '正常范围'}
+              </span>
             </div>
           </div>
         )}
@@ -417,11 +447,20 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           role="button"
           tabIndex={0}
           aria-expanded={expandedSection === 'emotional'}
-          onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSection('emotional') } }}
+          onKeyDown={ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault()
+              toggleSection('emotional')
+            }
+          }}
         >
-          <span className="field-section-toggle">{expandedSection === 'emotional' ? '\u25BC' : '\u25B8'}</span>
+          <span className="field-section-toggle">
+            {expandedSection === 'emotional' ? '\u25BC' : '\u25B8'}
+          </span>
           情感
-          <span className={`field-section-status ${e.in_flow ? 'ok' : e.is_anxious ? 'err' : 'warn'}`}>
+          <span
+            className={`field-section-status ${e.in_flow ? 'ok' : e.is_anxious ? 'err' : 'warn'}`}
+          >
             {e.state}
           </span>
         </h3>
@@ -452,7 +491,11 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           </div>
           <div {...metricProps('emotional_state', `情感状态: ${e.state}`)}>
             <div className="label">状态</div>
-            <div className={`value ${e.state === 'flow' ? 'ok' : e.state === 'anxious' ? 'err' : ''}`}>{e.state}</div>
+            <div
+              className={`value ${e.state === 'flow' ? 'ok' : e.state === 'anxious' ? 'err' : ''}`}
+            >
+              {e.state}
+            </div>
           </div>
           <div {...metricProps('in_flow', `心流中: ${e.in_flow ? '是' : '否'}`)}>
             <div className="label">心流中</div>
@@ -469,9 +512,16 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
           role="button"
           tabIndex={0}
           aria-expanded={expandedSection === 'interaction'}
-          onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSection('interaction') } }}
+          onKeyDown={ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault()
+              toggleSection('interaction')
+            }
+          }}
         >
-          <span className="field-section-toggle">{expandedSection === 'interaction' ? '\u25BC' : '\u25B8'}</span>
+          <span className="field-section-toggle">
+            {expandedSection === 'interaction' ? '\u25BC' : '\u25B8'}
+          </span>
           交互
           <span className={`field-section-status ${!i.is_struggling ? 'ok' : 'warn'}`}>
             {i.is_struggling ? '挣扎中' : '顺利'}
@@ -480,26 +530,41 @@ function FourFieldDashboardBase({ fields, decision, onAction }: Props) {
         <div className="field-panel">
           <div {...metricProps('hint_level', `提示级别: L${i.current_hint_level}`)}>
             <div className="label">提示级</div>
-            <div className="value">{i.current_hint_level > 0 ? `L${i.current_hint_level}` : '-'}</div>
+            <div className="value">
+              {i.current_hint_level > 0 ? `L${i.current_hint_level}` : '-'}
+            </div>
           </div>
           <div {...metricProps('consecutive_correct', `连续正确: ${i.consecutive_correct} 次`)}>
             <div className="label">连续正确</div>
-            <div className={`value ${i.consecutive_correct >= 3 ? 'ok' : ''}`}>{i.consecutive_correct}</div>
+            <div className={`value ${i.consecutive_correct >= 3 ? 'ok' : ''}`}>
+              {i.consecutive_correct}
+            </div>
           </div>
-          <div {...metricProps('should_fade_scaffold', `应淡出脚手架: ${i.should_fade_scaffold ? '是' : '否'}`)}>
+          <div
+            {...metricProps(
+              'should_fade_scaffold',
+              `应淡出脚手架: ${i.should_fade_scaffold ? '是' : '否'}`,
+            )}
+          >
             <div className="label">淡出</div>
-            <div className={`value ${i.should_fade_scaffold ? 'ok' : ''}`}>{i.should_fade_scaffold ? '是' : '否'}</div>
+            <div className={`value ${i.should_fade_scaffold ? 'ok' : ''}`}>
+              {i.should_fade_scaffold ? '是' : '否'}
+            </div>
           </div>
           <div {...metricProps('is_struggling', `挣扎状态: ${i.is_struggling ? '是' : '否'}`)}>
             <div className="label">挣扎</div>
-            <div className={`value ${i.is_struggling ? 'warn' : 'ok'}`}>{i.is_struggling ? '是' : '否'}</div>
+            <div className={`value ${i.is_struggling ? 'warn' : 'ok'}`}>
+              {i.is_struggling ? '是' : '否'}
+            </div>
           </div>
         </div>
         {expandedSection === 'interaction' && (
           <div className="field-detail">
             <div className="field-detail-row">
               <span className="field-detail-label">淡出阈值:</span>
-              <span className="field-detail-value">连续正确 {i.scaffold_fade_threshold} 次后减少提示</span>
+              <span className="field-detail-value">
+                连续正确 {i.scaffold_fade_threshold} 次后减少提示
+              </span>
             </div>
           </div>
         )}

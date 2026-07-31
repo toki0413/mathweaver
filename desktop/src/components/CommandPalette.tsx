@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import { getCommandIcon, type IconProps } from './Icons'
+import { getCommandIcon } from './Icons'
 
 export interface CommandAction {
   id: string
@@ -229,13 +229,11 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
   // 过滤 + 按 section 分组 + 扁平索引（用于方向键导航）
   const { sections, flat, indexById } = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const filtered = q
-      ? commands.filter((c) => c.label.toLowerCase().includes(q))
-      : commands
+    const filtered = q ? commands.filter(c => c.label.toLowerCase().includes(q)) : commands
 
     const buckets = new Map<string, CommandAction[]>()
-    SECTION_ORDER.forEach((s) => buckets.set(s, []))
-    filtered.forEach((c) => {
+    SECTION_ORDER.forEach(s => buckets.set(s, []))
+    filtered.forEach(c => {
       const bucket = buckets.get(c.section)
       if (bucket) {
         bucket.push(c)
@@ -269,9 +267,7 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
   // 高亮项滚动到可视区
   useEffect(() => {
     if (!isOpen) return
-    const el = listRef.current?.querySelector<HTMLElement>(
-      `[data-index="${selectedIndex}"]`,
-    )
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-index="${selectedIndex}"]`)
     el?.scrollIntoView({ block: 'nearest' })
   }, [selectedIndex, isOpen])
 
@@ -279,11 +275,11 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       if (flat.length === 0) return
-      setSelectedIndex((prev) => (prev + 1) % flat.length)
+      setSelectedIndex(prev => (prev + 1) % flat.length)
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       if (flat.length === 0) return
-      setSelectedIndex((prev) => (prev - 1 + flat.length) % flat.length)
+      setSelectedIndex(prev => (prev - 1 + flat.length) % flat.length)
     } else if (e.key === 'Enter') {
       e.preventDefault()
       const cmd = flat[selectedIndex]
@@ -311,23 +307,15 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
     <>
       <style dangerouslySetInnerHTML={{ __html: PALETTE_CSS }} />
       {isOpen && (
-        <div
-          className="cmd-palette-overlay"
-          onMouseDown={handleOverlayMouseDown}
-        >
-          <div
-            className="cmd-palette"
-            role="dialog"
-            aria-modal="true"
-            aria-label="命令面板"
-          >
+        <div className="cmd-palette-overlay" onMouseDown={handleOverlayMouseDown}>
+          <div className="cmd-palette" role="dialog" aria-modal="true" aria-label="命令面板">
             <input
               ref={inputRef}
               className="cmd-palette-input"
               type="text"
               placeholder="输入命令名称…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
               spellCheck={false}
               autoComplete="off"
@@ -338,8 +326,10 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
               ) : (
                 sections.map(({ section, items }) => (
                   <div key={section} className="cmd-palette-section">
-                    <div className="cmd-palette-section-label">{SECTION_LABELS[section] ?? section}</div>
-                    {items.map((cmd) => {
+                    <div className="cmd-palette-section-label">
+                      {SECTION_LABELS[section] ?? section}
+                    </div>
+                    {items.map(cmd => {
                       const idx = indexById.get(cmd.id) ?? 0
                       const selected = idx === selectedIndex
                       return (
@@ -347,8 +337,7 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
                           key={cmd.id}
                           data-index={idx}
                           className={
-                            'cmd-palette-item' +
-                            (selected ? ' cmd-palette-item-selected' : '')
+                            'cmd-palette-item' + (selected ? ' cmd-palette-item-selected' : '')
                           }
                           onMouseEnter={() => setSelectedIndex(idx)}
                           onClick={() => runCommand(cmd)}

@@ -81,8 +81,8 @@ function tokenize(text: string): string[] {
   // substring matching in scoring).
   return text
     .toLowerCase()
-    .split(/[\s,，。.;；:：!?！？()（）\[\]]+/)
-    .filter((t) => t.length > 0)
+    .split(/[\s,，。.;；:：!?！？()（）[\]]+/)
+    .filter(t => t.length > 0)
 }
 
 export class KnowledgeBase {
@@ -97,7 +97,7 @@ export class KnowledgeBase {
     const qTerms = tokenize(query)
     if (qTerms.length === 0) return []
     return this.entries
-      .map((e) => {
+      .map(e => {
         const terms = tokenize(e.title + ' ' + e.content)
         let score = 0
         for (const qt of qTerms) {
@@ -112,7 +112,7 @@ export class KnowledgeBase {
         score = score / Math.sqrt(terms.length || 1)
         return { entry: e, score, snippet: e.content.slice(0, 120) }
       })
-      .filter((r) => r.score > 0)
+      .filter(r => r.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, topK)
   }
@@ -135,10 +135,7 @@ export class HistoricalAgent extends BaseAgent {
 
   kb: KnowledgeBase
 
-  constructor(
-    llmClient: LLMClient | null = null,
-    knowledgeBase: KnowledgeBase | null = null,
-  ) {
+  constructor(llmClient: LLMClient | null = null, knowledgeBase: KnowledgeBase | null = null) {
     super(AgentRole.HISTORICAL, llmClient)
     this.kb = knowledgeBase ?? buildDefaultKB()
     this.registerTool('retrieve_history', (query: string, topK = 3) => this.retrieve(query, topK))
@@ -147,7 +144,7 @@ export class HistoricalAgent extends BaseAgent {
   /** RAG retrieval wrapper for tool registration. */
   private retrieve(query: string, topK = 3): Record<string, unknown>[] {
     const results = this.kb.search(query, topK)
-    return results.map((r) => ({
+    return results.map(r => ({
       id: r.entry.id,
       title: r.entry.title,
       content: r.entry.content,
@@ -189,9 +186,7 @@ export class HistoricalAgent extends BaseAgent {
       const contextParts = [`当前概念: ${currentNode}`]
       for (const r of resultsForLlm.slice(0, 2)) {
         const score = (r['score'] as number) ?? 0
-        contextParts.push(
-          `[${r['title']}] (score=${score.toFixed(2)}): ${r['content']}`,
-        )
+        contextParts.push(`[${r['title']}] (score=${score.toFixed(2)}): ${r['content']}`)
       }
       const resp = await this.llmClient.chat(
         '将学生此刻的数学探索，放置在更广阔的历史脉络中。\n' +
@@ -215,7 +210,7 @@ export class HistoricalAgent extends BaseAgent {
       metadata: {
         retrieved_key: retrievedKey,
         rag_used: toolResults.length > 0,
-        rag_scores: toolResults.map((r) => r['score']),
+        rag_scores: toolResults.map(r => r['score']),
         rag_count: toolResults.length,
         retrieval_method: 'bm25',
       },

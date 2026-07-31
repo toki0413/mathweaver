@@ -12,12 +12,34 @@
 import { app, BrowserWindow, shell, ipcMain, dialog, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'path'
 import { writeFileSync, readFileSync } from 'fs'
+import { randomBytes } from 'crypto'
 import Store from 'electron-store'
 import { autoUpdater } from 'electron-updater'
 import { backend, LLM_PRESETS } from '../backend'
 import type { LLMConfig } from '../backend/types'
 import logger from '../backend/utils/logger'
 import { encrypt, decrypt, decryptSafe } from '../backend/utils/crypto'
+import { getLLMConfigFromEnv, hasEnvLLMConfig } from '../backend/utils/config'
+
+// ---------------------------------------------------------------------------
+// Global exception handlers — prevent silent crashes
+// ---------------------------------------------------------------------------
+
+process.on('uncaughtException', err => {
+  logger.error('Uncaught exception in main process', {
+    module: 'Main',
+    error: err.message,
+    stack: err.stack,
+  })
+})
+
+process.on('unhandledRejection', reason => {
+  logger.error('Unhandled promise rejection in main process', {
+    module: 'Main',
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Store for window state + LLM settings
@@ -68,6 +90,9 @@ const store = new Store<AppSettings>({
 // Initialize backend with stored LLM config
 // ---------------------------------------------------------------------------
 
+/** Track whether the API key needs re-entry due to a machine-ID mismatch. */
+let apiKeyMigrationNeeded = false
+
 function initBackend(): void {
   const llmConfig = store.get('settings.llm') as LLMConfig
   // The stored API key is encrypted at rest; decrypt it before handing the
@@ -75,8 +100,60 @@ function initBackend(): void {
   // invalid (e.g. machine ID changed), so the app still boots and the user
   // can re-enter their key via the settings panel.
   if (llmConfig.apiKey) {
-    llmConfig.apiKey = decryptSafe(llmConfig.apiKey, '')
+    const decrypted = decryptSafe(llmConfig.apiKey, '')
+    if (!decrypted && llmConfig.apiKey.startsWith('v1:')) {
+      // The key was encrypted (has v1: prefix) but decryption failed — this
+      // means the machine ID has changed (e.g. user copied their config to a
+      // new machine, or the OS was reinstalled). Flag it so we can prompt
+      // the user to re-enter their API key.
+      apiKeyMigrationNeeded = true
+      logger.warn(
+        'API key decryption failed (machine ID mismatch) — user will be prompted to re-enter key',
+        {
+          module: 'Main',
+        },
+      )
+    }
+    llmConfig.apiKey = decrypted
   }
+
+  // ── Environment variable fallback ──────────────────────────────────
+  // When the electron-store has no API key (first run, or user hasn't
+  // configured via the settings panel), fall back to environment variables.
+  // This makes .env files and system env vars actually work — previously
+  // they were silently ignored, causing users to be stuck in mock mode.
+  //
+  // Supported prefixes: MATHWEAVER_LLM_* (Python backend compat) and LLM_*
+  if (!llmConfig.apiKey && llmConfig.provider === 'mock' && hasEnvLLMConfig()) {
+    const envConfig = getLLMConfigFromEnv()
+    if (envConfig) {
+      // Merge: env vars fill in the gaps, store values are kept where they
+      // differ from defaults (e.g. user changed temperature but not apiKey)
+      llmConfig.provider = envConfig.provider
+      llmConfig.apiKey = envConfig.apiKey
+      if (envConfig.baseUrl) llmConfig.baseUrl = envConfig.baseUrl
+      if (envConfig.model) llmConfig.model = envConfig.model
+      llmConfig.temperature = envConfig.temperature
+      llmConfig.maxTokens = envConfig.maxTokens
+      // Persist the env-derived config so the settings panel shows it
+      const toStore: LLMConfig = { ...llmConfig }
+      if (llmConfig.apiKey) {
+        try {
+          toStore.apiKey = encrypt(llmConfig.apiKey)
+        } catch {
+          /* keep plaintext */
+        }
+      }
+      store.set('settings.llm', toStore)
+      logger.info('LLM config loaded from environment variables', {
+        module: 'Main',
+        provider: llmConfig.provider,
+        model: llmConfig.model,
+        hasApiKey: Boolean(llmConfig.apiKey),
+      })
+    }
+  }
+
   logger.info('Initializing backend', {
     module: 'Main',
     provider: llmConfig.provider,
@@ -156,6 +233,37 @@ function createWindow(): BrowserWindow {
 
   win.on('ready-to-show', () => {
     win.show()
+
+    // If the API key failed to decrypt (machine ID changed), prompt the
+    // user to re-enter their key. This runs once after the window is visible
+    // so the dialog is attached to the correct window.
+    if (apiKeyMigrationNeeded) {
+      apiKeyMigrationNeeded = false // Only show once.
+      dialog
+        .showMessageBox(win, {
+          type: 'warning',
+          title: 'API 密钥需要重新输入',
+          message: '检测到 API 密钥解密失败',
+          detail:
+            '您的 API 密钥是使用本机唯一 ID 加密的。\n\n' +
+            '可能的原因：更换了计算机、重装了操作系统，或备份恢复了配置文件。\n\n' +
+            '请在「设置 → LLM 配置」中重新输入您的 API 密钥。',
+          buttons: ['前往设置', '稍后提醒'],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        .then(result => {
+          if (result.response === 0) {
+            win.webContents.send('menu:open-settings')
+          }
+        })
+        .catch(err => {
+          logger.error('Failed to show API key migration dialog', {
+            module: 'Main',
+            error: err instanceof Error ? err.message : String(err),
+          })
+        })
+    }
   })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -168,6 +276,13 @@ function createWindow(): BrowserWindow {
   // origins so that a compromised renderer cannot exfiltrate data or load
   // arbitrary remote scripts. connect-src whitelists only the LLM providers
   // the app actually talks to (cloud APIs + local model servers).
+  //
+  // style-src includes 'unsafe-inline' because React components use inline
+  // style attributes (style={{ ... }}) throughout the app. In Electron with
+  // contextIsolation enabled, the CSS attack surface is minimal — CSS cannot
+  // execute JavaScript and contextIsolation prevents DOM-based data exfiltration.
+  // This matches the approach used by VS Code and other Electron apps.
+  const cspNonce = randomBytes(16).toString('base64')
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -175,10 +290,10 @@ function createWindow(): BrowserWindow {
         'Content-Security-Policy': [
           "default-src 'self'",
           "script-src 'self'",
-          "style-src 'self' 'unsafe-inline'",
+          `style-src 'self' 'nonce-${cspNonce}' 'unsafe-inline'`,
           "img-src 'self' data: https:",
           "font-src 'self' data:",
-          "connect-src 'self' https://api.deepseek.com https://api.openai.com http://localhost:11434 http://localhost:1234",
+          "connect-src 'self' https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com http://localhost:11434 http://localhost:1234",
           "object-src 'none'",
           "base-uri 'self'",
         ].join('; '),
@@ -211,9 +326,41 @@ function validateSender(frame: Electron.WebFrameMain | null): boolean {
   }
 }
 
+/**
+ * Wrap an async IPC handler with try/catch so backend exceptions are logged
+ * and returned as structured error objects instead of crashing the process
+ * or producing unhandled promise rejections.
+ *
+ * Returns `{ error: message }` on failure, or the handler's result on success.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- IPC handlers accept arbitrary arguments
+type IpcHandler = (event: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<unknown> | unknown
+
+function safeIpcHandle(channel: string, handler: IpcHandler): void {
+  ipcMain.handle(channel, async (event, ...args) => {
+    if (!validateSender(event.senderFrame)) return null
+    try {
+      return await handler(event, ...args)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.error(`IPC handler '${channel}' failed`, {
+        module: 'IPC',
+        channel,
+        error: message,
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+      return { error: message, _ipcError: true }
+    }
+  })
+}
+
+/** Wrap a sync IPC handler (same as safeIpcHandle but for handlers that never throw async). */
+function safeIpcHandleSync(channel: string, handler: IpcHandler): void {
+  safeIpcHandle(channel, handler)
+}
+
 // App info
-ipcMain.handle('app:get-info', (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('app:get-info', () => {
   return {
     name: app.getName(),
     version: app.getVersion(),
@@ -225,9 +372,13 @@ ipcMain.handle('app:get-info', (event) => {
 })
 
 // Error logging from renderer process (ErrorBoundary)
-ipcMain.handle('app:log-error', (event, errorPayload: unknown) => {
-  if (!validateSender(event.senderFrame)) return null
-  const payload = errorPayload as { message?: string; stack?: string; componentStack?: string; timestamp?: string }
+safeIpcHandleSync('app:log-error', (_event, errorPayload: unknown) => {
+  const payload = errorPayload as {
+    message?: string
+    stack?: string
+    componentStack?: string
+    timestamp?: string
+  }
   logger.error('[Renderer Error]', {
     module: 'ErrorBoundary',
     error: payload?.message || 'Unknown error',
@@ -239,91 +390,86 @@ ipcMain.handle('app:log-error', (event, errorPayload: unknown) => {
 })
 
 // --- Health ---
-ipcMain.handle('api:health', async (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:health', async () => {
   return backend.health()
 })
 
 // --- DAG ---
-ipcMain.handle('api:dag', async (event, level?: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:dag', async (_event, level?: string) => {
   return backend.getDag(level)
 })
 
-ipcMain.handle('api:curricula', async (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:curricula', async () => {
   return backend.listCurricula()
 })
 
-ipcMain.handle('api:curriculum-dag', async (event, level: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:curriculum-dag', async (_event, level: string) => {
   return backend.getDag(level)
 })
 
-ipcMain.handle('api:dag-path', async (event, nodeId: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:dag-path', async (_event, nodeId: string) => {
   // Simplified: return the path from the DAG
   return { target_node: nodeId, path: [] }
 })
 
 // --- Session ---
-ipcMain.handle('api:session-start', async (event, req) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:session-start', async (_event, req) => {
   return backend.startSession(req)
 })
 
-ipcMain.handle('api:session-state', async (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:session-state', async () => {
   return backend.getSessionState()
 })
 
-ipcMain.handle('api:session-input', async (event, req) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:session-input', async (_event, req) => {
   return backend.processInput(req)
 })
 
 // --- Forge ---
-ipcMain.handle('api:verify-group', async (event, table: number[][]) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:verify-group', async (_event, table: number[][]) => {
   return backend.verifyGroup({ table })
 })
 
-ipcMain.handle('api:find-non-associative', async (event, n: number) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:find-non-associative', async (_event, n: number) => {
   return backend.findNonAssociative(n)
 })
 
 // --- Metrics ---
-ipcMain.handle('api:metrics', async (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:metrics', async () => {
   return backend.getMetrics()
 })
 
 // --- Proof ---
-ipcMain.handle('api:proof-theorems', async (event, level?: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:proof-theorems', async (_event, level?: string) => {
   return backend.listTheorems(level)
 })
 
-ipcMain.handle('api:proof-verify', async (event, theoremId: string, steps: string[], level?: string) => {
-  if (!validateSender(event.senderFrame)) return null
-  return backend.verifyProof(theoremId, steps, level)
-})
+safeIpcHandle(
+  'api:proof-verify',
+  async (_event, theoremId: string, steps: string[], level?: string) => {
+    return backend.verifyProof(theoremId, steps, level)
+  },
+)
 
 // --- Grill ---
-ipcMain.handle('api:grill-start', async (event, studentId?: string, curriculumLevel?: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('api:grill-start', async (_event, studentId?: string, curriculumLevel?: string) => {
   return backend.startGrill(studentId, curriculumLevel)
 })
 
-ipcMain.handle('api:grill-answer', async (event, qid: string, answer: string, responseTimeMs?: number) => {
-  if (!validateSender(event.senderFrame)) return null
-  return backend.submitGrillAnswer(qid, answer, responseTimeMs)
+safeIpcHandle(
+  'api:grill-answer',
+  async (_event, qid: string, answer: string, responseTimeMs?: number) => {
+    return backend.submitGrillAnswer(qid, answer, responseTimeMs)
+  },
+)
+
+// --- Dynamic Content Generation ---
+safeIpcHandle('api:generate-content', async (_event, req) => {
+  return backend.generateDynamicContent(req)
 })
 
 // --- Student ID ---
-ipcMain.handle('student:get-id', (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('student:get-id', () => {
   let studentId = store.get('settings.studentId') as string
   if (!studentId) {
     studentId = `student_${Date.now().toString().slice(-6)}`
@@ -333,19 +479,16 @@ ipcMain.handle('student:get-id', (event) => {
 })
 
 // --- LLM Settings ---
-ipcMain.handle('settings:get', (event, key: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:get', (_event, key: string) => {
   return store.get(`settings.${key}` as keyof AppSettings['settings'])
 })
 
-ipcMain.handle('settings:set', (event, key: string, value: unknown) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:set', (_event, key: string, value: unknown) => {
   store.set(`settings.${key}` as keyof AppSettings['settings'], value)
   return true
 })
 
-ipcMain.handle('settings:get-llm-config', (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:get-llm-config', () => {
   const config = { ...(store.get('settings.llm') as LLMConfig) }
   // Decrypt the API key before returning it to the renderer so the settings
   // panel can display it (masked) and re-submit unchanged values without
@@ -365,8 +508,7 @@ ipcMain.handle('settings:get-llm-config', (event) => {
   return config
 })
 
-ipcMain.handle('settings:set-llm-config', async (event, config: Partial<LLMConfig>) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('settings:set-llm-config', async (_event, config: Partial<LLMConfig>) => {
   const current = store.get('settings.llm') as LLMConfig
   // Merge incoming partial config. The renderer sends a plaintext apiKey
   // (or omits it); we keep a plaintext copy for the backend and store an
@@ -406,25 +548,21 @@ ipcMain.handle('settings:set-llm-config', async (event, config: Partial<LLMConfi
   return { success: true, config: plaintextConfig }
 })
 
-ipcMain.handle('settings:get-llm-presets', (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:get-llm-presets', () => {
   return LLM_PRESETS
 })
 
-ipcMain.handle('settings:is-onboarding-complete', (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:is-onboarding-complete', () => {
   return store.get('settings.onboardingCompleted')
 })
 
-ipcMain.handle('settings:set-onboarding-complete', (event, value: boolean) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandleSync('settings:set-onboarding-complete', (_event, value: boolean) => {
   store.set('settings.onboardingCompleted', value)
   return true
 })
 
 // --- File operations ---
-ipcMain.handle('file:save-session', async (event, data: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('file:save-session', async (_event, data: string) => {
   const result = await dialog.showSaveDialog(mainWindow!, {
     title: '保存学习会话',
     defaultPath: join(app.getPath('documents'), 'mathweaver-session.json'),
@@ -435,8 +573,7 @@ ipcMain.handle('file:save-session', async (event, data: string) => {
   return result.filePath
 })
 
-ipcMain.handle('file:load-session', async (event) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('file:load-session', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     title: '加载学习会话',
     properties: ['openFile'],
@@ -446,8 +583,7 @@ ipcMain.handle('file:load-session', async (event) => {
   return readFileSync(result.filePaths[0], 'utf-8')
 })
 
-ipcMain.handle('file:export-table', async (event, data: string) => {
-  if (!validateSender(event.senderFrame)) return null
+safeIpcHandle('file:export-table', async (_event, data: string) => {
   const result = await dialog.showSaveDialog(mainWindow!, {
     title: '导出运算表',
     defaultPath: join(app.getPath('documents'), 'cayley-table.txt'),
@@ -481,7 +617,7 @@ function setupAutoUpdater(): void {
     logger.info('Checking for updates', { module: 'Updater' })
   })
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', info => {
     logger.info(`Update available: ${info.version ?? 'unknown'}`, {
       module: 'Updater',
       version: info.version,
@@ -492,7 +628,7 @@ function setupAutoUpdater(): void {
     logger.info('App is up to date', { module: 'Updater' })
   })
 
-  autoUpdater.on('error', (err) => {
+  autoUpdater.on('error', err => {
     // Log but never surface to the user — update failures must not interrupt
     // the learning session.
     logger.error(`Auto-update error: ${err?.message ?? String(err)}`, {
@@ -501,7 +637,7 @@ function setupAutoUpdater(): void {
     })
   })
 
-  autoUpdater.on('download-progress', (progress) => {
+  autoUpdater.on('download-progress', progress => {
     logger.debug(`Update download progress: ${progress.percent.toFixed(1)}%`, {
       module: 'Updater',
       percent: progress.percent,
@@ -510,7 +646,7 @@ function setupAutoUpdater(): void {
     })
   })
 
-  autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.on('update-downloaded', info => {
     logger.info(`Update downloaded: ${info.version ?? 'unknown'}`, {
       module: 'Updater',
       version: info.version,
@@ -531,12 +667,12 @@ function setupAutoUpdater(): void {
         defaultId: 1,
         cancelId: 1,
       })
-      .then((result) => {
+      .then(result => {
         if (result.response === 0) {
           autoUpdater.quitAndInstall()
         }
       })
-      .catch((err) => {
+      .catch(err => {
         logger.error('Failed to show update-downloaded dialog', {
           module: 'Updater',
           error: err instanceof Error ? err.message : String(err),
@@ -545,7 +681,7 @@ function setupAutoUpdater(): void {
   })
 
   // Kick off the check without bothering the user. Errors are handled above.
-  autoUpdater.checkForUpdates().catch((err) => {
+  autoUpdater.checkForUpdates().catch(err => {
     logger.error('Failed to check for updates', {
       module: 'Updater',
       error: err instanceof Error ? err.message : String(err),
@@ -585,8 +721,16 @@ app.whenReady().then(async () => {
     {
       label: '文件',
       submenu: [
-        { label: '保存会话', accelerator: 'CmdOrCtrl+S', click: () => mainWindow?.webContents.send('menu:save-session') },
-        { label: '加载会话', accelerator: 'CmdOrCtrl+O', click: () => mainWindow?.webContents.send('menu:load-session') },
+        {
+          label: '保存会话',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => mainWindow?.webContents.send('menu:save-session'),
+        },
+        {
+          label: '加载会话',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => mainWindow?.webContents.send('menu:load-session'),
+        },
         { type: 'separator' },
         { label: '退出', accelerator: 'CmdOrCtrl+Q', role: 'quit' },
       ],
@@ -637,7 +781,7 @@ app.whenReady().then(async () => {
             dialog.showMessageBox(mainWindow!, {
               type: 'info',
               title: '关于 MathWeaver',
-              message: 'MathWeaver v0.2.0',
+              message: `MathWeaver v${app.getVersion()}`,
               detail:
                 '多智能体数学认知操作系统\n\n' +
                 '七 Agent 协作架构 · 四场耦合引擎 · 暴力枚举反例工坊\n' +

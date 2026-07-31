@@ -3,26 +3,21 @@
  * `setupFiles` in vitest.config.ts).
  */
 
-// The task spec asks to import `@testing-library/jest-dom` for extra DOM
-// matchers. That package is NOT installed in this project and the task
-// constraints forbid installing new npm packages. We attempt a dynamic import
-// and gracefully skip it when absent, so tests keep running on vitest's
-// built-in matchers. When jest-dom is later installed, its matchers light up
-// automatically with no code change here.
+// Register @testing-library/jest-dom matchers with vitest's `expect`.
+// jest-dom v7 exposes a vitest-specific entry point that augments
+// vitest's expect at import time.
 try {
-  // Top-level await is supported in vitest setup files.
-  // @ts-expect-error - optional dependency; resolve types only when installed
-  await import('@testing-library/jest-dom')
+  await import('@testing-library/jest-dom/vitest')
 } catch {
-  // @testing-library/jest-dom is not installed — falling back to vitest's
-  // built-in matchers. This is expected in the current dependency set.
+  // jest-dom not available — tests fall back to vitest built-in matchers.
+  console.warn('@testing-library/jest-dom not available; using vitest built-in matchers')
 }
 
 /**
  * Mock the Electron IPC bridge exposed by the preload script.
  *
- * In production the preload injects `window.api` and `window.electronAPI`
- * (both alias the same object). Components read these to invoke IPC channels
+ * In production the preload injects `window.api`.
+ * Components read it to invoke IPC channels
  * and subscribe to menu events. We provide a benign no-op mock so that any
  * component touching the bridge during a test does not throw.
  *
@@ -60,13 +55,11 @@ if (typeof window !== 'undefined') {
     }),
   }
 
-  // Assign both aliases to the same mock object, mirroring the preload bridge.
+  // Assign the mock object, mirroring the preload bridge.
   const w = window as unknown as {
     api: typeof mockElectronAPI
-    electronAPI: typeof mockElectronAPI
   }
   w.api = mockElectronAPI
-  w.electronAPI = mockElectronAPI
 }
 
 export {}

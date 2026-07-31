@@ -12,6 +12,13 @@ directories:
 # devDependencies are excluded. Everything is packed into app.asar.
 asar: true
 
+# Extra files to include alongside the app bundle.
+# The local webgazer.js script is bundled so eye-tracking works offline.
+extraResources:
+  - from: node_modules/webgazer/dist/webgazer.all.js
+    to: webgazer/webgazer.all.js
+    filter: ["**/*"]
+
 files:
   - out/**/*
   - package.json
@@ -21,11 +28,26 @@ files:
 # Ensure native modules are rebuilt for Electron's ABI
 npmRebuild: true
 
+# ---------------------------------------------------------------------------
 # Code signing configuration
-# For production builds, set these environment variables:
-#   Windows: CSC_LINK (path to .pfx), CSC_KEY_PASSWORD
-#   macOS:   CSC_LINK (path to .p12),  CSC_KEY_PASSWORD
-#   Or use:  WIN_CSC_LINK, CSC_NAME (for macOS keychain)
+# ---------------------------------------------------------------------------
+# Set these environment variables for production builds:
+#
+#   macOS (Apple Developer certificate):
+#     CSC_LINK       = path to .p12 file (or base64-encoded contents)
+#     CSC_KEY_PASSWORD = .p12 file password
+#     APPLE_ID       = Apple Developer account email (for notarization)
+#     APPLE_APP_SPECIFIC_PASSWORD = app-specific password (notarization)
+#
+#   Windows (code signing certificate):
+#     CSC_LINK       = path to .pfx file
+#     CSC_KEY_PASSWORD = .pfx file password
+#
+#   If CSC_LINK is unset, builds are produced unsigned (for development only).
+#   Unsigned macOS builds will be blocked by Gatekeeper; users must right-click
+#   → Open to bypass, or run: xattr -cr /Applications/MathWeaver.app
+# ---------------------------------------------------------------------------
+
 win:
   target:
     - target: nsis
@@ -55,8 +77,15 @@ mac:
       arch:
         - x64
         - arm64
-  icon: build/icon.png
+  icon: build/icon.icns
   category: public.app-category.education
+  # Notarization: when APPLE_ID and APPLE_APP_SPECIFIC_PASSWORD are set,
+  # electron-builder automatically submits the build for notarization.
+  # Gatekeeper will then accept the app without user intervention.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
 
 dmg:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
@@ -72,6 +101,12 @@ linux:
         - x64
   icon: build/icon.png
   category: Education
+  # AppImage needs chrome-sandbox to have setuid root. Two options:
+  #   1. Build with --no-sandbox (less secure, but portable).
+  #   2. Run: sudo chmod 4755 chrome-sandbox inside the extracted AppImage.
+  # electron-builder sets the correct permissions automatically when building
+  # on Linux. Users running the AppImage on systems where setuid is restricted
+  # can launch with: ./MathWeaver-*.AppImage --no-sandbox
 
 appImage:
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}

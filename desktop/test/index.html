@@ -14,10 +14,12 @@
     }
     #root { min-height: 100vh; }
   </style>
+  <!-- Mock Electron IPC bridge — must load before the app bundle -->
   <script src="./mock-api.js"></script>
+  <!-- React app entry — Vite resolves this from src/main.tsx -->
+  <script type="module" src="/src/main.tsx"></script>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="../src/main.tsx"></script>
 </body>
 </html>

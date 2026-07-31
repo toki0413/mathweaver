@@ -300,7 +300,7 @@
     "prerequisites": [
       "subspace"
     ],
-    "abstraction_level": 2,
+    "abstraction_level": 4,
     "domain": "vector_space",
     "difficulty": 0.45,
     "is_milestone": false,

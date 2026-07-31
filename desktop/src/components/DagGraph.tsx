@@ -66,13 +66,12 @@ const MILESTONE_R = 30
 const H_SPACING = 120
 const V_SPACING = 120
 const TOP_PAD = 50
-const BOTTOM_PAD = 56  // accounts for node radius + label + meta text below last row
+const BOTTOM_PAD = 56 // accounts for node radius + label + meta text below last row
 const LEFT_PAD = 56
 const RIGHT_PAD = 28
 const MIN_INNER_W = 280
 
 function normalizeNode(raw: AnyDagNode): DagNode {
-  const legacy = raw as LegacyDagNode
   return {
     id: raw.id,
     name: raw.name,
@@ -140,7 +139,7 @@ function computeLayout(allNodes: DagNode[], allEdges: DagEdge[]): Layout {
   }
   const levels = [...byLevel.keys()].sort((a, b) => a - b)
 
-  const maxCount = Math.max(1, ...levels.map((l) => byLevel.get(l)!.length))
+  const maxCount = Math.max(1, ...levels.map(l => byLevel.get(l)!.length))
   const innerW = Math.max(MIN_INNER_W, (maxCount - 1) * H_SPACING)
   const width = LEFT_PAD + innerW + RIGHT_PAD
   const height = TOP_PAD + BOTTOM_PAD + Math.max(0, levels.length - 1) * V_SPACING
@@ -276,11 +275,11 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
   }, [nodes])
 
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP))
+    setZoom(z => Math.min(MAX_ZOOM, z + ZOOM_STEP))
   }, [])
 
   const handleZoomOut = useCallback(() => {
-    setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP))
+    setZoom(z => Math.max(MIN_ZOOM, z - ZOOM_STEP))
   }, [])
 
   const handleReset = useCallback(() => {
@@ -289,16 +288,13 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
     setPanY(0)
   }, [])
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      // Only zoom when Ctrl/Cmd is held, otherwise let the page scroll
-      if (!e.ctrlKey && !e.metaKey) return
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
-      setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta)))
-    },
-    []
-  )
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Only zoom when Ctrl/Cmd is held, otherwise let the page scroll
+    if (!e.ctrlKey && !e.metaKey) return
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
+    setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta)))
+  }, [])
 
   const handlePointerDown = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -322,7 +318,7 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
         dragStart.current = { x: e.clientX, y: e.clientY, panX, panY }
       }
     },
-    [effectiveZoom, fitZoom, panX, panY, zoom]
+    [effectiveZoom, fitZoom, panX, panY, zoom],
   )
 
   const handlePointerMove = useCallback(
@@ -350,22 +346,19 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
       setPanX(dragStart.current.panX + dx)
       setPanY(dragStart.current.panY + dy)
     },
-    [isDragging]
+    [isDragging],
   )
 
-  const handlePointerUp = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
-      pointersRef.current.delete(e.pointerId)
-      if (pointersRef.current.size < 2) {
-        pinchStartDistRef.current = 0
-      }
-      if (pointersRef.current.size === 0) {
-        setIsDragging(false)
-        dragStart.current = null
-      }
-    },
-    []
-  )
+  const handlePointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(e.pointerId)
+    if (pointersRef.current.size < 2) {
+      pinchStartDistRef.current = 0
+    }
+    if (pointersRef.current.size === 0) {
+      setIsDragging(false)
+      dragStart.current = null
+    }
+  }, [])
 
   if (layout.nodes.length === 0) {
     return (
@@ -375,7 +368,7 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
     )
   }
 
-  const zoomPct = Math.round(effectiveZoom / fitZoom * 100)
+  const zoomPct = Math.round((effectiveZoom / fitZoom) * 100)
 
   return (
     <nav aria-label="概念依赖图" className="dag-graph-wrap">
@@ -422,24 +415,22 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
         onPointerLeave={handlePointerUp}
         onPointerCancel={handlePointerUp}
         style={{
-          cursor: isDragging ? 'grabbing' : (effectiveZoom > fitZoom ? 'grab' : 'default'),
+          cursor: isDragging ? 'grabbing' : effectiveZoom > fitZoom ? 'grab' : 'default',
           touchAction: 'none',
         }}
       >
-      <svg
-        className="dag-graph"
-        viewBox={`0 0 ${layout.width} ${layout.height}`}
-        width={svgWidth}
-        height={svgHeight}
-        style={{
-          transform: `translate(${panX}px, ${panY}px)`,
-          flexShrink: 0,
-        }}
-        role="img"
-        aria-label="概念依赖图谱"
-      >
-        <defs>
-          <style>{`
+        <svg
+          className="dag-graph"
+          viewBox={`0 0 ${layout.width} ${layout.height}`}
+          width={svgWidth}
+          height={svgHeight}
+          style={{
+            transform: `translate(${panX}px, ${panY}px)`,
+            flexShrink: 0,
+          }}
+        >
+          <defs>
+            <style>{`
             .dag-scroll-container .dag-graph {
               display: block;
               font-family: var(--serif);
@@ -578,188 +569,184 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
             }
           `}</style>
 
-          <marker
-            id="dag-arrow-accent"
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto"
-          >
-            <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--accent)' }} />
-          </marker>
-          <marker
-            id="dag-arrow-warning"
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto"
-          >
-            <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--warn)' }} />
-          </marker>
-          <marker
-            id="dag-arrow-muted"
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto"
-          >
-            <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--border)' }} />
-          </marker>
-        </defs>
-
-        {layout.levels.map((lv) => (
-          <g key={`lvl-${lv.level}`}>
-            <line
-              className="dag-level-line"
-              x1={LEFT_PAD - 8}
-              y1={lv.y}
-              x2={layout.width - RIGHT_PAD + 8}
-              y2={lv.y}
-            />
-            <text
-              className="dag-level-label"
-              x={LEFT_PAD - 22}
-              y={lv.y + 3}
-              textAnchor="end"
+            <marker
+              id="dag-arrow-accent"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
             >
-              L{lv.level}
-            </text>
-          </g>
-        ))}
-
-        {layout.edges.map((e) => {
-          const cls = `dag-edge to-${e.targetStatus}`
-          const marker =
-            e.targetStatus === 'mastered' || e.targetStatus === 'current'
-              ? 'url(#dag-arrow-accent)'
-              : e.targetStatus === 'needs_review'
-                ? 'url(#dag-arrow-warning)'
-                : 'url(#dag-arrow-muted)'
-          return (
-            <path
-              key={e.key}
-              className={cls}
-              d={edgePath(e.x1, e.y1, e.x2, e.y2, e.r1, e.r2)}
-              markerEnd={marker}
-            />
-          )
-        })}
-
-        {layout.nodes.map((n) => {
-          const isSelected = n.id === selectedId
-          const showMastery = n.mastery > 0.01 && n.status !== 'mastered'
-          const ringR = n.r + 5
-          const circ = 2 * Math.PI * ringR
-          const dash = Math.min(1, Math.max(0, n.mastery)) * circ
-          const statusKey = n.status
-
-          return (
-            <g
-              key={n.id}
-              className={`dag-node-group s-${statusKey} ${n.is_milestone ? 'is-milestone' : ''} ${isSelected ? 'is-selected' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-label={`${n.name} — ${STATUS_LABEL[statusKey]}`}
-              onClick={() => onSelect(n.id)}
-              onKeyDown={(ev) => {
-                if (ev.key === 'Enter' || ev.key === ' ') {
-                  ev.preventDefault()
-                  onSelect(n.id)
-                }
-              }}
+              <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--accent)' }} />
+            </marker>
+            <marker
+              id="dag-arrow-warning"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
             >
-              <title>
-                {`${n.name}\n${n.description}\n状态: ${STATUS_LABEL[statusKey]} · 掌握度: ${(n.mastery * 100).toFixed(0)}% · 难度: ${(n.difficulty * 100).toFixed(0)}% · L${n.abstraction_level}`}
-              </title>
+              <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--warn)' }} />
+            </marker>
+            <marker
+              id="dag-arrow-muted"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M0,0 L10,5 L0,10 z" style={{ fill: 'var(--border)' }} />
+            </marker>
+          </defs>
 
-              {statusKey === 'current' && (
-                <circle
-                  className="dag-halo dag-halo-pulse"
-                  cx={n.x}
-                  cy={n.y}
-                  r={n.r}
-                />
-              )}
-
-              {isSelected && (
-                <circle
-                  className="node-select-ring"
-                  cx={n.x}
-                  cy={n.y}
-                  r={n.r + 6}
-                />
-              )}
-
-              {showMastery && (
-                <>
-                  <circle
-                    className="mastery-track"
-                    cx={n.x}
-                    cy={n.y}
-                    r={ringR}
-                    transform={`rotate(-90 ${n.x} ${n.y})`}
-                  />
-                  <circle
-                    className="mastery-fill"
-                    cx={n.x}
-                    cy={n.y}
-                    r={ringR}
-                    strokeDasharray={`${dash} ${circ}`}
-                    transform={`rotate(-90 ${n.x} ${n.y})`}
-                  />
-                </>
-              )}
-
-              <circle className="node-fill" cx={n.x} cy={n.y} r={n.r} />
-              <circle className="node-stroke" cx={n.x} cy={n.y} r={n.r} />
-
-              {n.is_milestone && (
-                <circle
-                  className="milestone-ring"
-                  cx={n.x}
-                  cy={n.y}
-                  r={n.r - 9}
-                />
-              )}
-
-              {statusKey === 'skipped' && (
-                <line
-                  className="node-strike"
-                  x1={n.x - n.r * 0.7}
-                  y1={n.y - n.r * 0.7}
-                  x2={n.x + n.r * 0.7}
-                  y2={n.y + n.r * 0.7}
-                />
-              )}
-
-              <text
-                className={`node-label ${n.is_milestone ? 'milestone' : ''} ${statusKey === 'locked' ? 'locked' : ''}`}
-                x={n.x}
-                y={n.y + n.r + 18}
-              >
-                {truncateLabel(n.name, 14)}
-              </text>
-              <text className="node-meta" x={n.x} y={n.y + n.r + 32}>
-                {`L${n.abstraction_level} · ${(n.difficulty * 100).toFixed(0)}%`}
+          {layout.levels.map(lv => (
+            <g key={`lvl-${lv.level}`}>
+              <line
+                className="dag-level-line"
+                x1={LEFT_PAD - 8}
+                y1={lv.y}
+                x2={layout.width - RIGHT_PAD + 8}
+                y2={lv.y}
+              />
+              <text className="dag-level-label" x={LEFT_PAD - 22} y={lv.y + 3} textAnchor="end">
+                L{lv.level}
               </text>
             </g>
-          )
-        })}
-      </svg>
-      </div>{/* /dag-scroll-container */}
+          ))}
+
+          {layout.edges.map(e => {
+            const cls = `dag-edge to-${e.targetStatus}`
+            const marker =
+              e.targetStatus === 'mastered' || e.targetStatus === 'current'
+                ? 'url(#dag-arrow-accent)'
+                : e.targetStatus === 'needs_review'
+                  ? 'url(#dag-arrow-warning)'
+                  : 'url(#dag-arrow-muted)'
+            return (
+              <path
+                key={e.key}
+                className={cls}
+                d={edgePath(e.x1, e.y1, e.x2, e.y2, e.r1, e.r2)}
+                markerEnd={marker}
+              />
+            )
+          })}
+
+          {layout.nodes.map(n => {
+            const isSelected = n.id === selectedId
+            const showMastery = n.mastery > 0.01 && n.status !== 'mastered'
+            const ringR = n.r + 5
+            const circ = 2 * Math.PI * ringR
+            const dash = Math.min(1, Math.max(0, n.mastery)) * circ
+            const statusKey = n.status
+
+            return (
+              <g
+                key={n.id}
+                className={`dag-node-group s-${statusKey} ${n.is_milestone ? 'is-milestone' : ''} ${isSelected ? 'is-selected' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`${n.name} — ${STATUS_LABEL[statusKey]}`}
+                onClick={() => onSelect(n.id)}
+                onKeyDown={ev => {
+                  if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault()
+                    onSelect(n.id)
+                  }
+                }}
+              >
+                <title>
+                  {`${n.name}\n${n.description}\n状态: ${STATUS_LABEL[statusKey]} · 掌握度: ${(n.mastery * 100).toFixed(0)}% · 难度: ${(n.difficulty * 100).toFixed(0)}% · L${n.abstraction_level}`}
+                </title>
+
+                {statusKey === 'current' && (
+                  <circle className="dag-halo dag-halo-pulse" cx={n.x} cy={n.y} r={n.r} />
+                )}
+
+                {isSelected && (
+                  <circle className="node-select-ring" cx={n.x} cy={n.y} r={n.r + 6} />
+                )}
+
+                {showMastery && (
+                  <>
+                    <circle
+                      className="mastery-track"
+                      cx={n.x}
+                      cy={n.y}
+                      r={ringR}
+                      transform={`rotate(-90 ${n.x} ${n.y})`}
+                    />
+                    <circle
+                      className="mastery-fill"
+                      cx={n.x}
+                      cy={n.y}
+                      r={ringR}
+                      strokeDasharray={`${dash} ${circ}`}
+                      transform={`rotate(-90 ${n.x} ${n.y})`}
+                    />
+                  </>
+                )}
+
+                <circle className="node-fill" cx={n.x} cy={n.y} r={n.r} />
+                <circle className="node-stroke" cx={n.x} cy={n.y} r={n.r} />
+
+                {n.is_milestone && (
+                  <circle className="milestone-ring" cx={n.x} cy={n.y} r={n.r - 9} />
+                )}
+
+                {statusKey === 'skipped' && (
+                  <line
+                    className="node-strike"
+                    x1={n.x - n.r * 0.7}
+                    y1={n.y - n.r * 0.7}
+                    x2={n.x + n.r * 0.7}
+                    y2={n.y + n.r * 0.7}
+                  />
+                )}
+
+                <text
+                  className={`node-label ${n.is_milestone ? 'milestone' : ''} ${statusKey === 'locked' ? 'locked' : ''}`}
+                  x={n.x}
+                  y={n.y + n.r + 18}
+                >
+                  {truncateLabel(n.name, 14)}
+                </text>
+                <text className="node-meta" x={n.x} y={n.y + n.r + 32}>
+                  {`L${n.abstraction_level} · ${(n.difficulty * 100).toFixed(0)}%`}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+      {/* /dag-scroll-container */}
 
       <div className="dag-legend">
-        <span className="dag-legend-item"><i className="sw mastered" />已掌握</span>
-        <span className="dag-legend-item"><i className="sw current" />当前</span>
-        <span className="dag-legend-item"><i className="sw review" />需复习</span>
-        <span className="dag-legend-item"><i className="sw skipped" />跳过</span>
-        <span className="dag-legend-item"><i className="sw locked" />未解锁</span>
+        <span className="dag-legend-item">
+          <i className="sw mastered" />
+          已掌握
+        </span>
+        <span className="dag-legend-item">
+          <i className="sw current" />
+          当前
+        </span>
+        <span className="dag-legend-item">
+          <i className="sw review" />
+          需复习
+        </span>
+        <span className="dag-legend-item">
+          <i className="sw skipped" />
+          跳过
+        </span>
+        <span className="dag-legend-item">
+          <i className="sw locked" />
+          未解锁
+        </span>
       </div>
     </nav>
   )

@@ -10,6 +10,7 @@ agent to call next, whether to use a tool, and when to deliver.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -17,6 +18,18 @@ from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
+
+
+def extract_content(resp: Any) -> str:
+    """Extract text content from an LLM response.
+
+    Handles both LLMResponse dataclass and legacy dict returns.
+    """
+    if hasattr(resp, "content"):
+        return resp.content
+    if isinstance(resp, dict):
+        return resp.get("content", "")
+    return str(resp)
 
 
 @dataclass
@@ -71,16 +84,18 @@ class MockLLMClient:
         })
 
         # Parse which agents have already been called
+        # Match both "已执行:" (legacy) and "已经听过：" (current) formats
         called = set()
-        exec_match = re.search(r"已执行:\s*(.*)", user_message)
+        exec_match = re.search(r"(?:已执行|已经听过)[：:]\s*(.*)", user_message)
         if exec_match:
             exec_str = exec_match.group(1).strip()
-            if exec_str and exec_str != "无":
+            if exec_str and exec_str != "无" and exec_str != "还没有人发言":
                 called = set(a.strip() for a in exec_str.split(","))
 
         # Parse student input type
+        # Match both "学生输入:" (legacy) and "学生写下了：" (current) formats
         student_input = ""
-        input_match = re.search(r"学生输入:\s*(.*)", user_message)
+        input_match = re.search(r"(?:学生输入|学生写下了)[：:]\s*(.*)", user_message)
         if input_match:
             student_input = input_match.group(1)
 
@@ -193,18 +208,104 @@ class MockLLMClient:
 
 
 class OpenAICompatibleClient:
-    """LLM client for OpenAI-compatible APIs (DeepSeek, GLM, Qwen, etc.)."""
+    """LLM client for OpenAI-compatible APIs (DeepSeek, GLM, Qwen, etc.).
+
+    Features:
+    - Connection reuse via persistent httpx.AsyncClient
+    - Automatic retry with exponential backoff for 429/5xx errors
+    - Token usage tracking exposed via total_tokens property
+    """
+
+    # Retryable HTTP status codes
+    _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
     def __init__(
         self,
         api_key: str,
         base_url: str = "https://api.deepseek.com/v1",
         model: str = "deepseek-chat",
+        max_retries: int = 3,
+        timeout: float = 60.0,
     ) -> None:
         self.api_key = api_key
         self.base_url = base_url
         self.model = model
+        self.max_retries = max_retries
+        self.timeout = timeout
         self._total_tokens: int = 0
+        self._client: Any = None  # lazy-init httpx.AsyncClient
+
+    async def _get_client(self):
+        """Get or create the persistent httpx client."""
+        if self._client is None or self._client.is_closed:
+            import httpx
+            self._client = httpx.AsyncClient(
+                timeout=httpx.Timeout(self.timeout, connect=10.0),
+                limits=httpx.Limits(
+                    max_connections=10,
+                    max_keepalive_connections=5,
+                    keepalive_expiry=30.0,
+                ),
+            )
+        return self._client
+
+    async def _call_api(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Make a single API call with retry on transient failures."""
+        import httpx
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        client = await self._get_client()
+        last_exc: Exception | None = None
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                resp = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+                if resp.status_code in self._RETRYABLE_STATUS and attempt < self.max_retries:
+                    # Exponential backoff: 1s, 2s, 4s, ...
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "LLM API returned %d, retrying in %ds (attempt %d/%d)",
+                        resp.status_code, delay, attempt + 1, self.max_retries,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.TimeoutException as e:
+                last_exc = e
+                if attempt < self.max_retries:
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "LLM API timeout, retrying in %ds (attempt %d/%d): %s",
+                        delay, attempt + 1, self.max_retries, e,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+            except httpx.HTTPStatusError:
+                raise  # Non-retryable HTTP errors propagate immediately
+            except httpx.HTTPError as e:
+                last_exc = e
+                if attempt < self.max_retries:
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "LLM API error, retrying in %ds (attempt %d/%d): %s",
+                        delay, attempt + 1, self.max_retries, e,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+
+        # All retries exhausted
+        raise last_exc or RuntimeError("LLM API call failed after all retries")
 
     async def chat(
         self,
@@ -213,13 +314,6 @@ class OpenAICompatibleClient:
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.7,
     ) -> LLMResponse:
-        import httpx
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
@@ -235,14 +329,7 @@ class OpenAICompatibleClient:
                 {"type": "function", "function": t} for t in tools
             ]
 
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+        data = await self._call_api(payload)
 
         choice = data["choices"][0]
         message = choice["message"]
@@ -284,3 +371,14 @@ class OpenAICompatibleClient:
             finish_reason=choice.get("finish_reason", "stop"),
             usage=usage,
         )
+
+    @property
+    def total_tokens(self) -> int:
+        """Total tokens consumed across all calls."""
+        return self._total_tokens
+
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None

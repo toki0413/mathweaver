@@ -24,14 +24,7 @@ interface MathSymbol {
   category: SymbolCategory
 }
 
-const CATEGORY_ORDER = [
-  '逻辑',
-  '集合论',
-  '代数',
-  '关系',
-  '箭头',
-  '希腊字母',
-] as const
+const CATEGORY_ORDER = ['逻辑', '集合论', '代数', '关系', '箭头', '希腊字母'] as const
 type SymbolCategory = (typeof CATEGORY_ORDER)[number]
 
 /** 全部数学符号 —— 按需求指定的类别与字符组织。
@@ -78,7 +71,13 @@ const SYMBOLS: MathSymbol[] = [
   // ── 箭头 ──────────────────────────────────────────────
   { char: '→', latex: '\\rightarrow', name: 'rightarrow', desc: '右箭头', category: '箭头' },
   { char: '←', latex: '\\leftarrow', name: 'leftarrow', desc: '左箭头', category: '箭头' },
-  { char: '↔', latex: '\\leftrightarrow', name: 'leftrightarrow', desc: '双向箭头', category: '箭头' },
+  {
+    char: '↔',
+    latex: '\\leftrightarrow',
+    name: 'leftrightarrow',
+    desc: '双向箭头',
+    category: '箭头',
+  },
   { char: '↑', latex: '\\uparrow', name: 'uparrow', desc: '上箭头', category: '箭头' },
   { char: '↓', latex: '\\downarrow', name: 'downarrow', desc: '下箭头', category: '箭头' },
   { char: '⇒', latex: '\\Rightarrow', name: 'Rightarrow', desc: '双线右箭头', category: '箭头' },
@@ -269,13 +268,6 @@ const PALETTE_CSS = `
 }
 `
 
-/** 判断事件目标是否为可编辑元素（输入框 / 文本域 / contenteditable） */
-function isEditable(el: EventTarget | null): boolean {
-  if (!(el instanceof HTMLElement)) return false
-  const tag = el.tagName.toLowerCase()
-  return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable
-}
-
 /**
  * 数学符号快捷插入面板 —— 浮动面板，通过按钮点击或 Ctrl+/ 键盘快捷键展开/收起。
  *
@@ -319,18 +311,13 @@ function MathSymbolPaletteImpl({
     isOpenRef.current = isOpen
   }, [isOpen])
 
-  const openPanel = useCallback(() => {
-    setIsOpen(true)
-    onOpenChangeRef.current?.(true)
-  }, [])
-
   const closePanel = useCallback(() => {
     setIsOpen(false)
     onOpenChangeRef.current?.(false)
   }, [])
 
   const togglePanel = useCallback(() => {
-    setIsOpen((prev) => {
+    setIsOpen(prev => {
       const next = !prev
       onOpenChangeRef.current?.(next)
       return next
@@ -347,12 +334,7 @@ function MathSymbolPaletteImpl({
   // Ctrl+/ 是控制序列而非可打印字符，因此在输入框中也可安全触发
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        !e.shiftKey &&
-        !e.altKey &&
-        e.key === '/'
-      ) {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key === '/') {
         e.preventDefault()
         togglePanel()
       } else if (e.key === 'Escape' && isOpenRef.current) {
@@ -383,13 +365,14 @@ function MathSymbolPaletteImpl({
     }
     setQuery('')
     setHovered(null)
+    return undefined
   }, [isOpen])
 
   const handleInsert = useCallback((sym: MathSymbol) => {
     onInsertRef.current?.(sym.char, sym.latex)
     // 按 char 去重并置于首位，保留最近 MAX_RECENT 个
-    setRecent((prev) => {
-      const filtered = prev.filter((s) => s.char !== sym.char)
+    setRecent(prev => {
+      const filtered = prev.filter(s => s.char !== sym.char)
       return [sym, ...filtered].slice(0, MAX_RECENT)
     })
   }, [])
@@ -410,8 +393,8 @@ function MathSymbolPaletteImpl({
     const filtered = q ? SYMBOLS.filter(match) : SYMBOLS
 
     const buckets = new Map<string, MathSymbol[]>()
-    CATEGORY_ORDER.forEach((c) => buckets.set(c, []))
-    filtered.forEach((s) => {
+    CATEGORY_ORDER.forEach(c => buckets.set(c, []))
+    filtered.forEach(s => {
       const bucket = buckets.get(s.category)
       if (bucket) {
         bucket.push(s)
@@ -460,7 +443,7 @@ function MathSymbolPaletteImpl({
                 type="text"
                 placeholder="搜索符号 / LaTeX / 含义…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={e => setQuery(e.target.value)}
                 spellCheck={false}
                 autoComplete="off"
               />
@@ -470,7 +453,7 @@ function MathSymbolPaletteImpl({
                 <div className="msp-section">
                   <div className="msp-section-label">最近使用</div>
                   <div className="msp-grid">
-                    {recent.map((s) => (
+                    {recent.map(s => (
                       <button
                         key={'recent-' + s.name}
                         type="button"
@@ -491,7 +474,7 @@ function MathSymbolPaletteImpl({
                   <div key={category} className="msp-section">
                     <div className="msp-section-label">{category}</div>
                     <div className="msp-grid">
-                      {items.map((s) => (
+                      {items.map(s => (
                         <button
                           key={category + '-' + s.name}
                           type="button"

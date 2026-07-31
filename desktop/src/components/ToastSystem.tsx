@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CSSProperties } from 'react'
-import { getCommandIcon, type IconProps, SparkleIcon, TrophyIcon, InfoIcon, AlertIcon } from './Icons'
+import {
+  getCommandIcon,
+  type IconProps,
+  SparkleIcon,
+  TrophyIcon,
+  InfoIcon,
+  AlertIcon,
+} from './Icons'
 
 export interface ToastItem {
   id: string
@@ -44,7 +51,10 @@ function renderToastIcon(iconName: string): React.ReactNode {
   if (IconComp) return <IconComp size={16} />
   // Direct mapping for toast-only icons
   const direct: Record<string, React.FC<IconProps>> = {
-    TrophyIcon, SparkleIcon, InfoIcon, AlertIcon,
+    TrophyIcon,
+    SparkleIcon,
+    InfoIcon,
+    AlertIcon,
   }
   const Comp = direct[iconName]
   if (Comp) return <Comp size={16} />
@@ -243,7 +253,7 @@ export function ToastCard({
   useEffect(() => {
     if (isPaused || isExiting) return
     const intervalId = window.setInterval(() => {
-      setProgress((prev) => {
+      setProgress(prev => {
         const next = prev - TICK_MS / duration
         return next <= 0 ? 0 : next
       })
@@ -290,12 +300,7 @@ export function ToastCard({
         <div className="toast-title">{toast.title}</div>
         {toast.message && <div className="toast-message">{toast.message}</div>}
       </div>
-      <button
-        className="toast-close"
-        type="button"
-        onClick={startExit}
-        aria-label="关闭通知"
-      >
+      <button className="toast-close" type="button" onClick={startExit} aria-label="关闭通知">
         <CloseIcon />
       </button>
       <div className="toast-progress">
@@ -317,13 +322,8 @@ export function ToastSystem({ toasts, onDismiss }: ToastSystemProps) {
   return (
     <>
       <style>{TOAST_CSS}</style>
-      <div
-        className="toast-container"
-        role="region"
-        aria-label="通知中心"
-        aria-live="polite"
-      >
-        {toasts.map((toast) => (
+      <div className="toast-container" role="region" aria-label="通知中心" aria-live="polite">
+        {toasts.map(toast => (
           <ToastCard key={toast.id} toast={toast} onDismiss={onDismiss} />
         ))}
       </div>

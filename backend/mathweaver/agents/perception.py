@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from ..models.state import AgentMessage, AgentRole
+from ..llm.client import extract_content
 from .base import AgentContext, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class PerceptionAgent(BaseAgent):
                     user_message=text,
                 )
                 # Extract content from LLM response
-                llm_text = resp.get("content", "") if isinstance(resp, dict) else str(resp)
+                llm_text = extract_content(resp)
                 llm_text_lower = llm_text.lower().strip()
                 if "conjecture" in llm_text_lower:
                     llm_input_type = "conjecture"

@@ -224,17 +224,13 @@ function ShortcutsOverlayImpl({ shortcuts, open, onClose }: ShortcutsOverlayProp
     isOpenRef.current = isOpen
   }, [isOpen])
 
-  const openOverlay = useCallback(() => {
-    setIsOpen(true)
-  }, [])
-
   const closeOverlay = useCallback(() => {
     setIsOpen(false)
     onCloseRef.current?.()
   }, [])
 
   const toggleOverlay = useCallback(() => {
-    setIsOpen((prev) => {
+    setIsOpen(prev => {
       const next = !prev
       if (!next) {
         onCloseRef.current?.()
@@ -279,14 +275,14 @@ function ShortcutsOverlayImpl({ shortcuts, open, onClose }: ShortcutsOverlayProp
   const grouped = useMemo(() => {
     const order: string[] = []
     const map = new Map<string, ShortcutItem[]>()
-    shortcuts.forEach((item) => {
+    shortcuts.forEach(item => {
       if (!map.has(item.category)) {
         map.set(item.category, [])
         order.push(item.category)
       }
       map.get(item.category)!.push(item)
     })
-    return order.map((category) => ({ category, items: map.get(category)! }))
+    return order.map(category => ({ category, items: map.get(category)! }))
   }, [shortcuts])
 
   // 点击遮罩（而非卡片内部）时关闭
@@ -303,16 +299,8 @@ function ShortcutsOverlayImpl({ shortcuts, open, onClose }: ShortcutsOverlayProp
     <>
       <style dangerouslySetInnerHTML={{ __html: OVERLAY_CSS }} />
       {isOpen && (
-        <div
-          className="sco-backdrop"
-          onMouseDown={handleBackdropMouseDown}
-        >
-          <div
-            className="sco-card"
-            role="dialog"
-            aria-modal="true"
-            aria-label="键盘快捷键"
-          >
+        <div className="sco-backdrop" onMouseDown={handleBackdropMouseDown}>
+          <div className="sco-card" role="dialog" aria-modal="true" aria-label="键盘快捷键">
             <div className="sco-header">
               <div>
                 <span className="sco-title">键盘快捷键</span>
@@ -351,9 +339,7 @@ function ShortcutsOverlayImpl({ shortcuts, open, onClose }: ShortcutsOverlayProp
                 ))
               )}
             </div>
-            <div className="sco-footer">
-              MathWeaver — 数学认知操作系统
-            </div>
+            <div className="sco-footer">MathWeaver — 数学认知操作系统</div>
           </div>
         </div>
       )}

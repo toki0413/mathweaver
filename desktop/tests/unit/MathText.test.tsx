@@ -69,7 +69,11 @@ describe('MathText', () => {
     // `throwOnError: false` KaTeX emits an error annotation rather than a
     // live script element, and MathText feeds KaTeX output through
     // dangerouslySetInnerHTML only for math segments.
-    const html = render(<MathText>$<script>alert(1)</script>$</MathText>)
+    const html = render(
+      <MathText>
+        $<script>alert(1)</script>$
+      </MathText>,
+    )
 
     // No raw, executable <script> tag should appear in the rendered output.
     expect(html).not.toMatch(/<script[^>]*>/i)

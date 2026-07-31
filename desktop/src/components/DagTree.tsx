@@ -20,20 +20,16 @@ function DagTreeBase({ nodes, activeNode, onSelect }: Props) {
   // react-native-skills: list-performance-item-expensive — move sort outside render
   const sorted = useMemo(
     () => [...nodes].sort((a, b) => a.abstraction_level - b.abstraction_level),
-    [nodes]
+    [nodes],
   )
 
   if (nodes.length === 0) {
-    return (
-      <p style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '8px' }}>
-        加载中...
-      </p>
-    )
+    return <p style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '8px' }}>加载中...</p>
   }
 
   return (
     <div>
-      {sorted.map((node) => (
+      {sorted.map(node => (
         <div
           key={node.id}
           className={`dag-node ${node.id === activeNode ? 'active' : ''} ${node.is_milestone ? 'milestone' : ''}`}

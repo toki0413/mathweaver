@@ -25,7 +25,7 @@
  */
 
 import {
-  AgentRole,
+  type AgentRole,
   SessionPhase,
   type FourFieldState,
   type StudentProfile,
@@ -47,7 +47,7 @@ import {
 import type { LLMClient } from '../llm/client'
 import { MockLLMClient } from '../llm/client'
 import { CounterExampleForge } from '../forge/forge'
-import { BaseAgent } from '../agents/base'
+import { type BaseAgent } from '../agents/base'
 import {
   PerceptionAgent,
   AbstractionAgent,
@@ -58,9 +58,12 @@ import {
   MetaEvolutionAgent,
 } from '../agents'
 import { ParameterLearner } from '../agents/meta'
-import { KnowledgeBase, buildDefaultKB } from '../agents/historical'
+import { type KnowledgeBase, buildDefaultKB } from '../agents/historical'
 import type { ConceptDAG } from '../dag/concept_dag'
 import { getDag } from '../dag/concept_dag'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('Orchestrator')
 
 // ---------------------------------------------------------------------------
 // Minimal Concept DAG (replaces dag/concept_dag.py)
@@ -126,11 +129,12 @@ const DEFAULT_DAG_NODES: DagNode[] = [
   },
 ]
 
-class SimpleConceptDAG {
+/** @internal Simple in-memory DAG for unit testing and development. */
+export class SimpleConceptDAG {
   private nodes: Map<string, DagNode>
 
   constructor(nodes: DagNode[] = DEFAULT_DAG_NODES) {
-    this.nodes = new Map(nodes.map((n) => [n.id, n]))
+    this.nodes = new Map(nodes.map(n => [n.id, n]))
   }
 
   getNode(id: string): DagNode | undefined {
@@ -177,7 +181,7 @@ class SimpleConceptDAG {
     return {
       total_nodes: this.nodes.size,
       domains: [...domains],
-      levels: Math.max(...[...this.nodes.values()].map((n) => n.abstraction_level)),
+      levels: Math.max(...[...this.nodes.values()].map(n => n.abstraction_level)),
     }
   }
 }
@@ -320,7 +324,7 @@ class SimpleGrillSession {
     const resolved = Math.min(this.currentIndex, total)
     const conjSuccess =
       this.conjectureHistory.length > 0
-        ? this.conjectureHistory.filter((c) => c.verdict === 'confirmed').length /
+        ? this.conjectureHistory.filter(c => c.verdict === 'confirmed').length /
           this.conjectureHistory.length
         : 0
     return {
@@ -397,11 +401,7 @@ const PROOF_TEMPLATES: Record<string, ProofTemplate> = {
     description: '{e} 是子群',
     given: ['G 是群', 'e 是单位元'],
     toProve: '{e} 是 G 的子群',
-    expectedSteps: [
-      '封闭性：e·e = e ∈ {e}',
-      '单位元：e ∈ {e}',
-      '逆元：e 的逆元是 e ∈ {e}',
-    ],
+    expectedSteps: ['封闭性：e·e = e ∈ {e}', '单位元：e ∈ {e}', '逆元：e 的逆元是 e ∈ {e}'],
     socraticHints: ['逐条验证子群判定条件。'],
   },
   abelian_subgroup_of_squares: {
@@ -542,15 +542,14 @@ export class Orchestrator {
     this.grillSession = null
     const allNodes = this.dag.getAllNodes()
     if (allNodes.length > 0) {
-      const first = allNodes.reduce((a, b) =>
-        a.abstraction_level <= b.abstraction_level ? a : b,
-      )
+      const first = allNodes.reduce((a, b) => (a.abstraction_level <= b.abstraction_level ? a : b))
       this.state.knowledge.current_node_id = first.id
     }
-    console.info(
-      `Switched curriculum to [${level}] (${CURRICULUM_LABELS[level] ?? level}), ` +
-        `${this.dag.getNodeCount()} concepts`,
-    )
+    log.info('Switched curriculum', {
+      level,
+      label: CURRICULUM_LABELS[level] ?? level,
+      conceptCount: this.dag.getNodeCount(),
+    })
   }
 
   detectCurriculumSwitch(text: string): [string, string] | null {
@@ -562,10 +561,10 @@ export class Orchestrator {
       group_theory: ['群论', 'group theory', '大学', '抽象代数'],
     }
     const switchVerbs = ['切换', '学', '想学', '换', '转到', 'switch', 'change']
-    const hasSwitchIntent = switchVerbs.some((v) => textLower.includes(v))
+    const hasSwitchIntent = switchVerbs.some(v => textLower.includes(v))
 
     for (const [level, keywords] of Object.entries(switchMap)) {
-      if (keywords.some((kw) => textLower.includes(kw))) {
+      if (keywords.some(kw => textLower.includes(kw))) {
         if (hasSwitchIntent || level !== this.curriculumLevel) {
           return [level, CURRICULUM_LABELS[level] ?? level]
         }
@@ -586,7 +585,7 @@ export class Orchestrator {
 
   registerAgent(role: AgentRole, _handler: unknown): void {
     // Placeholder for custom agent handlers (kept for API compatibility)
-    console.debug(`Registered agent handler for ${role}`)
+    log.debug('Registered agent handler', { role })
   }
 
   // -- Single-Writer Field Update --
@@ -601,7 +600,7 @@ export class Orchestrator {
     }
     const model = fieldMap[fieldName]
     if (!model) {
-      console.warn(`Rejected field update: unknown field '${fieldName}'`)
+      log.warn('Rejected field update: unknown field', { field: fieldName })
       return
     }
 
@@ -614,7 +613,11 @@ export class Orchestrator {
     }
     const intFields: Record<string, Set<string>> = {
       cognitive: new Set(['backtrack_count', 'trial_sequence_length']),
-      interaction: new Set(['current_hint_level', 'consecutive_correct', 'scaffold_fade_threshold']),
+      interaction: new Set([
+        'current_hint_level',
+        'consecutive_correct',
+        'scaffold_fade_threshold',
+      ]),
     }
     const nnFloatFields: Record<string, Set<string>> = {
       cognitive: new Set(['response_time_ms', 'baseline_rt_ms', 'struggle_duration_s']),
@@ -627,25 +630,29 @@ export class Orchestrator {
 
     for (const [key, val] of Object.entries(updates)) {
       if (!(key in model)) {
-        console.warn(`Rejected: ${fieldName}.${key} does not exist`)
+        log.warn('Rejected: field.key does not exist', { field: fieldName, key })
         continue
       }
 
       if (ok01.has(key)) {
         if (typeof val !== 'number' || !(val >= 0.0 && val <= 1.0)) {
-          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} out of [0,1]`)
+          log.warn('Rejected: field.value out of [0,1]', { field: fieldName, key, value: val })
           continue
         }
       }
       if (okInt.has(key)) {
         if (!Number.isInteger(val) || (val as number) < 0) {
-          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} not non-negative int`)
+          log.warn('Rejected: field.value not non-negative int', {
+            field: fieldName,
+            key,
+            value: val,
+          })
           continue
         }
       }
       if (okNnFloat.has(key)) {
         if (typeof val !== 'number' || (val as number) < 0) {
-          console.warn(`Rejected: ${fieldName}.${key} = ${String(val)} not non-negative`)
+          log.warn('Rejected: field.value not non-negative', { field: fieldName, key, value: val })
           continue
         }
       }
@@ -769,29 +776,27 @@ export class Orchestrator {
 
     // --- Grill Me mode detection ---
     const grillTriggerKeywords = ['考考我', 'grill me', '考考看', '来考考', '审问我', '面试我']
-    const isGrillTrigger = grillTriggerKeywords.some((kw) =>
-      studentInput.toLowerCase().includes(kw),
-    )
+    const isGrillTrigger = grillTriggerKeywords.some(kw => studentInput.toLowerCase().includes(kw))
 
     if (isGrillTrigger && this.grillSession === null) {
       this.grillSession = new SimpleGrillSession()
       this.grillSession.activate()
-      console.info('Grill mode activated by student request')
+      log.info('Grill mode activated by student request')
     } else if (isGrillTrigger && this.grillSession !== null) {
       this.grillSession.reactivate()
-      console.info('Grill mode re-activated by student request')
+      log.info('Grill mode re-activated by student request')
     }
 
     // --- Proof mode detection ---
     const proofTriggerKeywords = ['证明', '求证', 'prove', 'proof', '我要证', '验证以下']
-    const isProof = proofTriggerKeywords.some((kw) => studentInput.toLowerCase().includes(kw))
+    const isProof = proofTriggerKeywords.some(kw => studentInput.toLowerCase().includes(kw))
     let proofResultData: Record<string, unknown> | null = null
     if (isProof) {
       proofResultData = this.handleProof(studentInput)
-      console.info(
-        `Proof mode: theorem=${proofResultData['theorem_name'] ?? '?'}, ` +
-          `progress=${proofResultData['progress'] ?? '?'}`,
-      )
+      log.info('Proof mode', {
+        theorem: proofResultData['theorem_name'] ?? '?',
+        progress: proofResultData['progress'] ?? '?',
+      })
     }
 
     // --- Track Cayley tables for grill session ---
@@ -800,7 +805,7 @@ export class Orchestrator {
       if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
         try {
           const table = JSON.parse(trimmed)
-          if (Array.isArray(table) && table.every((r) => Array.isArray(r))) {
+          if (Array.isArray(table) && table.every(r => Array.isArray(r))) {
             this.grillSession.recordCayleyTable()
           }
         } catch {
@@ -853,7 +858,12 @@ export class Orchestrator {
       }
       agentDescriptions = filtered
 
-      const llmInput = this.buildLlmInput(studentInput, priorResults, calledAgents, agentDescriptions)
+      const llmInput = this.buildLlmInput(
+        studentInput,
+        priorResults,
+        calledAgents,
+        agentDescriptions,
+      )
       const llmResp = await llm.chat(this.systemPrompt(), llmInput)
 
       // LLM decides to deliver
@@ -906,7 +916,7 @@ export class Orchestrator {
           },
         }
 
-        console.debug(`Context message orchestrator -> ${exitName} (session ${sessionId})`)
+        log.debug('Context message orchestrator -> exit agent', { exitAgent: exitName, sessionId })
 
         const msg = await this.agents[exitName].run(ctx)
         this.messageHistory.push(msg)
@@ -930,7 +940,7 @@ export class Orchestrator {
       // LLM decides which agent to call
       let nextAgentName = llmResp.next_agent
       if (nextAgentName && !this.topology.isActive(nextAgentName)) {
-        console.info(`Agent '${nextAgentName}' not in topology, ignoring`)
+        log.info('Agent not in topology, ignoring', { agent: nextAgentName })
         nextAgentName = null
       }
       if (!nextAgentName || !(nextAgentName in this.agents)) {
@@ -946,7 +956,10 @@ export class Orchestrator {
         if (nextAgentName !== this.topology.exitAgent) {
           const isEntry = calledAgents.size === 0 && nextAgentName === this.topology.entryAgent
           if (!isEntry && !this.topology.canRoute(lastAgent, nextAgentName)) {
-            console.warn(`Topology blocked route ${lastAgent} -> ${nextAgentName}, falling back to exit`)
+            log.warn('Topology blocked route, falling back to exit', {
+              from: lastAgent,
+              to: nextAgentName,
+            })
             nextAgentName = this.topology.exitAgent
           }
         }
@@ -1060,7 +1073,7 @@ export class Orchestrator {
         }
       }
     } catch (e) {
-      console.warn(`MetaEvolution agent failed: ${e}`)
+      log.warn('MetaEvolution agent failed', { error: e instanceof Error ? e.message : String(e) })
     }
 
     // DAG 自主推进: 当掌握度超过 ZPD 上界时，推荐下一概念
@@ -1213,7 +1226,7 @@ export class Orchestrator {
       abelian_subgroup_of_squares: ['平方子群', 'squares', '{g²}', '交换群的平方'],
     }
     for (const [name, keywords] of Object.entries(theoremMap)) {
-      if (keywords.some((kw) => textLower.includes(kw.toLowerCase()))) {
+      if (keywords.some(kw => textLower.includes(kw.toLowerCase()))) {
         return name
       }
     }
@@ -1304,7 +1317,7 @@ export class Orchestrator {
       `学生写下了：${studentInput}\n\n这个回答需要哪些视角？`,
     )
 
-    const calls = Array.from(resp.content.matchAll(/\[CALL:(\w+)\]/g)).map((m) => m[1])
+    const calls = Array.from(resp.content.matchAll(/\[CALL:(\w+)\]/g)).map(m => m[1])
     let finalCalls = calls
     if (finalCalls.length === 0) {
       // Fallback: infer from input type
@@ -1319,7 +1332,7 @@ export class Orchestrator {
 
     return {
       student_input: studentInput,
-      steps: finalCalls.map((name) => ({
+      steps: finalCalls.map(name => ({
         agent: name,
         reason: `LLM decided: needed for ${name}`,
         optional: name === 'historical',
@@ -1337,8 +1350,8 @@ export class Orchestrator {
       collaboration: '综合苏格拉底式回应',
     }
     const active = this.topology.agents
-      .filter((name) => name in this.agents)
-      .map((name) => `- ${name}: ${agentLines[name] ?? '未知'}`)
+      .filter(name => name in this.agents)
+      .map(name => `- ${name}: ${agentLines[name] ?? '未知'}`)
       .join('\n')
     return (
       '你是一位指挥，面前有几位各有所长的乐手。\n' +
@@ -1398,9 +1411,7 @@ export class Orchestrator {
       agentCallCounts[role] = (agentCallCounts[role] ?? 0) + 1
     }
 
-    const sessionDurationMs = this.sessionStart
-      ? Date.now() - this.sessionStart.getTime()
-      : 0
+    const sessionDurationMs = this.sessionStart ? Date.now() - this.sessionStart.getTime() : 0
 
     return {
       session_start: this.sessionStart?.toISOString() ?? null,
@@ -1476,15 +1487,12 @@ export class Orchestrator {
         student_step: step,
         expected_step: expected,
         is_valid: isValid,
-        feedback: isValid
-          ? '步骤已记录。'
-          : '步骤内容为空，请补充。',
-        matched_expected:
-          idx < expectedSteps.length && step.includes(expected.slice(0, 10)),
+        feedback: isValid ? '步骤已记录。' : '步骤内容为空，请补充。',
+        matched_expected: idx < expectedSteps.length && step.includes(expected.slice(0, 10)),
       }
     })
 
-    const completedSteps = verifiedSteps.filter((s) => s.is_valid).length
+    const completedSteps = verifiedSteps.filter(s => s.is_valid).length
     const isComplete = completedSteps >= expectedSteps.length
     const missingSteps = expectedSteps.slice(studentSteps.length)
 

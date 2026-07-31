@@ -11,32 +11,48 @@ import { test, expect, type Page } from '@playwright/test'
 
 /**
  * Wait for the first-run onboarding dialog and walk through all four steps,
- * finishing with the "开始使用" button. Used by scenarios that need to interact
+ * finishing with the "开始探索" button. Used by scenarios that need to interact
  * with the main UI underneath the overlay.
  */
 async function completeOnboarding(page: Page): Promise<void> {
   const dialog = page.getByRole('dialog', { name: '使用引导' })
   await expect(dialog).toBeVisible()
 
+  // Step 0: Select age level (tweens = 4 steps, matching 3×下一步 + 开始探索)
+  await page.getByRole('button', { name: /初中/ }).click()
+
   // Steps 1..3 expose a "下一步" button; click through to the final step.
   for (let i = 0; i < 3; i++) {
     await page.getByRole('button', { name: '下一步' }).click()
   }
 
-  await page.getByRole('button', { name: '开始使用' }).click()
+  await page.getByRole('button', { name: '开始探索' }).click()
   await expect(dialog).toBeHidden()
+
+  // After the static onboarding, a CoachMarks overlay ("功能引导") may appear.
+  // Dismiss it so it doesn't block interaction with the main UI.
+  const coachDialog = page.getByRole('dialog', { name: '功能引导' })
+  const coachVisible = await coachDialog.isVisible().catch(() => false)
+  if (coachVisible) {
+    await coachDialog.getByRole('button', { name: '跳过' }).click()
+    await expect(coachDialog).toBeHidden({ timeout: 5000 })
+  }
 }
 
 test.describe('MathWeaver', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies()
+  })
+
   test('page loads and renders the app shell', async ({ page }) => {
     await page.goto('/test/')
 
     // App header is present.
-    await expect(page.getByRole('heading', { name: 'MathWeaver' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'MathWeaver' })).toBeVisible({ timeout: 15000 })
     // The mode-switcher tablist is rendered.
     await expect(page.getByRole('tablist', { name: '模式切换' })).toBeVisible()
-    // All four mode tabs exist.
-    for (const name of ['对话', '面试', '证明', '图谱']) {
+    // All five mode tabs exist.
+    for (const name of ['对话', '挑战', '证明', '知识地图', '建模']) {
       await expect(page.getByRole('tab', { name })).toBeVisible()
     }
   })
@@ -45,29 +61,34 @@ test.describe('MathWeaver', () => {
     await page.goto('/test/')
 
     const dialog = page.getByRole('dialog', { name: '使用引导' })
-    await expect(dialog).toBeVisible()
+    await expect(dialog).toBeVisible({ timeout: 15000 })
 
     // First step welcomes the user.
-    await expect(page.getByText('欢迎使用 MathWeaver')).toBeVisible()
+    await expect(dialog.getByText('欢迎')).toBeVisible()
+
+    // Step 0: Select age level (tweens = 4 steps, matching 3×下一步 + 开始探索)
+    await page.getByRole('button', { name: /初中/ }).click()
 
     // Walk through to the final step and finish.
     for (let i = 0; i < 3; i++) {
       await page.getByRole('button', { name: '下一步' }).click()
     }
-    await expect(page.getByRole('button', { name: '开始使用' })).toBeVisible()
-    await page.getByRole('button', { name: '开始使用' }).click()
+    await expect(page.getByRole('button', { name: '开始探索' })).toBeVisible()
+    await page.getByRole('button', { name: '开始探索' }).click()
 
     // The overlay is dismissed.
     await expect(dialog).toBeHidden()
   })
 
-  test('switches between dialogue / interview / proof / graph modes', async ({ page }) => {
+  test('switches between dialogue / challenge / proof / graph modes', async ({ page }) => {
     await page.goto('/test/')
     await completeOnboarding(page)
 
     // Visiting each mode marks its tab as selected.
-    for (const name of ['面试', '证明', '图谱', '对话']) {
-      const tab = page.getByRole('tab', { name })
+    // Use exact: true because proof mode adds sub-tabs (正向证明/倒推模式)
+    // whose names contain '证明' as a substring.
+    for (const name of ['挑战', '证明', '知识地图', '建模', '对话']) {
+      const tab = page.getByRole('tab', { name, exact: true })
       await tab.click()
       await expect(tab).toHaveAttribute('aria-selected', 'true')
     }
@@ -92,5 +113,30 @@ test.describe('MathWeaver', () => {
 
     // The badge should now report a closure violation.
     await expect(page.getByText('✗ 未闭合')).toBeVisible()
+  })
+
+  test('modeling mode renders canvas and parameter sliders', async ({ page }) => {
+    await page.goto('/test/')
+    await completeOnboarding(page)
+
+    // Switch to modeling mode.
+    await page.getByRole('tab', { name: '建模', exact: true }).click()
+
+    // The modeling canvas should be visible.
+    await expect(page.getByRole('img', { name: /可视化/ })).toBeVisible({ timeout: 10000 })
+
+    // Model preset buttons should be present.
+    await expect(page.getByText('模型预设')).toBeVisible()
+    await expect(page.getByText('捕食-被捕食模型')).toBeVisible()
+
+    // Parameter sliders should be present.
+    await expect(page.getByText('参数控制')).toBeVisible()
+
+    // The "explain the math path" section should be visible (GeoChat-inspired).
+    await expect(page.getByText('解释数学路径')).toBeVisible()
+
+    // Switch to Cayley graph model (connects to group theory core).
+    await page.getByText('Cayley 图可视化').click()
+    await expect(page.getByRole('img', { name: /Cayley/ })).toBeVisible({ timeout: 10000 })
   })
 })

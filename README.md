@@ -6,7 +6,12 @@
 
 ```
 mathweaver/
-├── backend/                 # Python FastAPI 后端
+├── desktop/                 # Electron 桌面应用（v0.3.0 主前端，含内嵌 TypeScript 后端）
+│   ├── src/                 # React + TypeScript UI（Cayley表 / 四场仪表盘 / 聊天 / DAG树 …）
+│   ├── electron/            # 主进程 + preload + 内嵌后端（agents / dag / forge / orchestrator …）
+│   ├── tests/               # 单元测试 + Playwright e2e
+│   └── package.json
+├── backend/                 # Python FastAPI 后端（可选 · 开发模式）
 │   ├── mathweaver/
 │   │   ├── models/          # 四场状态域模型
 │   │   ├── orchestrator/    # 四场耦合引擎 + 状态机
@@ -18,27 +23,36 @@ mathweaver/
 │   ├── Dockerfile           # 后端容器镜像（多阶段构建）
 │   ├── .dockerignore
 │   └── pyproject.toml
-├── frontend/                # React + TypeScript 前端
-│   ├── src/
-│   │   ├── components/      # Cayley表 / 四场仪表盘 / 聊天 / DAG树
-│   │   └── stores/          # Zustand 状态管理
-│   ├── Dockerfile           # 前端容器镜像（Node 构建 + nginx 运行）
-│   └── nginx.conf           # 静态托管 + API/WebSocket 反向代理
-├── desktop/                 # Electron 桌面应用
-├── docker-compose.yml       # 一键部署（后端 + 前端）
+├── docs/                    # 设计文档与截图
+├── docker-compose.yml       # 一键部署（Python 后端容器，开发模式）
 ├── .dockerignore
 └── .github/workflows/ci.yml # CI：lint / test / build
 ```
 
-## Quick Start with Docker（Docker 一键部署）
+> 说明：`desktop/` 是 v0.3.0 起的唯一前端入口（Electron 桌面应用，自带内嵌后端，可独立运行）。
+> `backend/`（Python FastAPI）为可选的开发模式，用于服务端联调或容器化部署，普通使用无需启动。
+
+## 快速启动
+
+```bash
+cd desktop
+npm install
+npm run dev
+```
+
+启动后 Electron 桌面应用窗口将自动打开，默认使用内嵌后端 + Mock LLM，无需额外配置即可体验。
+
+## Docker 部署（可选 · Python 后端开发模式）
 
 > 前置条件：已安装 [Docker](https://docs.docker.com/get-docker/) 与 Docker Compose v2（`docker compose` 命令）。
+>
+> MathWeaver 的主入口是 `desktop/` 桌面应用（见上文「快速启动」）。Docker 仅用于在容器中运行可选的 Python FastAPI 后端（开发模式 / 服务端联调）。
 
 ```bash
 # 1. 配置 LLM 密钥（可先保持 mock 模式直接体验，无需真实密钥）
 cp backend/.env.example backend/.env
 
-# 2. 构建并启动所有服务（后端 + 前端）
+# 2. 构建并启动 Python 后端服务
 docker compose up --build
 ```
 
@@ -46,36 +60,14 @@ docker compose up --build
 
 | 服务 | 地址 |
 |------|------|
-| 前端 Web UI | http://localhost:3000 |
 | 后端 API | http://localhost:8000 |
 | 健康检查 | http://localhost:8000/api/health |
 | API 文档（Swagger） | http://localhost:8000/docs |
 
 说明：
 - 后端 SQLite 数据库通过 volume 持久化到宿主机 `backend/data/` 目录。
-- 前端容器使用 nginx 反向代理 `/api` 与 `/ws` 到后端，浏览器访问 `http://localhost:3000` 即可正常调用后端接口（无需关心跨域）。
 - 停止服务：`docker compose down`；修改代码后重新构建：`docker compose up --build`。
-
-## 快速启动
-
-### 后端
-
-```bash
-cd backend
-pip install -e ".[dev]" --break-system-packages
-python -m pytest tests/ -v          # 运行测试
-uvicorn mathweaver.api.app:app --host 0.0.0.0 --port 8000
-```
-
-### 前端
-
-```bash
-cd frontend
-npm install
-npx vite --host 0.0.0.0 --port 5173
-```
-
-打开 http://localhost:5173
+- UI 请使用 `desktop/` 桌面应用（`npm run dev`），不再提供独立的前端容器。
 
 ## 核心功能
 
@@ -83,7 +75,7 @@ npx vite --host 0.0.0.0 --port 5173
 
 - **L1**: Z3 直接验证 Cayley 表的群公理（结合律/单位元/逆元/交换律）
 - **L1 搜索**: Z3 自动搜索非结合运算（反例发现）
-- **L2-L4**: LLM + Z3 / LLM + Lean / LLM-only（框架已就绪）
+- **L2-L4**: LLM + Z3 / LLM + 启发式验证 / LLM-only（框架已就绪）
 
 ### 四场耦合引擎
 
@@ -100,7 +92,18 @@ npx vite --host 0.0.0.0 --port 5173
 4. `guided_discovery` - ZPD 区域内继续引导发现
 5. `provide_hint` - 挣扎时提供分级提示
 
+## 设计哲学与理论根基
+
+MathWeaver 的设计植根于两条理论脉络：
+
+- **新数学运动的历史反思** — Bourbaki 结构主义教育实验 (1958–1975) 的失败教训。详见 [`docs/new-math-reflection.md`](docs/new-math-reflection.md)
+- **数学思维能力的六维框架** — 基于 ER Bem《数学思维能力的训练》(1985) 的六种核心思维能力（分析、设想、归纳、模拟、类比、逻辑推理），映射到 MathWeaver 的七 Agent 架构。详见 [`docs/thinking-abilities-framework.md`](docs/thinking-abilities-framework.md)
+
+核心信条：**"结构是终点，不是起点。"** 先让学习者在具体问题中获得直觉，再用形式化工具帮助他们看见直觉背后的结构。
+
 ## API 端点
+
+> 以下端点属于可选的 Python 后端（开发模式）。Electron 桌面应用使用内嵌后端，无需调用这些接口。
 
 | 方法 | 路径 | 描述 |
 |------|------|------|

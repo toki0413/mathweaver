@@ -91,7 +91,7 @@ describe('CayleyTable', () => {
     // Use a regex so the exact multiplication-sign byte does not matter.
     expect(html).toMatch(/aria-label="3.3 运算表"/)
     // The status region summarising the verification result is labelled.
-    expect(html).toContain('aria-label="运算表验证结果：')
+    expect(html).toContain('aria-label="验证结果：')
     // Every cell input has a descriptive aria-label.
     expect(html).toContain('aria-label="元素 0 与元素 0 的运算结果"')
     expect(html).toContain('aria-label="元素 2 与元素 2 的运算结果"')

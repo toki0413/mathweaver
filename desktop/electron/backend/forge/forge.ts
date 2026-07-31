@@ -15,7 +15,7 @@
  * The four-layer fallback:
  * L1: brute-force direct (finite structures via Cayley table)
  * L2: LLM + brute-force verify (LLM generates candidate, forge checks)
- * L3: LLM + Lean verify (placeholder — not available in TS backend)
+ * L3: LLM + heuristic verify (for undecidable nonlinear cases)
  * L4: LLM-only + annotation (last resort)
  *
  * NOTE on types: ../types defines an IPC-facing CounterExampleResult, but the
@@ -33,7 +33,7 @@ import type { LLMClient } from '../llm/client'
 export enum FallbackLevel {
   L1_BRUTE_FORCE = 'L1: brute-force direct',
   L2_LLM_VERIFY = 'L2: LLM + brute-force verify',
-  L3_LLM_LEAN = 'L3: LLM + Lean verify',
+  L3_LLM_HEURISTIC = 'L3: LLM + heuristic verify',
   L4_LLM_ONLY = 'L4: LLM only',
 }
 
@@ -76,9 +76,7 @@ export function mkForgeResult(
  *
  * @returns [isGroup, counterExampleDescription]
  */
-export function verifyGroupAxiomsCayley(
-  cayleyTable: number[][],
-): [boolean, string | null] {
+export function verifyGroupAxiomsCayley(cayleyTable: number[][]): [boolean, string | null] {
   const n = cayleyTable.length
   if (n === 0) return [false, 'Empty table']
 
@@ -144,9 +142,7 @@ export function verifyGroupAxiomsCayley(
 }
 
 /** Check if the Cayley table is commutative (Abelian). */
-export function checkCommutativityCayley(
-  cayleyTable: number[][],
-): [boolean, string | null] {
+export function checkCommutativityCayley(cayleyTable: number[][]): [boolean, string | null] {
   const n = cayleyTable.length
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
@@ -166,9 +162,7 @@ export function checkCommutativityCayley(
  * Check associativity only.
  * @returns [isAssociative, violationDescription]
  */
-export function checkAssociativityCayley(
-  cayleyTable: number[][],
-): [boolean, string | null] {
+export function checkAssociativityCayley(cayleyTable: number[][]): [boolean, string | null] {
   const n = cayleyTable.length
   for (let a = 0; a < n; a++) {
     for (let b = 0; b < n; b++) {
@@ -253,7 +247,7 @@ export function findNonAssociativeTable(n = 3): ForgeResult {
   const table: number[][] = []
   for (let i = 0; i < n; i++) {
     const row: number[] = []
-    for (let j = 0; j < n; j++) row.push(((i - j) % n + n) % n)
+    for (let j = 0; j < n; j++) row.push((((i - j) % n) + n) % n)
     table.push(row)
   }
   const [ok, reason] = checkAssociativityCayley(table)
@@ -269,11 +263,7 @@ export function findNonAssociativeTable(n = 3): ForgeResult {
     )
   }
 
-  return mkForgeResult(
-    false,
-    FallbackLevel.L1_BRUTE_FORCE,
-    `在 ${n} 元集合上未能构造出非结合运算`,
-  )
+  return mkForgeResult(false, FallbackLevel.L1_BRUTE_FORCE, `在 ${n} 元集合上未能构造出非结合运算`)
 }
 
 /** Brute-force verify if a given Cayley table satisfies associativity. */
@@ -341,11 +331,7 @@ export class CounterExampleForge {
   checkCommutativity(cayleyTable: number[][]): ForgeResult {
     const [isCommutative, reason] = checkCommutativityCayley(cayleyTable)
     if (isCommutative) {
-      return mkForgeResult(
-        false,
-        FallbackLevel.L1_BRUTE_FORCE,
-        '该群满足交换律（Abel 群）',
-      )
+      return mkForgeResult(false, FallbackLevel.L1_BRUTE_FORCE, '该群满足交换律（Abel 群）')
     }
     return mkForgeResult(
       true,
@@ -553,9 +539,9 @@ function extractCayleyTable(text: string): number[][] | null {
       Array.isArray(candidate) &&
       candidate.length > 0 &&
       Array.isArray(candidate[0]) &&
-      candidate.every((r) => Array.isArray(r)) &&
-      candidate.every((r) => r.length === candidate[0].length) &&
-      candidate.every((r) => r.every((v) => Number.isInteger(v)))
+      candidate.every(r => Array.isArray(r)) &&
+      candidate.every(r => r.length === candidate[0].length) &&
+      candidate.every(r => r.every(v => Number.isInteger(v)))
     ) {
       return candidate as number[][]
     }
@@ -603,10 +589,27 @@ export class ConjectureResult {
 
 // Known test structures (Cayley tables) for common conjectures
 const TEST_GROUPS: Record<string, number[][]> = {
-  z2: [[0, 1], [1, 0]], // Z2, order 2, abelian
-  z3: [[0, 1, 2], [1, 2, 0], [2, 0, 1]], // Z3, order 3, abelian
-  z4: [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2]], // Z4, abelian
-  klein: [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]], // Klein 4-group
+  z2: [
+    [0, 1],
+    [1, 0],
+  ], // Z2, order 2, abelian
+  z3: [
+    [0, 1, 2],
+    [1, 2, 0],
+    [2, 0, 1],
+  ], // Z3, order 3, abelian
+  z4: [
+    [0, 1, 2, 3],
+    [1, 2, 3, 0],
+    [2, 3, 0, 1],
+    [3, 0, 1, 2],
+  ], // Z4, abelian
+  klein: [
+    [0, 1, 2, 3],
+    [1, 0, 3, 2],
+    [2, 3, 0, 1],
+    [3, 2, 1, 0],
+  ], // Klein 4-group
   s3: [
     [0, 1, 2, 3, 4, 5],
     [1, 0, 3, 2, 5, 4],

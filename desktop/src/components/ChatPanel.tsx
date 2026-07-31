@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useStore } from '../stores/sessionStore'
 import { MathText } from './MathText'
 
@@ -114,6 +114,45 @@ const SCOPED_CSS = `
   max-height: 60px;
   overflow: hidden;
 }
+
+/* === Guided choice chips (I3 interaction) === */
+.cw-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+}
+.cw-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg2);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+.cw-suggestion-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-subtle);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.cw-suggestion-chip:active {
+  transform: translateY(0);
+}
+.cw-suggestion-chip .cw-chip-icon {
+  font-size: 11px;
+  opacity: 0.7;
+}
 `
 
 // ---------------------------------------------------------------------------
@@ -121,8 +160,10 @@ const SCOPED_CSS = `
 // ---------------------------------------------------------------------------
 
 function ChatPanelBase({ onQuote }: ChatPanelProps) {
-  const chat = useStore((s) => s.chat)
-  const loading = useStore((s) => s.loading)
+  const chat = useStore(s => s.chat)
+  const loading = useStore(s => s.loading)
+  const sendInput = useStore(s => s.sendInput)
+  const backendReady = useStore(s => s.backendReady)
 
   // Search / filter
   const [searchTerm, setSearchTerm] = useState('')
@@ -188,6 +229,71 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
     nearBottomRef.current = distanceFromBottom < NEAR_BOTTOM_PX
   }
 
+  // -------------------------------------------------------------------------
+  // Guided choices: parse suggestions from system messages (I3 interaction)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Extracts follow-up suggestions from a system message.
+   * Looks for:
+   * 1. Explicit suggestions after "建议：" / "你可以：" / "接下来："
+   * 2. Questions in the message (lines ending with ?)
+   * 3. Falls back to contextual defaults based on message phase
+   */
+  const parseSuggestions = useCallback(
+    (content: string, phase?: string): string[] => {
+      const suggestions: string[] = []
+      const lines = content.split('\n')
+
+      // Pattern 1: explicit suggestion lists
+      for (const line of lines) {
+        const trimmed = line.trim()
+        // "建议：xxx" / "你可以：xxx" / "接下来：xxx"
+        const explicitMatch = trimmed.match(
+          /^(?:建议|你可以|接下来|试试|你可以尝试)[：:]\s*(.+)/,
+        )
+        if (explicitMatch) {
+          const text = explicitMatch[1].trim()
+          if (text.length > 0 && text.length < 40) {
+            suggestions.push(text)
+          }
+        }
+        // Numbered or bulleted items: "1. xxx" / "- xxx" / "• xxx"
+        const bulletMatch = trimmed.match(/^(?:\d+[.、)]|[-•*])\s*(.+)/)
+        if (bulletMatch) {
+          const text = bulletMatch[1].trim()
+          if (text.length > 2 && text.length < 40 && !suggestions.includes(text)) {
+            suggestions.push(text)
+          }
+        }
+      }
+
+      // Pattern 2: if content has questions, suggest "为什么？" etc.
+      if (suggestions.length === 0) {
+        // Contextual defaults based on phase
+        const phaseSuggestions: Record<string, string[]> = {
+          session_start: ['详细解释这个概念', '出一个例子', '直接开始练习'],
+          explore: ['举个例子', '为什么这样？', '继续深入'],
+          assess: ['提示一下', '换个角度解释', '出一道类似的题'],
+          idle: ['我想学习新概念', '复习已学内容', '出一道挑战题'],
+        }
+        const defaults = phaseSuggestions[phase || 'idle'] || phaseSuggestions.idle
+        suggestions.push(...defaults.slice(0, 3))
+      }
+
+      return suggestions.slice(0, 4) // Limit to 4 suggestions
+    },
+    [],
+  )
+
+  const handleSuggestionClick = useCallback(
+    (text: string) => {
+      if (loading || !backendReady) return
+      sendInput(text, 0)
+    },
+    [sendInput, loading, backendReady],
+  )
+
   const handleCopy = (i: number, content: string) => {
     if (!navigator.clipboard) return
     navigator.clipboard
@@ -198,7 +304,7 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
           window.clearTimeout(copyTimerRef.current)
         }
         copyTimerRef.current = window.setTimeout(() => {
-          setCopiedIndex((prev) => (prev === i ? null : prev))
+          setCopiedIndex(prev => (prev === i ? null : prev))
         }, COPY_FEEDBACK_MS)
       })
       .catch(() => {
@@ -212,7 +318,7 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
   }
 
   const toggleExpand = (i: number) => {
-    setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
+    setExpanded(prev => ({ ...prev, [i]: !prev[i] }))
   }
 
   // -------------------------------------------------------------------------
@@ -232,27 +338,15 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
           type="text"
           placeholder="搜索消息..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           aria-label="搜索聊天记录"
         />
-        {term && (
-          <span className="cw-search-count">
-            找到 {filtered.length} 条匹配
-          </span>
-        )}
+        {term && <span className="cw-search-count">找到 {filtered.length} 条匹配</span>}
       </div>
 
-      <div
-        className="chat-box"
-        ref={chatBoxRef}
-        onScroll={handleScroll}
-      >
-        {chat.length === 0 && (
-          <p className="desc">提交运算表或输入问题开始</p>
-        )}
-        {chat.length > 0 && filtered.length === 0 && (
-          <p className="desc">没有匹配的消息</p>
-        )}
+      <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+        {chat.length === 0 && <p className="desc">提交运算表或输入问题开始</p>}
+        {chat.length > 0 && filtered.length === 0 && <p className="desc">没有匹配的消息</p>}
 
         {filtered.map(({ msg, i }) => {
           const isLong = msg.content.length > COLLAPSE_THRESHOLD
@@ -262,6 +356,14 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
             ? msg.content
             : msg.content.slice(0, PREVIEW_LENGTH) + '...'
           const copied = copiedIndex === i
+
+          // Guided choices: only show suggestions on the last system message
+          // when not searching and not loading
+          const isLastSystem =
+            !term && !loading && msg.role === 'system' && i === chat.length - 1
+          const suggestions = isLastSystem
+            ? parseSuggestions(msg.content, msg.phase)
+            : []
 
           return (
             <div key={i} className={`chat-msg ${msg.role} cw-msg`}>
@@ -288,10 +390,7 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
               <div className="role">
                 {msg.role === 'user' ? 'student' : 'system'}
                 {msg.phase && msg.role === 'system' && (
-                  <span
-                    className="badge badge-warning"
-                    style={{ marginLeft: '6px' }}
-                  >
+                  <span className="badge badge-warning" style={{ marginLeft: '6px' }}>
                     {msg.phase}
                   </span>
                 )}
@@ -300,15 +399,29 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
               <div className="content">
                 <MathText>{displayContent}</MathText>
                 {isLong && (
-                  <button
-                    type="button"
-                    className="cw-expand-btn"
-                    onClick={() => toggleExpand(i)}
-                  >
+                  <button type="button" className="cw-expand-btn" onClick={() => toggleExpand(i)}>
                     {isExpanded ? '收起' : '展开全部'}
                   </button>
                 )}
               </div>
+
+              {/* Guided choice chips — only for the last system message */}
+              {suggestions.length > 0 && (
+                <div className="cw-suggestions">
+                  {suggestions.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="cw-suggestion-chip"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      disabled={!backendReady}
+                    >
+                      <span className="cw-chip-icon">→</span>
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}

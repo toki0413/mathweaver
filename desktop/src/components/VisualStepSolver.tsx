@@ -352,11 +352,7 @@ const STYLES = `
 }
 `
 
-function VisualStepSolverImpl({
-  problem,
-  steps,
-  onRequestSolution,
-}: VisualStepSolverProps) {
+function VisualStepSolverImpl({ problem, steps, onRequestSolution }: VisualStepSolverProps) {
   const total = steps?.length ?? 0
   const hasSteps = total > 0
 
@@ -374,12 +370,12 @@ function VisualStepSolverImpl({
 
   const handlePrev = useCallback(() => {
     setCascadeStart(null)
-    setCurrent((c) => Math.max(0, c - 1))
+    setCurrent(c => Math.max(0, c - 1))
   }, [])
 
   const handleNext = useCallback(() => {
     setCascadeStart(null)
-    setCurrent((c) => Math.min(total - 1, c + 1))
+    setCurrent(c => Math.min(total - 1, c + 1))
   }, [total])
 
   const handleShowAll = useCallback(() => {
@@ -422,10 +418,7 @@ function VisualStepSolverImpl({
             aria-label="解答进度"
           >
             <div className="cw-vss-progress-track">
-              <div
-                className="cw-vss-progress-fill"
-                style={{ width: `${progressPct}%` }}
-              />
+              <div className="cw-vss-progress-fill" style={{ width: `${progressPct}%` }} />
             </div>
             <div className="cw-vss-progress-text">
               第 {safeCurrent + 1} / {total} 步
@@ -468,9 +461,7 @@ function VisualStepSolverImpl({
                       {STEP_ICONS[step.type]}
                     </span>
                     <span className="cw-vss-title">{step.title}</span>
-                    <span className="cw-vss-type-tag">
-                      {TYPE_LABELS[step.type]}
-                    </span>
+                    <span className="cw-vss-type-tag">{TYPE_LABELS[step.type]}</span>
                   </div>
 
                   <div className="cw-vss-expr">
@@ -487,12 +478,7 @@ function VisualStepSolverImpl({
 
           {/* 导航控件 */}
           <div className="cw-vss-nav">
-            <button
-              type="button"
-              className="cw-vss-btn"
-              onClick={handlePrev}
-              disabled={atStart}
-            >
+            <button type="button" className="cw-vss-btn" onClick={handlePrev} disabled={atStart}>
               上一步
             </button>
             <button
@@ -503,12 +489,7 @@ function VisualStepSolverImpl({
             >
               下一步
             </button>
-            <button
-              type="button"
-              className="cw-vss-btn"
-              onClick={handleShowAll}
-              disabled={atEnd}
-            >
+            <button type="button" className="cw-vss-btn" onClick={handleShowAll} disabled={atEnd}>
               显示全部
             </button>
           </div>
@@ -516,7 +497,9 @@ function VisualStepSolverImpl({
       ) : (
         /* 无步骤：请求 AI 解答 */
         <div className="cw-vss-empty">
-          <div className="cw-vss-empty-icon" aria-hidden="true">∑</div>
+          <div className="cw-vss-empty-icon" aria-hidden="true">
+            ∑
+          </div>
           <div className="cw-vss-empty-title">暂无解答步骤</div>
           <div className="cw-vss-empty-desc">
             点击下方按钮，让 AI 为你生成这道题的可视化分步解答。
@@ -526,17 +509,11 @@ function VisualStepSolverImpl({
             className="cw-vss-btn cw-vss-btn-primary cw-vss-request"
             onClick={handleRequest}
             disabled={!onRequestSolution}
-            title={
-              onRequestSolution
-                ? '请求 AI 生成分步解答'
-                : '未提供解答请求回调'
-            }
+            title={onRequestSolution ? '请求 AI 生成分步解答' : '未提供解答请求回调'}
           >
             请求AI解答
           </button>
-          {!onRequestSolution ? (
-            <div className="cw-vss-empty-hint">未配置解答请求回调</div>
-          ) : null}
+          {!onRequestSolution ? <div className="cw-vss-empty-hint">未配置解答请求回调</div> : null}
         </div>
       )}
     </div>

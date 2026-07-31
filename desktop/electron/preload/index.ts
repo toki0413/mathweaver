@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 
 // ---------------------------------------------------------------------------
 // IPC Channel Whitelist
@@ -26,6 +26,7 @@ const INVOKE_CHANNELS = [
   'api:proof-verify',
   'api:grill-start',
   'api:grill-answer',
+  'api:generate-content',
   // Settings
   'settings:get',
   'settings:set',
@@ -57,15 +58,23 @@ type SendChannel = (typeof SEND_CHANNELS)[number]
 // Type-safe API bridge
 // ---------------------------------------------------------------------------
 
+/**
+ * Invoke an IPC handler (request-response) after validating the channel
+ * against the whitelist. All convenience methods route through this so the
+ * whitelist check is always enforced and no raw `ipcRenderer.invoke` call can
+ * bypass it.
+ */
+async function safeInvoke(channel: string, ...args: unknown[]): Promise<unknown> {
+  if (INVOKE_CHANNELS.includes(channel as InvokeChannel)) {
+    return await ipcRenderer.invoke(channel, ...args)
+  }
+  console.warn(`[Preload] Unknown IPC channel: ${channel}`)
+  return null
+}
+
 const api = {
-  /** Invoke an IPC handler (request-response) */
-  invoke: async (channel: string, ...args: unknown[]): Promise<unknown> => {
-    if (INVOKE_CHANNELS.includes(channel as InvokeChannel)) {
-      return await ipcRenderer.invoke(channel, ...args)
-    }
-    console.warn(`[Preload] Unknown IPC channel: ${channel}`)
-    return null
-  },
+  /** Invoke an IPC handler (request-response) — validates against the whitelist */
+  invoke: safeInvoke,
 
   /** Listen for messages from main process */
   on: (channel: string, callback: (data: unknown) => void): (() => void) => {
@@ -77,64 +86,60 @@ const api = {
     return () => {}
   },
 
-  // --- Convenience methods ---
+  // --- Convenience methods (all routed through safeInvoke for whitelist enforcement) ---
 
   // Health
-  health: () => ipcRenderer.invoke('api:health'),
+  health: () => safeInvoke('api:health'),
 
   // DAG
-  getDag: (level?: string) => ipcRenderer.invoke('api:dag', level),
-  getCurricula: () => ipcRenderer.invoke('api:curricula'),
-  getCurriculumDag: (level: string) => ipcRenderer.invoke('api:curriculum-dag', level),
+  getDag: (level?: string) => safeInvoke('api:dag', level),
+  getCurricula: () => safeInvoke('api:curricula'),
+  getCurriculumDag: (level: string) => safeInvoke('api:curriculum-dag', level),
 
   // Session
-  startSession: (req: {
-    student_id: string
-    student_name?: string
-    target_node_id?: string
-  }) => ipcRenderer.invoke('api:session-start', req),
-  getSessionState: () => ipcRenderer.invoke('api:session-state'),
-  sendInput: (req: {
-    student_input: string
-    response_time_ms?: number
-  }) => ipcRenderer.invoke('api:session-input', req),
+  startSession: (req: { student_id: string; student_name?: string; target_node_id?: string }) =>
+    safeInvoke('api:session-start', req),
+  getSessionState: () => safeInvoke('api:session-state'),
+  sendInput: (req: { student_input: string; response_time_ms?: number }) =>
+    safeInvoke('api:session-input', req),
 
   // Forge
-  verifyGroup: (table: number[][]) => ipcRenderer.invoke('api:verify-group', table),
-  findNonAssociative: (n: number) => ipcRenderer.invoke('api:find-non-associative', n),
+  verifyGroup: (table: number[][]) => safeInvoke('api:verify-group', table),
+  findNonAssociative: (n: number) => safeInvoke('api:find-non-associative', n),
 
   // Metrics
-  getMetrics: () => ipcRenderer.invoke('api:metrics'),
+  getMetrics: () => safeInvoke('api:metrics'),
 
   // Proof
-  getTheorems: (level?: string) => ipcRenderer.invoke('api:proof-theorems', level),
+  getTheorems: (level?: string) => safeInvoke('api:proof-theorems', level),
   submitProof: (theoremId: string, steps: string[], level?: string) =>
-    ipcRenderer.invoke('api:proof-verify', theoremId, steps, level),
+    safeInvoke('api:proof-verify', theoremId, steps, level),
 
   // Grill
   startGrill: (studentId?: string, curriculumLevel?: string) =>
-    ipcRenderer.invoke('api:grill-start', studentId, curriculumLevel),
+    safeInvoke('api:grill-start', studentId, curriculumLevel),
   submitGrillAnswer: (qid: string, answer: string, responseTimeMs?: number) =>
-    ipcRenderer.invoke('api:grill-answer', qid, answer, responseTimeMs),
+    safeInvoke('api:grill-answer', qid, answer, responseTimeMs),
+
+  // Dynamic Content Generation
+  generateContent: (req: Record<string, unknown>) => safeInvoke('api:generate-content', req),
 
   // Settings
-  getLLMConfig: () => ipcRenderer.invoke('settings:get-llm-config'),
-  setLLMConfig: (config: Record<string, unknown>) =>
-    ipcRenderer.invoke('settings:set-llm-config', config),
-  getLLMPresets: () => ipcRenderer.invoke('settings:get-llm-presets'),
-  getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
-  setSetting: (key: string, value: unknown) => ipcRenderer.invoke('settings:set', key, value),
-  isOnboardingComplete: () => ipcRenderer.invoke('settings:is-onboarding-complete'),
-  setOnboardingComplete: (value: boolean) =>
-    ipcRenderer.invoke('settings:set-onboarding-complete', value),
+  getLLMConfig: () => safeInvoke('settings:get-llm-config'),
+  setLLMConfig: (config: Record<string, unknown>) => safeInvoke('settings:set-llm-config', config),
+  getLLMPresets: () => safeInvoke('settings:get-llm-presets'),
+  getSetting: (key: string) => safeInvoke('settings:get', key),
+  setSetting: (key: string, value: unknown) => safeInvoke('settings:set', key, value),
+  isOnboardingComplete: () => safeInvoke('settings:is-onboarding-complete'),
+  setOnboardingComplete: (value: boolean) => safeInvoke('settings:set-onboarding-complete', value),
 
   // File
-  saveSession: (data: string) => ipcRenderer.invoke('file:save-session', data),
-  loadSession: () => ipcRenderer.invoke('file:load-session'),
-  exportTable: (data: string) => ipcRenderer.invoke('file:export-table', data),
+  saveSession: (data: string) => safeInvoke('file:save-session', data),
+  loadSession: () => safeInvoke('file:load-session'),
+  exportTable: (data: string) => safeInvoke('file:export-table', data),
 
   // App
-  getAppInfo: () => ipcRenderer.invoke('app:get-info'),
+  getAppInfo: () => safeInvoke('app:get-info'),
 
   // Electron API compatibility (used by App.tsx for menu events, student ID, etc.)
   send: (channel: string, ...args: unknown[]) => {
@@ -146,8 +151,6 @@ const api = {
 }
 
 contextBridge.exposeInMainWorld('api', api)
-// Also expose as electronAPI for components that use the legacy naming
-contextBridge.exposeInMainWorld('electronAPI', api)
 
 // Type export for the renderer
 export type MathWeaverAPI = typeof api

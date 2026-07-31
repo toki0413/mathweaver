@@ -1,0 +1,370 @@
+[
+  {
+    "id": "stoichiometry",
+    "name": "化学计量学",
+    "description": "化学方程式的配平与计量——线性代数方程组在化学中的直接应用",
+    "prerequisites": [],
+    "abstraction_level": 0,
+    "domain": "analytical",
+    "difficulty": 0.25,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解化学方程式配平本质是求解线性方程组 Ax = 0",
+      "掌握摩尔概念与质量守恒（代数恒等式约束）",
+      "理解当量与浓度的数学关系（比例与线性函数）"
+    ],
+    "examples": [
+      "配平 C₃H₈ + O₂ → CO₂ + H₂O：设系数 a,b,c,d 求解 aC₃H₈ + bO₂ = cCO₂ + dH₂O",
+      "摩尔浓度：C = n/V（线性比例关系）",
+      "滴定计算：C₁V₁ = C₂V₂（等量代换）"
+    ],
+    "assessment_criteria": [
+      "能用代数方法配平化学方程式",
+      "能进行摩尔、质量、浓度之间的换算",
+      "理解配平的数学本质是原子守恒的线性方程组"
+    ],
+    "estimated_minutes": 45,
+    "historical_context": "Lavoisier（1789年）提出质量守恒定律后，化学方程式的配平成为数学问题。Richter（1792年）建立了化学计量学，认识到化学反应遵循确定的数学比例。配平化学方程式的本质是求齐次线性方程组的正整数解——这是线性代数在化学中最古老的应用。",
+    "related_theorems": [
+      "质量守恒定律（代数恒等式）",
+      "化学计量方程（线性方程组）"
+    ],
+    "common_misconceptions": [
+      "认为配平只是试凑（本质是解线性方程组）",
+      "混淆摩尔数与质量（差一个分子量系数）"
+    ]
+  },
+  {
+    "id": "atomic_structure",
+    "name": "原子结构与量子数",
+    "description": "四个量子数与电子排布——整数参数化与对称性约束",
+    "prerequisites": [
+      "stoichiometry"
+    ],
+    "abstraction_level": 1,
+    "domain": "atomic",
+    "difficulty": 0.4,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解四个量子数 (n, l, mₗ, mₛ) 是微分方程的整数解参数",
+      "掌握量子数的取值约束：n ≥ 1, 0 ≤ l ≤ n-1, |mₗ| ≤ l, mₛ = ±½",
+      "理解泡利不相容原理的数学形式：每个态最多一个电子（双射约束）"
+    ],
+    "examples": [
+      "主量子数 n=1→K层, n=2→L层（正整数参数化）",
+      "角量子数 l=0(s), 1(p), 2(d), 3(f)（球谐函数阶数）",
+      "每个壳层容量：2n²（量子数约束的计数结果）"
+    ],
+    "assessment_criteria": [
+      "能写出四个量子数的取值范围",
+      "能根据量子数确定电子排布",
+      "理解量子数的数学本质是边界条件的整数解"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "Bohr（1913年）首次用量子化条件解释氢原子光谱。Schrödinger（1926年）求解氢原子薛定谔方程时，发现球坐标分离变量后三个方程的边界条件自然给出三个量子数 n, l, mₗ——整数参数化不是假设，而是微分方程的数学推论。",
+    "related_theorems": [
+      "泡利不相容原理",
+      "量子数取值定理（边界条件约束）"
+    ],
+    "common_misconceptions": [
+      "认为电子在确定轨道上运动（量子力学中只有概率分布）",
+      "混淆量子数与能级（能级由多个量子数共同决定）"
+    ]
+  },
+  {
+    "id": "chemical_bonding",
+    "name": "化学键与能量",
+    "description": "化学键的能量分析——势能函数与极值优化的化学应用",
+    "prerequisites": [
+      "atomic_structure"
+    ],
+    "abstraction_level": 2,
+    "domain": "bonding",
+    "difficulty": 0.5,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解化学键能用势能函数的极值描述：dU/dr = 0 处为平衡键长",
+      "掌握 Born-Haber 循环：能量守恒的代数计算（Hess 定律 = 路径无关性）",
+      "理解键能曲线的数学模型：Morse 势 U(r) = Dₑ(1 - e^(-a(r-rₑ)))²"
+    ],
+    "examples": [
+      "Lennard-Jones 势：U(r) = 4ε[(σ/r)¹² - (σ/r)⁶]（极值在 r = 2^(1/6)·σ）",
+      "Morse 势极值：dU/dr = 0 在 r = rₑ 处给出平衡键长",
+      "Hess 定律：ΔH_total = ΣΔHᵢ（与路径无关，类似保守力做功）"
+    ],
+    "assessment_criteria": [
+      "能从势能曲线找出平衡键长和键能",
+      "能用 Hess 定律进行能量计算",
+      "理解势能函数极值与化学稳定性的关系"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "Lewis（1916年）提出八隅体规则。Born 和 Haber（1919年）用热力学循环分析离子晶体能量。Morse（1929年）提出分子势能函数，将化学键描述为势能函数的数学对象——化学稳定性本质是势能函数的极小值。",
+    "related_theorems": [
+      "Hess 定律（能量路径无关性）",
+      "Morse 势极值定理"
+    ],
+    "common_misconceptions": [
+      "认为化学键'含有'能量（断键需要输入能量，成键释放能量）",
+      "混淆势能极小与势能零点"
+    ]
+  },
+  {
+    "id": "molecular_geometry",
+    "name": "分子几何",
+    "description": "VSEPR 理论与分子形状——几何学与向量在分子结构中的应用",
+    "prerequisites": [
+      "chemical_bonding"
+    ],
+    "abstraction_level": 2,
+    "domain": "geometry",
+    "difficulty": 0.45,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解 VSEPR 理论：价层电子对在空间中的最优化分布（球面最均匀分布问题）",
+      "掌握分子几何的数学描述：键角、二面角与点群",
+      "理解杂化轨道的线性代数本质：s + pₓ + pᵧ + p_z → 等价正交基变换"
+    ],
+    "examples": [
+      "甲烷 CH₄：正四面体，键角 arccos(-1/3) ≈ 109.47°（四面体几何）",
+      "水 H₂O：V形，键角 ≈ 104.5°（偏离正四面体角，因孤对电子排斥）",
+      "sp³ 杂化：四个正交基向量由 s 和 p 轨道线性组合构成"
+    ],
+    "assessment_criteria": [
+      "能根据 VSEPR 理论预测分子形状",
+      "能计算简单分子的键角",
+      "理解杂化轨道的正交变换本质"
+    ],
+    "estimated_minutes": 50,
+    "historical_context": "Lewis（1916年）和 Pauling（1931年）发展了价键理论。VSEPR 理论由 Gillespie 和 Nyholm（1957年）提出，其数学本质是球面上点的最均匀分布——这是一个经典的几何优化问题。杂化轨道理论本质上是向量空间中的正交变换。",
+    "related_theorems": [
+      "VSEPR 最优分布原理",
+      "杂化轨道正交性定理"
+    ],
+    "common_misconceptions": [
+      "认为杂化是物理过程（杂化是数学描述工具，不是真实过程）",
+      "混淆电子对几何与分子几何"
+    ]
+  },
+  {
+    "id": "molecular_symmetry",
+    "name": "分子对称性与群论",
+    "description": "分子点群与对称操作——群论在化学中的核心应用",
+    "prerequisites": [
+      "molecular_geometry"
+    ],
+    "abstraction_level": 3,
+    "domain": "symmetry",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解分子对称操作（旋转、反映、反演、旋转反映）构成群",
+      "掌握点群的分类与特征标表（群表示论的应用）",
+      "理解群论预测分子光谱选律：不可约表示决定跃迁允许性"
+    ],
+    "examples": [
+      "水分子 C₂ᵥ 群：{E, C₂, σᵥ, σᵥ'}（四阶交换群）",
+      "甲烷 T_d 群：24个对称操作（正四面体群）",
+      "选律：积分 ∫ψᵢ·μ·ψ_f dτ ≠ 0 要求直积 Γᵢ ⊗ Γ_μ ⊗ Γ_f 含全对称表示"
+    ],
+    "assessment_criteria": [
+      "能识别分子的对称元素和所属点群",
+      "能使用特征标表进行对称性分析",
+      "能用群论判断光谱跃迁是否允许"
+    ],
+    "estimated_minutes": 75,
+    "historical_context": "群论在化学中的应用由 Weyl、Wigner 等人在 1920-30 年代开创。Cotton（1963年）的著作《化学应用群论》使其成为标准课程。群论之所以在化学中如此强大，是因为分子的对称性直接决定了其光谱性质——这是抽象代数（群表示论）在化学中的直接应用。",
+    "related_theorems": [
+      "点群分类定理",
+      "光谱选律（群表示论）"
+    ],
+    "common_misconceptions": [
+      "认为对称操作只是几何概念（对称操作构成群，有深刻的代数结构）",
+      "混淆对称元素（轴、面、中心）与对称操作"
+    ]
+  },
+  {
+    "id": "thermodynamics",
+    "name": "化学热力学",
+    "description": "熵、自由能与平衡——多元微积分在化学反应方向性中的应用",
+    "prerequisites": [
+      "molecular_symmetry"
+    ],
+    "abstraction_level": 3,
+    "domain": "thermodynamics",
+    "difficulty": 0.6,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解熵 S = k·ln(W) 的对数结构（Boltzmann 公式，概率与信息论）",
+      "掌握 Gibbs 自由能 G = H - TS 的偏微分关系：dG = VdP - SdT",
+      "理解化学平衡 ΔG° = -RT·ln(K)（平衡常数的热力学推导）"
+    ],
+    "examples": [
+      "Boltzmann 熵：S = k_B·ln(W)，W 为微观状态数（对数函数的物理意义）",
+      "Gibbs-Helmholtz 方程：(∂(G/T)/∂T)_P = -H/T²（偏导数的应用）",
+      "平衡常数：K = e^(-ΔG°/RT)（指数函数描述平衡位置）"
+    ],
+    "assessment_criteria": [
+      "能计算反应的熵变和自由能变化",
+      "能运用偏微分关系进行热力学推导",
+      "理解平衡常数的数学推导与物理意义"
+    ],
+    "estimated_minutes": 70,
+    "historical_context": "Clausius（1865年）引入熵概念，Boltzmann（1877年）给出 S = k·ln(W) 的统计解释——这是数学对数函数在物理中最深刻的体现之一。Gibbs（1876年）用自由能统一了化学反应方向性的判据。化学热力学的数学基础是多元微积分：全微分、偏导数和恰当微分。",
+    "related_theorems": [
+      "Boltzmann 熵公式",
+      "Gibbs 自由能判据"
+    ],
+    "common_misconceptions": [
+      "认为熵只是'混乱度'（熵是微观状态数的对数，有精确数学定义）",
+      "混淆自发反应与快速反应（热力学决定方向，动力学决定速率）"
+    ]
+  },
+  {
+    "id": "chemical_kinetics",
+    "name": "化学动力学",
+    "description": "反应速率方程与机理——常微分方程在化学中的应用",
+    "prerequisites": [
+      "thermodynamics"
+    ],
+    "abstraction_level": 4,
+    "domain": "kinetics",
+    "difficulty": 0.65,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解反应速率方程本质是常微分方程：dC/dt = -kCⁿ",
+      "掌握一级反应 ln(C/C₀) = -kt（指数衰减）与二级反应 1/C - 1/C₀ = kt（双曲衰减）",
+      "理解 Arrhenius 方程 k = A·e^(-Ea/RT)（指数函数描述温度依赖性）"
+    ],
+    "examples": [
+      "一级反应：C(t) = C₀·e^(-kt)（半衰期 t₁/₂ = ln2/k，与浓度无关）",
+      "二级反应：1/C(t) = 1/C₀ + kt（半衰期与初始浓度成正比）",
+      "Arrhenius 方程：ln(k₂/k₁) = Ea/R·(1/T₁ - 1/T₂)（对数线性化）"
+    ],
+    "assessment_criteria": [
+      "能建立并求解一阶和二阶反应速率方程",
+      "能计算半衰期和活化能",
+      "理解不同反应级数的数学特征"
+    ],
+    "estimated_minutes": 65,
+    "historical_context": "Wilhelmy（1850年）首次用微分方程描述化学反应速率。Arrhenius（1889年）发现反应速率常数的温度依赖性遵循指数律。化学动力学的核心是常微分方程的求解——一级反应对应指数衰减解，二级反应对应双曲解，这些数学形式直接反映了分子碰撞的物理机制。",
+    "related_theorems": [
+      "一级反应半衰期公式",
+      "Arrhenius 方程"
+    ],
+    "common_misconceptions": [
+      "认为反应速率方程就是化学方程式（速率方程需要实验确定，与化学方程式不一定一致）",
+      "混淆反应级数与化学计量数"
+    ]
+  },
+  {
+    "id": "chemical_equilibrium",
+    "name": "化学平衡",
+    "description": "平衡常数与 Le Chatelier 原理——非线性方程组与稳定性分析",
+    "prerequisites": [
+      "chemical_kinetics"
+    ],
+    "abstraction_level": 4,
+    "domain": "equilibrium",
+    "difficulty": 0.55,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解平衡常数 K 的数学定义：K = ∏[products]^ν / ∏[reactants]^ν（幂律函数）",
+      "掌握平衡移动的数学描述：Le Chatelier 原理是稳定性分析的结果",
+      "理解耦合平衡的非线性方程组求解（Newton-Raphson 迭代法）"
+    ],
+    "examples": [
+      "平衡常数：Kc = [AB]/([A][B])（幂律关系）",
+      "Le Chatelier：∂(equilibrium)/∂(stress) < 0（负反馈，稳定性条件）",
+      "多重平衡：K_total = K₁ × K₂ × ... （平衡常数的乘法性质）"
+    ],
+    "assessment_criteria": [
+      "能计算平衡浓度和平衡常数",
+      "能预测平衡移动方向（稳定性分析思想）",
+      "能求解耦合平衡的非线性方程组"
+    ],
+    "estimated_minutes": 55,
+    "historical_context": "Guldberg 和 Waage（1864年）提出质量作用定律。Le Chatelier（1884年）和 Braun 提出平衡移动原理。平衡的数学本质是微分方程的稳态：正反应速率等于逆反应速率，即 dC/dt = 0。Le Chatelier 原理本质上是动力系统的稳定性分析——系统在扰动后回到平衡。",
+    "related_theorems": [
+      "质量作用定律",
+      "Le Chatelier 原理（稳定性定理）"
+    ],
+    "common_misconceptions": [
+      "认为平衡是静止的（平衡是动态的，正逆反应仍在进行）",
+      "认为平衡常数永远不变（K 只随温度变化）"
+    ]
+  },
+  {
+    "id": "electrochemistry",
+    "name": "电化学",
+    "description": "Nernst 方程与电化学——对数函数与指数函数在电化学中的应用",
+    "prerequisites": [
+      "chemical_equilibrium"
+    ],
+    "abstraction_level": 5,
+    "domain": "electrochemistry",
+    "difficulty": 0.6,
+    "is_milestone": false,
+    "learning_objectives": [
+      "理解 Nernst 方程 E = E° - (RT/nF)·ln(Q)（对数函数描述浓度对电势的影响）",
+      "掌握电化学热力学：ΔG = -nFE（自由能与电功的线性关系）",
+      "理解电解的 Faraday 定律：m = (M·I·t)/(nF)（线性比例关系）"
+    ],
+    "examples": [
+      "Nernst 方程 25°C：E = E° - (0.0592/n)·log(Q)（对数线性关系）",
+      "电池电动势：E_cell = E_cathode - E_anode（代数差）",
+      "Faraday 定律：m = (M/F)·(Q/n) = (M/F)·(It/n)（质量与电量的线性关系）"
+    ],
+    "assessment_criteria": [
+      "能用 Nernst 方程计算非标准条件下的电势",
+      "能将电化学量与热力学量相互转换",
+      "能运用 Faraday 定律进行电解计算"
+    ],
+    "estimated_minutes": 60,
+    "historical_context": "Volta（1800年）发明电池后，电化学成为定量科学。Nernst（1889年）提出电势与浓度的对数关系方程，将热力学与电化学统一。Faraday（1834年）发现电解定律，确立了电荷与化学变化的定量关系。Nernst 方程的对数形式直接来源于热力学平衡条件 ΔG = 0。",
+    "related_theorems": [
+      "Nernst 方程",
+      "Faraday 电解定律"
+    ],
+    "common_misconceptions": [
+      "混淆标准电势与实际电势（Nernst 方程修正浓度效应）",
+      "认为电池电势是简单的加法（实际是阴极减阳极）"
+    ]
+  },
+  {
+    "id": "quantum_chemistry",
+    "name": "量子化学",
+    "description": "分子轨道理论与计算化学——线性代数与偏微分方程在化学中的终极应用",
+    "prerequisites": [
+      "electrochemistry"
+    ],
+    "abstraction_level": 6,
+    "domain": "quantum_chem",
+    "difficulty": 0.85,
+    "is_milestone": true,
+    "learning_objectives": [
+      "理解分子轨道理论：原子轨道线性组合 LCAO = Σ cᵢφᵢ（线性代数基底变换）",
+      "掌握 Hückel 近似：求解久期方程 det(H - ES) = 0（矩阵特征值问题）",
+      "理解计算化学的核心：用变分法求薛定谔方程近似解（优化问题）"
+    ],
+    "examples": [
+      "H₂ 分子：ψ = c₁φ_A + c₂φ_B（两个原子轨道的线性组合）",
+      "Hückel 方法：苯的 π 电子能级由 6×6 矩阵特征值给出",
+      "变分原理：E[ψ] ≥ E₀（泛函极小值问题）"
+    ],
+    "assessment_criteria": [
+      "能写出简单分子的 LCAO-MO 表达式",
+      "能用 Hückel 方法计算共轭体系的能级",
+      "理解变分法的数学原理（泛函极值）"
+    ],
+    "estimated_minutes": 90,
+    "historical_context": "量子化学由 Heitler 和 London（1927年）开创，他们用量子力学计算了 H₂ 分子。Hückel（1930年）简化了共轭体系的计算，将分子轨道理论归结为矩阵特征值问题。Pople（1960年代起）发展了 Gaussian 系列计算化学软件，并于 1998 年获诺贝尔奖。量子化学的本质是将薛定谔方程（偏微分方程）转化为线性代数问题（矩阵对角化）来求解。",
+    "related_theorems": [
+      "LCAO 分子轨道定理",
+      "变分原理（泛函极小值定理）"
+    ],
+    "common_misconceptions": [
+      "认为分子轨道是单个原子的轨道（分子轨道是原子轨道的线性组合）",
+      "混淆变分法的近似本质与精确解"
+    ]
+  }
+]

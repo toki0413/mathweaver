@@ -1487,6 +1487,15 @@ class GrillSession:
 
     def _init_branches(self) -> None:
         """Initialize branches from the concept DAG, starting from current node."""
+        # Validate current_node_id exists in the DAG; fall back to default
+        if not self.dag.get_node(self.current_node_id):
+            fallback = self._default_node()
+            logger.warning(
+                "Grill: current_node_id '%s' not in DAG, falling back to '%s'",
+                self.current_node_id, fallback,
+            )
+            self.current_node_id = fallback
+
         # Build branch tree: current node + its prerequisites + dependents
         nodes_to_cover: list[str] = []
 

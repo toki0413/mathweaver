@@ -25,12 +25,7 @@ export interface DragDropProofStepsProps {
 // styles are provided separately (not in this file).
 // ---------------------------------------------------------------------------
 
-function DragDropProofStepsBase({
-  steps,
-  onReorder,
-  onEdit,
-  onRemove,
-}: DragDropProofStepsProps) {
+function DragDropProofStepsBase({ steps, onReorder, onEdit, onRemove }: DragDropProofStepsProps) {
   // Index of the step currently being dragged, or null when idle. Drives the
   // reduced-opacity styling on the source row.
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
@@ -94,10 +89,7 @@ function DragDropProofStepsBase({
     <div className="ddps-container">
       {steps.map((step, idx) => {
         const isDragging = draggedIndex === idx
-        const isDropTarget =
-          dragOverIndex === idx &&
-          draggedIndex !== null &&
-          draggedIndex !== idx
+        const isDropTarget = dragOverIndex === idx && draggedIndex !== null && draggedIndex !== idx
 
         const rowClassName = [
           'ddps-step-row',
@@ -112,24 +104,20 @@ function DragDropProofStepsBase({
             key={idx}
             className={rowClassName}
             draggable
-            onDragStart={(e) => handleDragStart(idx, e)}
-            onDragOver={(e) => handleDragOver(idx, e)}
+            onDragStart={e => handleDragStart(idx, e)}
+            onDragOver={e => handleDragOver(idx, e)}
             onDragLeave={() => handleDragLeave(idx)}
-            onDrop={(e) => handleDrop(idx, e)}
+            onDrop={e => handleDrop(idx, e)}
             onDragEnd={handleDragEnd}
           >
-            <span
-              className="ddps-drag-handle"
-              aria-hidden="true"
-              title="拖动以重新排序"
-            >
+            <span className="ddps-drag-handle" aria-hidden="true" title="拖动以重新排序">
               {'\u283f'}
             </span>
             <span className="ddps-step-number">{idx + 1}</span>
             <textarea
               className="ddps-step-textarea"
               value={step}
-              onChange={(e) => onEdit(idx, e.target.value)}
+              onChange={e => onEdit(idx, e.target.value)}
               placeholder={`第 ${idx + 1} 步：写出你的推导...`}
               rows={2}
             />

@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react'
 
 interface Props {
-  table: number[][];
-  size: number;
+  table: number[][]
+  size: number
 }
 
 /**
@@ -18,77 +18,73 @@ interface Props {
  * - Highlights commutativity of the selected pair and detects the identity element.
  */
 export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
-  const [selectedA, setSelectedA] = useState<number>(0);
-  const [selectedB, setSelectedB] = useState<number>(0);
-  const [animating, setAnimating] = useState<boolean>(false);
+  const [selectedA, setSelectedA] = useState<number>(0)
+  const [selectedB, setSelectedB] = useState<number>(0)
+  const [animating, setAnimating] = useState<boolean>(false)
 
   // Left-multiplication permutation for the selected element a: i -> table[a][i].
   const permutation = useMemo<number[]>(() => {
-    const perm: number[] = [];
+    const perm: number[] = []
     for (let i = 0; i < size; i++) {
-      perm.push(table[selectedA]?.[i] ?? i);
+      perm.push(table[selectedA]?.[i] ?? i)
     }
-    return perm;
-  }, [table, selectedA, size]);
+    return perm
+  }, [table, selectedA, size])
 
   // Commutativity check for the selected pair (a, b): table[a][b] === table[b][a].
   const isCommutative = useMemo<boolean>(() => {
-    if (size === 0) return false;
-    const ab = table[selectedA]?.[selectedB];
-    const ba = table[selectedB]?.[selectedA];
-    return ab !== undefined && ba !== undefined && ab === ba;
-  }, [table, selectedA, selectedB, size]);
+    if (size === 0) return false
+    const ab = table[selectedA]?.[selectedB]
+    const ba = table[selectedB]?.[selectedA]
+    return ab !== undefined && ba !== undefined && ab === ba
+  }, [table, selectedA, selectedB, size])
 
   // Identity detection: element e satisfying table[e][j] === j for all j.
   const identityElement = useMemo<number>(() => {
     for (let e = 0; e < size; e++) {
-      let isIdentity = true;
+      let isIdentity = true
       for (let j = 0; j < size; j++) {
         if (table[e]?.[j] !== j) {
-          isIdentity = false;
-          break;
+          isIdentity = false
+          break
         }
       }
-      if (isIdentity) return e;
+      if (isIdentity) return e
     }
-    return -1;
-  }, [table, size]);
+    return -1
+  }, [table, size])
 
   // Selecting a new `a` triggers the fade-out -> swap -> fade-in animation.
   const handleSelectA = useCallback(
     (idx: number) => {
-      if (idx === selectedA) return;
-      setAnimating(true);
+      if (idx === selectedA) return
+      setAnimating(true)
       window.setTimeout(() => {
-        setSelectedA(idx);
-        setAnimating(false);
-      }, 300);
+        setSelectedA(idx)
+        setAnimating(false)
+      }, 300)
     },
-    [selectedA]
-  );
+    [selectedA],
+  )
 
   const handleSelectB = useCallback((idx: number) => {
-    setSelectedB(idx);
-  }, []);
+    setSelectedB(idx)
+  }, [])
 
-  const opResult = table[selectedA]?.[selectedB];
+  const opResult = table[selectedA]?.[selectedB]
 
   // SVG layout constants.
-  const svgWidth = 300;
-  const rowHeight = 30;
-  const svgHeight = rowHeight * Math.max(size, 1);
-  const leftX = 40;
-  const rightX = svgWidth - 40;
-  const nodeRadius = 12;
-  const midX = svgWidth / 2;
+  const svgWidth = 300
+  const rowHeight = 30
+  const svgHeight = rowHeight * Math.max(size, 1)
+  const leftX = 40
+  const rightX = svgWidth - 40
+  const nodeRadius = 12
+  const midX = svgWidth / 2
 
-  const centerY = (i: number) => i * rowHeight + rowHeight / 2;
+  const centerY = (i: number) => i * rowHeight + rowHeight / 2
 
-  const renderSelectorRow = (
-    label: string,
-    selected: number,
-    onSelect: (i: number) => void
-  ) => (
+  const renderSelectorRow = (label: string, selected: number, onSelect: (i: number) => void) => (
     <div>
       <span>{label}: </span>
       {Array.from({ length: size }, (_, i) => (
@@ -103,7 +99,7 @@ export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
         </span>
       ))}
     </div>
-  );
+  )
 
   return (
     <div className="group-viz">
@@ -141,11 +137,11 @@ export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
 
         {/* Curved arrows: i (left) -> table[a][i] (right) */}
         {permutation.map((target, i) => {
-          const y1 = centerY(i);
-          const y2 = centerY(target);
-          const startX = leftX + nodeRadius;
-          const endX = rightX - nodeRadius;
-          const d = `M ${startX} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${endX} ${y2}`;
+          const y1 = centerY(i)
+          const y2 = centerY(target)
+          const startX = leftX + nodeRadius
+          const endX = rightX - nodeRadius
+          const d = `M ${startX} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${endX} ${y2}`
           return (
             <path
               key={`arrow-${i}`}
@@ -158,12 +154,12 @@ export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
                 transition: 'opacity 0.3s ease-in-out',
               }}
             />
-          );
+          )
         })}
 
         {/* Input elements on the left */}
         {Array.from({ length: size }, (_, i) => {
-          const y = centerY(i);
+          const y = centerY(i)
           return (
             <g key={`left-${i}`}>
               <circle className="perm-node" cx={leftX} cy={y} r={nodeRadius} />
@@ -177,12 +173,12 @@ export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
                 {i}
               </text>
             </g>
-          );
+          )
         })}
 
         {/* Output elements on the right */}
         {Array.from({ length: size }, (_, i) => {
-          const y = centerY(i);
+          const y = centerY(i)
           return (
             <g key={`right-${i}`}>
               <circle className="perm-node" cx={rightX} cy={y} r={nodeRadius} />
@@ -196,11 +192,11 @@ export const GroupOperationVisualizer: React.FC<Props> = ({ table, size }) => {
                 {i}
               </text>
             </g>
-          );
+          )
         })}
       </svg>
     </div>
-  );
-};
+  )
+}
 
-export default GroupOperationVisualizer;
+export default GroupOperationVisualizer

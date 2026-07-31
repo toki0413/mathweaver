@@ -8,6 +8,9 @@ import type { AgentContext, AgentMessage } from '../types'
 import type { LLMClient } from '../llm/client'
 import { BaseAgent } from './base'
 import { AgentRole, createAgentMessage } from '../types'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('PerceptionAgent')
 
 export class PerceptionAgent extends BaseAgent {
   /** Parses raw student input into structured form. */
@@ -24,13 +27,10 @@ export class PerceptionAgent extends BaseAgent {
     if (text.startsWith('[') && text.endsWith(']')) {
       try {
         const table = JSON.parse(text)
-        if (
-          Array.isArray(table) &&
-          table.every((r) => Array.isArray(r))
-        ) {
+        if (Array.isArray(table) && table.every(r => Array.isArray(r))) {
           const n = table.length
-          const allValid = table.every(
-            (r: unknown[]) => r.every((v) => {
+          const allValid = table.every((r: unknown[]) =>
+            r.every(v => {
               const num = v as number
               return Number.isInteger(num) && num >= 0 && num < n
             }),
@@ -74,15 +74,14 @@ export class PerceptionAgent extends BaseAgent {
           llmInputType = 'question'
         }
       } catch {
-        console.debug('LLM perception failed, falling back to keywords')
+        log.debug('LLM perception failed, falling back to keywords')
       }
     }
 
     // Proof attempt detection: LLM result takes priority, then keywords
     const proofKeywords = ['证明', '求证', 'prove', 'proof', '我要证', '验证以下']
     const isProof =
-      llmInputType === 'proof_attempt' ||
-      proofKeywords.some((kw) => text.toLowerCase().includes(kw))
+      llmInputType === 'proof_attempt' || proofKeywords.some(kw => text.toLowerCase().includes(kw))
 
     if (isProof) {
       return createAgentMessage(this.role, text, {
@@ -98,12 +97,23 @@ export class PerceptionAgent extends BaseAgent {
 
     // Conjecture detection: LLM result takes priority, then keywords
     const conjectureKeywords = [
-      '我猜', '猜想', '所有', '任', '每个', '任何', '一定', '必然',
-      '总是', 'all', 'every', 'must', 'conjecture',
+      '我猜',
+      '猜想',
+      '所有',
+      '任',
+      '每个',
+      '任何',
+      '一定',
+      '必然',
+      '总是',
+      'all',
+      'every',
+      'must',
+      'conjecture',
     ]
     const isConjecture =
       llmInputType === 'conjecture' ||
-      conjectureKeywords.some((kw) => text.toLowerCase().includes(kw))
+      conjectureKeywords.some(kw => text.toLowerCase().includes(kw))
     const inputType = isConjecture ? 'conjecture' : 'question'
 
     return createAgentMessage(this.role, text, {

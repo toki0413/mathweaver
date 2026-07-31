@@ -11,6 +11,9 @@
  */
 
 import type { LLMConfig } from '../types'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('LLM')
 
 // ---------------------------------------------------------------------------
 // LLM Response
@@ -36,14 +39,7 @@ export interface ToolCall {
 // ---------------------------------------------------------------------------
 
 export type LLMErrorKind =
-  | 'network'
-  | 'timeout'
-  | 'auth'
-  | 'rate_limit'
-  | 'server'
-  | 'client'
-  | 'parse'
-  | 'unknown'
+  'network' | 'timeout' | 'auth' | 'rate_limit' | 'server' | 'client' | 'parse' | 'unknown'
 
 export interface LLMErrorOptions {
   kind?: LLMErrorKind
@@ -236,7 +232,7 @@ export class MockLLMClient implements LLMClient {
     if (execMatch) {
       const execStr = execMatch[1].trim()
       if (execStr && execStr !== '无') {
-        execStr.split(',').forEach((a) => called.add(a.trim()))
+        execStr.split(',').forEach(a => called.add(a.trim()))
       }
     }
 
@@ -246,14 +242,15 @@ export class MockLLMClient implements LLMClient {
     if (inputMatch) studentInput = inputMatch[1]
 
     const isCayley = studentInput.includes('[[') || studentInput.toLowerCase().includes('cayley')
-    const isHistory = studentInput.includes('历史') || studentInput.toLowerCase().includes('history')
-    const isConjecture = ['我猜', '猜想', '所有', '任何', '每个', '一定', '必然', '总是'].some((kw) =>
+    const isHistory =
+      studentInput.includes('历史') || studentInput.toLowerCase().includes('history')
+    const isConjecture = ['我猜', '猜想', '所有', '任何', '每个', '一定', '必然', '总是'].some(kw =>
       studentInput.includes(kw),
     )
-    const isGrillTrigger = ['考考我', 'grill me', '考考看', '来考考', '审问我', '面试我'].some((kw) =>
+    const isGrillTrigger = ['考考我', 'grill me', '考考看', '来考考', '审问我', '面试我'].some(kw =>
       studentInput.toLowerCase().includes(kw),
     )
-    const isProof = ['证明', '求证', 'prove', 'proof', '我要证', '验证以下'].some((kw) =>
+    const isProof = ['证明', '求证', 'prove', 'proof', '我要证', '验证以下'].some(kw =>
       studentInput.includes(kw),
     )
 
@@ -279,17 +276,25 @@ export class MockLLMClient implements LLMClient {
     }
 
     if (isCayley) {
-      if (!called.has('abstraction')) return mkResponse('Abstracting Cayley table structure', 'call_agent', 'abstraction')
-      if (!called.has('counter_example')) return mkResponse('Verifying with Z3', 'call_agent', 'counter_example')
-      if (!called.has('epistemic')) return mkResponse('Diagnosing cognitive state', 'call_agent', 'epistemic')
+      if (!called.has('abstraction'))
+        return mkResponse('Abstracting Cayley table structure', 'call_agent', 'abstraction')
+      if (!called.has('counter_example'))
+        return mkResponse('Verifying with Z3', 'call_agent', 'counter_example')
+      if (!called.has('epistemic'))
+        return mkResponse('Diagnosing cognitive state', 'call_agent', 'epistemic')
     } else if (isConjecture) {
-      if (!called.has('counter_example')) return mkResponse('Testing conjecture with Z3', 'call_agent', 'counter_example')
-      if (!called.has('epistemic')) return mkResponse('Diagnosing cognitive state after conjecture', 'call_agent', 'epistemic')
+      if (!called.has('counter_example'))
+        return mkResponse('Testing conjecture with Z3', 'call_agent', 'counter_example')
+      if (!called.has('epistemic'))
+        return mkResponse('Diagnosing cognitive state after conjecture', 'call_agent', 'epistemic')
     } else if (isHistory) {
-      if (!called.has('historical')) return mkResponse('Retrieving historical context', 'call_agent', 'historical')
+      if (!called.has('historical'))
+        return mkResponse('Retrieving historical context', 'call_agent', 'historical')
     } else {
-      if (!called.has('abstraction')) return mkResponse('Abstracting input', 'call_agent', 'abstraction')
-      if (!called.has('epistemic')) return mkResponse('Diagnosing cognitive state', 'call_agent', 'epistemic')
+      if (!called.has('abstraction'))
+        return mkResponse('Abstracting input', 'call_agent', 'abstraction')
+      if (!called.has('epistemic'))
+        return mkResponse('Diagnosing cognitive state', 'call_agent', 'epistemic')
     }
 
     return mkResponse('All agents complete, delivering response [DELIVER]', 'deliver')
@@ -318,11 +323,15 @@ export class MockLLMClient implements LLMClient {
   }
 
   private static sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 }
 
-function mkResponse(content: string, nextAction: LLMResponse['next_action'], nextAgent?: string): LLMResponse {
+function mkResponse(
+  content: string,
+  nextAction: LLMResponse['next_action'],
+  nextAgent?: string,
+): LLMResponse {
   return {
     content,
     tool_calls: null,
@@ -389,7 +398,7 @@ export class OpenAICompatibleClient implements LLMClient {
     }
 
     if (tools && tools.length > 0) {
-      payload.tools = tools.map((t) => ({ type: 'function', function: t }))
+      payload.tools = tools.map(t => ({ type: 'function', function: t }))
     }
 
     const url = `${this.baseUrl}/chat/completions`
@@ -400,9 +409,10 @@ export class OpenAICompatibleClient implements LLMClient {
   // Response parsing helpers
   // -------------------------------------------------------------------------
 
-  private parseNextAction(
-    content: string,
-  ): { next_action: LLMResponse['next_action']; next_agent: string | null } {
+  private parseNextAction(content: string): {
+    next_action: LLMResponse['next_action']
+    next_agent: string | null
+  } {
     if (content.includes('[DELIVER]')) {
       return { next_action: 'deliver', next_agent: null }
     }
@@ -418,7 +428,7 @@ export class OpenAICompatibleClient implements LLMClient {
   private parseToolCalls(message: Record<string, unknown>): ToolCall[] | null {
     const raw = message.tool_calls as Array<Record<string, unknown>> | undefined
     if (!raw) return null
-    return raw.map((tc) => {
+    return raw.map(tc => {
       const fn = (tc.function as Record<string, unknown>) ?? {}
       const argsStr = (fn.arguments as string) || '{}'
       let args: Record<string, unknown>
@@ -440,7 +450,7 @@ export class OpenAICompatibleClient implements LLMClient {
   // -------------------------------------------------------------------------
 
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   /**
@@ -470,10 +480,12 @@ export class OpenAICompatibleClient implements LLMClient {
       try {
         if (attempt > 0) {
           const delay = backoffMs[attempt - 1]
-          console.log(
-            `[LLM] Retrying ${context} (attempt ${attempt + 1}/${maxRetries + 1}) ` +
-              `after ${delay}ms backoff`,
-          )
+          log.info('Retrying after backoff', {
+            context,
+            attempt: attempt + 1,
+            maxAttempts: maxRetries + 1,
+            delayMs: delay,
+          })
           await this.sleep(delay)
         }
         return await fn()
@@ -484,10 +496,13 @@ export class OpenAICompatibleClient implements LLMClient {
         if (!retryable || attempt === maxRetries) {
           throw llmErr
         }
-        console.warn(
-          `[LLM] ${context} failed (attempt ${attempt + 1}/${maxRetries + 1}): ` +
-            `${llmErr.kind} — ${llmErr.message}`,
-        )
+        log.warn('Request failed', {
+          context,
+          attempt: attempt + 1,
+          maxAttempts: maxRetries + 1,
+          errorKind: llmErr.kind,
+          errorMessage: llmErr.message,
+        })
       }
     }
 
@@ -687,7 +702,7 @@ export class OpenAICompatibleClient implements LLMClient {
         }
 
         // Read the SSE stream chunk by chunk, processing complete lines.
-        // eslint-disable-next-line no-constant-condition
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
@@ -714,7 +729,7 @@ export class OpenAICompatibleClient implements LLMClient {
 
         let toolCalls: ToolCall[] | null = null
         if (toolCallFrags.length > 0) {
-          toolCalls = toolCallFrags.map((f) => {
+          toolCalls = toolCallFrags.map(f => {
             let args: Record<string, unknown>
             try {
               args = JSON.parse(f.args || '{}')
@@ -744,11 +759,9 @@ export class OpenAICompatibleClient implements LLMClient {
       }
     }
 
-    return this.retryWithBackoff(doFetch, 'chatStream', (err) => {
+    return this.retryWithBackoff(doFetch, 'chatStream', err => {
       if (streamStarted) {
-        console.warn(
-          `[LLM] chatStream cannot retry: stream already started (error: ${err.kind})`,
-        )
+        log.warn('chatStream cannot retry: stream already started', { errorKind: err.kind })
         return false
       }
       return err.retryable
@@ -845,10 +858,11 @@ export const LLM_PRESETS: LLMPreset[] = [
     defaultModel: '',
     requiresApiKey: true,
     helpUrl: '',
-    description: '任何兼容 OpenAI Chat Completions API 格式的服务端点（vLLM、LiteLLM、Azure OpenAI 等）。',
+    description:
+      '任何兼容 OpenAI Chat Completions API 格式的服务端点（vLLM、LiteLLM、Azure OpenAI 等）。',
   },
 ]
 
 export function getPresetById(id: string): LLMPreset | undefined {
-  return LLM_PRESETS.find((p) => p.id === id)
+  return LLM_PRESETS.find(p => p.id === id)
 }

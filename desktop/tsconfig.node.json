@@ -6,6 +6,10 @@
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "outDir": "./out/tsconfig.node"
   },
   "include": ["electron/**/*.ts", "electron/**/*.d.ts"]

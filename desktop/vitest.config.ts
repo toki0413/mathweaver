@@ -5,22 +5,11 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   test: {
-    // NOTE on environment:
-    // The task spec requested `environment: 'jsdom'`, but `jsdom` (and
-    // `happy-dom`) are NOT installed in this project, and the task constraints
-    // forbid installing new npm packages. Vitest fails hard when the jsdom
-    // environment cannot be resolved, so we use `'node'` instead.
-    //
-    // Component tests render via `react-dom/server`'s `renderToString`, which
-    // produces an HTML string with no DOM dependency — this covers every
-    // assertion required by the task (text/math rendering, Cayley-table
-    // closure/associativity badges, aria-label presence, XSS escaping).
-    //
-    // To switch back to the spec's intent later, install the DOM toolchain
-    // (`npm i -D jsdom @testing-library/react @testing-library/jest-dom`) and
-    // change this value to `'jsdom'`; the guarded setup file below will then
-    // pick up @testing-library/jest-dom automatically.
-    environment: 'node',
+    // jsdom enables real DOM APIs (document, window, etc.) so React Testing
+    // Library can render components into an actual DOM tree and simulate
+    // user interactions (click, type, hover, …). This is the industry-standard
+    // environment for component-level testing.
+    environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     // Only run unit tests through vitest; E2E specs live under tests/e2e and
@@ -29,8 +18,35 @@ export default defineConfig({
     exclude: ['node_modules/', 'dist/', 'out/', 'tests/e2e/**'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/', 'out/'],
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        'out/',
+        'tests/**',
+        'test/**',
+        '**/*.config.{ts,js}',
+        'src/main/index.ts',     // Electron main process entry
+        'src/preload/**',        // Electron preload bridge
+        'electron/main/**',      // Electron main process (requires app context)
+        'electron/preload/**',   // Electron preload bridge
+        'electron/backend/agents/**',  // LLM-dependent agents (require network)
+        'electron/backend/rag/**',      // RAG retriever (requires data files)
+        'electron/backend/persistence/**', // SQLite store (requires native module)
+      ],
+      // Industry-standard coverage thresholds (production-grade).
+      // Two-tier approach: src/ (frontend) has higher thresholds, while
+      // electron/backend is measured but with lower thresholds since most
+      // backend modules require LLM/network/SQLite runtime to test.
+      // See: https://frontendchecklist.io/rules/testing/test-coverage
+      thresholds: {
+        global: {
+          statements: 35,
+          branches: 35,
+          functions: 40,
+          lines: 35,
+        },
+      },
     },
   },
   resolve: {

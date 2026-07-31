@@ -1,7 +1,6 @@
 import { memo, useMemo } from 'react'
-import katex from 'katex'
-import DOMPurify from 'dompurify'
 import 'katex/dist/katex.min.css'
+import { renderTex } from '../utils/katex-render'
 
 /**
  * MathText — renders text containing inline ($...$) and display ($$...$$)
@@ -19,62 +18,6 @@ import 'katex/dist/katex.min.css'
  * always runs in Electron's renderer process where DOMPurify is fully functional.
  */
 
-// Configure DOMPurify to allow only KaTeX-safe HTML
-// KaTeX output uses: span, mathml elements, aria attributes, class, style
-const purifyConfig = {
-  ALLOWED_TAGS: [
-    'span', 'math', 'semantics', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub',
-    'msubsup', 'mfrac', 'mroot', 'msqrt', 'mtable', 'mtr', 'mtd', 'mtext',
-    'mspace', 'annotation', 'menclose', 'mover', 'munder', 'munderover',
-  ],
-  ALLOWED_ATTR: ['class', 'style', 'aria-hidden', 'aria-label', 'role', 'mathvariant'],
-  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
-  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
-}
-
-/**
- * Basic HTML escaper for SSR/test fallback.
- * In production (Electron renderer), DOMPurify sanitization is always used.
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-}
-
-/**
- * Sanitize HTML using DOMPurify if available (browser/Electron renderer).
- * Falls back to HTML escaping in Node.js/SSR/test environments.
- */
-function sanitizeHtml(html: string): string {
-  // DOMPurify requires a DOM (window) to be fully initialized.
-  // In Electron renderer (production), this is always the case.
-  if (typeof DOMPurify?.sanitize === 'function') {
-    return DOMPurify.sanitize(html, purifyConfig) as string
-  }
-  // Fallback: basic HTML escaping (strips all HTML tags, returns safe text)
-  return escapeHtml(html)
-}
-
-function renderTex(tex: string, displayMode: boolean): string {
-  try {
-    const rawHtml = katex.renderToString(tex, {
-      displayMode,
-      throwOnError: false,
-      output: 'html',
-      strict: false,
-    })
-    // Security: Sanitize KaTeX HTML output to prevent XSS
-    return sanitizeHtml(rawHtml)
-  } catch {
-    // Security: Even fallback text is sanitized
-    return sanitizeHtml(tex)
-  }
-}
-
 interface Segment {
   type: 'text' | 'inline-math' | 'display-math'
   content: string
@@ -82,7 +25,7 @@ interface Segment {
 
 function parseSegments(input: string): Segment[] {
   const segments: Segment[] = []
-  let remaining = input
+  const remaining = input
 
   const pattern = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g
   let lastIndex = 0
@@ -122,10 +65,7 @@ function MathTextImpl({ children, className }: MathTextProps) {
       {segments.map((seg, i) => {
         if (seg.type === 'inline-math') {
           return (
-            <span
-              key={i}
-              dangerouslySetInnerHTML={{ __html: renderTex(seg.content, false) }}
-            />
+            <span key={i} dangerouslySetInnerHTML={{ __html: renderTex(seg.content, false) }} />
           )
         }
         if (seg.type === 'display-math') {

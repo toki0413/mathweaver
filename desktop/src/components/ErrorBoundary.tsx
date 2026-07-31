@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 /**
  * ErrorBoundary — 全局错误边界组件
@@ -51,7 +51,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // 尝试通过 IPC 发送错误日志到主进程
     try {
-      const api = (window as unknown as { api?: { invoke?: (channel: string, ...args: unknown[]) => Promise<unknown> } }).api
+      const api = (
+        window as unknown as {
+          api?: { invoke?: (channel: string, ...args: unknown[]) => Promise<unknown> }
+        }
+      ).api
       if (api?.invoke) {
         api.invoke('app:log-error', errorPayload).catch(() => {
           // IPC 不可用时降级到 console
@@ -66,7 +70,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleRetry = (): void => {
-    this.setState((prev) => ({
+    this.setState(prev => ({
       hasError: false,
       error: null,
       errorInfo: null,
@@ -80,7 +84,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   toggleDetails = (): void => {
-    this.setState((prev) => ({ showDetails: !prev.showDetails }))
+    this.setState(prev => ({ showDetails: !prev.showDetails }))
   }
 
   render(): ReactNode {
@@ -101,7 +105,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           padding: '2rem',
           background: '#0d1117',
           color: '#e6edf3',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", system-ui, sans-serif',
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", system-ui, sans-serif',
         }}
       >
         <div
@@ -132,21 +137,49 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </svg>
           </div>
 
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '0.5rem' }}>
+          <h1
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              textAlign: 'center',
+              marginBottom: '0.5rem',
+            }}
+          >
             应用遇到了问题
           </h1>
-          <p style={{ textAlign: 'center', color: '#8b949e', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+          <p
+            style={{
+              textAlign: 'center',
+              color: '#8b949e',
+              fontSize: '0.9rem',
+              marginBottom: '1.5rem',
+            }}
+          >
             MathWeaver 遇到了一个意外错误。您可以尝试重试或重新加载应用。
           </p>
 
           {retryCount > 0 && (
-            <p style={{ textAlign: 'center', color: '#fbbf24', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            <p
+              style={{
+                textAlign: 'center',
+                color: '#fbbf24',
+                fontSize: '0.85rem',
+                marginBottom: '1rem',
+              }}
+            >
               已重试 {retryCount} 次，如果问题持续出现，请联系支持团队。
             </p>
           )}
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'center',
+              marginBottom: '1.5rem',
+            }}
+          >
             <button
               onClick={this.handleRetry}
               style={{
@@ -160,8 +193,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = '#9171f8'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = '#a78bfa'}
+              onMouseEnter={e => ((e.target as HTMLButtonElement).style.background = '#9171f8')}
+              onMouseLeave={e => ((e.target as HTMLButtonElement).style.background = '#a78bfa')}
             >
               重试
             </button>
@@ -178,8 +211,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = '#30363d'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = '#21262d'}
+              onMouseEnter={e => ((e.target as HTMLButtonElement).style.background = '#30363d')}
+              onMouseLeave={e => ((e.target as HTMLButtonElement).style.background = '#21262d')}
             >
               重新加载
             </button>

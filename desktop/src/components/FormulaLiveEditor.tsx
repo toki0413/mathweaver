@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, memo } from 'react'
-import katex from 'katex'
 import 'katex/dist/katex.min.css'
+import { renderLatexWithErrors, type RenderResult } from '../utils/katex-render'
 
 // ---------------------------------------------------------------------------
 // FormulaLiveEditor
@@ -202,40 +202,13 @@ export interface FormulaLiveEditorProps {
   height?: number
 }
 
-interface RenderResult {
-  html: string
-  error: string | null
-}
-
 /**
- * 将 LaTeX 渲染为 HTML 字符串，并捕获语法错误信息。
+ * 将 LaTeX 渲染为已净化的 HTML 字符串，并捕获语法错误信息。
  *
- * 主渲染使用 `throwOnError: false`（出错时 KaTeX 在公式内联标注红色错误），
- * 另以 `throwOnError: true` 单独探测一次以提取可读错误信息，供预览区下方展示。
+ * 渲染与净化逻辑统一由 `utils/katex-render` 提供，避免与 MathText 组件重复。
  */
 function renderLatex(latex: string): RenderResult {
-  const src = latex.trim()
-  if (!src) return { html: '', error: null }
-
-  let html = ''
-  try {
-    html = katex.renderToString(latex, {
-      throwOnError: false,
-      displayMode: true,
-    })
-  } catch {
-    return { html: '', error: '渲染失败：内部错误' }
-  }
-
-  let error: string | null = null
-  try {
-    katex.renderToString(latex, { throwOnError: true, displayMode: true })
-  } catch (e) {
-    const raw = e instanceof Error ? e.message : String(e)
-    error = raw.replace(/^KaTeX parse error:\s*/i, '').trim() || raw
-  }
-
-  return { html, error }
+  return renderLatexWithErrors(latex, true)
 }
 
 function FormulaLiveEditorImpl({
@@ -251,11 +224,12 @@ function FormulaLiveEditorImpl({
   const toastTimer = useRef<number | null>(null)
   const [toast, setToast] = useState<{ id: number; msg: string } | null>(null)
 
-  // 实时渲染（含错误探测）—— 仅依赖 latex，输入变化时重算。
-  const { html, error } = useMemo<RenderResult>(
-    () => renderLatex(latex),
-    [latex],
-  )
+  // 实时渲染（含错误探测 + DOMPurify 净化）—— 仅依赖 latex，输入变化时重算。
+  // 净化逻辑已内置于 renderLatex（utils/katex-render），此处无需再次处理。
+  const { html, error } = useMemo<RenderResult>(() => renderLatex(latex), [latex])
+
+  // 渲染结果已通过 DOMPurify 净化，可直接安全注入 DOM。
+  const sanitizedHtml = html
 
   // 轻量复制反馈：1.6s 后自动清除。React 18 中组件卸载后的 setState
   // 为静默 no-op，故无需额外清理副作用。
@@ -277,7 +251,7 @@ function FormulaLiveEditorImpl({
     (snippet: string) => {
       const ta = textareaRef.current
       if (!ta) {
-        setLatex((prev) => prev + snippet)
+        setLatex(prev => prev + snippet)
         return
       }
       const start = ta.selectionStart ?? latex.length
@@ -355,7 +329,7 @@ function FormulaLiveEditorImpl({
             ref={textareaRef}
             className="fle-textarea"
             value={latex}
-            onChange={(e) => setLatex(e.target.value)}
+            onChange={e => setLatex(e.target.value)}
             placeholder="输入 LaTeX 公式，例如  \frac{a}{b}  或  \int_0^1 x^2 \, dx"
             spellCheck={false}
             autoComplete="off"
@@ -375,14 +349,16 @@ function FormulaLiveEditorImpl({
           <div className="fle-preview-wrap">
             <div className="fle-preview">
               {html ? (
-                <span dangerouslySetInnerHTML={{ __html: html }} />
+                <span dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
               ) : (
-                <span className="fle-preview-empty">
-                  预览区为空——在左侧输入 LaTeX 公式
-                </span>
+                <span className="fle-preview-empty">预览区为空——在左侧输入 LaTeX 公式</span>
               )}
             </div>
-            {error && <div className="fle-error" role="alert">{error}</div>}
+            {error && (
+              <div className="fle-error" role="alert">
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -391,7 +367,7 @@ function FormulaLiveEditorImpl({
       <div className="fle-toolbar">
         <div className="fle-tpl-group" role="group" aria-label="公式模板">
           <span className="fle-tpl-label">模板</span>
-          {TEMPLATES.map((tpl) => (
+          {TEMPLATES.map(tpl => (
             <button
               key={tpl.label}
               type="button"

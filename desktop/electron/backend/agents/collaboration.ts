@@ -286,7 +286,7 @@ export class CollaborationAgent extends BaseAgent {
   }
 
   private buildContextSummary(
-    ce: Record<string, unknown>,
+    _ce: Record<string, unknown>,
     epistemic: Record<string, unknown>,
     historical: Record<string, unknown>,
     isGroup: boolean,

@@ -2,7 +2,7 @@
 
 L1: Z3 direct solve (finite structures via Cayley table encoding)
 L2: LLM + Z3 verification (LLM generates candidate, Z3 checks)
-L3: LLM + Lean verification (for undecidable nonlinear cases)
+L3: LLM + heuristic verification (for undecidable nonlinear cases)
 L4: LLM-only + annotation (last resort)
 """
 
@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from ..llm.client import extract_content
 
 from z3 import (
     If,
@@ -24,7 +26,7 @@ from z3 import (
 class FallbackLevel(Enum):
     L1_Z3 = "L1: Z3 direct"
     L2_LLM_Z3 = "L2: LLM + Z3 verify"
-    L3_LLM_LEAN = "L3: LLM + Lean verify"
+    L3_LLM_HEURISTIC = "L3: LLM + heuristic verify"
     L4_LLM_ONLY = "L4: LLM only"
 
 
@@ -51,6 +53,11 @@ def verify_group_axioms_cayley(
 
     Checks: closure (trivial by construction), associativity,
     identity element, and inverse elements.
+
+    .. note::
+        This is a **direct Python verification** (triple-nested loop),
+        not Z3 SMT solving.  For Z3-based search of non-associative
+        operations, see :func:`z3_find_non_associative_binary_op`.
 
     Returns (is_group, counter_example_description).
     """
@@ -198,15 +205,25 @@ def z3_find_non_associative_binary_op(n: int = 3) -> CounterExampleResult:
             z3_model={"cayley_table": cayley, "n": n},
         )
     else:
+        # This branch is only reachable for n=1 (single-element set,
+        # where the unique trivial operation is associative).
+        # For n>=2, non-associative operations always exist and Z3 finds them.
         return CounterExampleResult(
             success=False,
             level=FallbackLevel.L1_Z3,
-            explanation=f"在 {n} 元集合上，所有二元运算都满足结合律",
+            explanation=f"在 {n} 元集合上未找到非结合运算（n=1 时唯一运算是结合的；n≥2 时此分支不可达）",
         )
 
 
 def z3_verify_associativity(cayley_table: list[list[int]]) -> CounterExampleResult:
-    """Use Z3 to verify if a given Cayley table satisfies associativity."""
+    """Verify if a given Cayley table satisfies associativity.
+
+    .. note::
+        This is a **direct Python verification** (triple-nested loop),
+        not Z3 SMT solving.  The function name preserves backward
+        compatibility.  For real Z3-based search, see
+        :func:`z3_find_non_associative_binary_op`.
+    """
     n = len(cayley_table)
 
     # Create Z3 variables for the table (to get model if counter-example exists)
@@ -248,7 +265,7 @@ class CounterExampleForge:
     Implements the four-layer fallback:
     L1: Z3 direct (finite structures)
     L2: LLM + Z3 verify
-    L3: LLM + Lean verify
+    L3: LLM + heuristic verify
     L4: LLM only + annotation
     """
 
@@ -274,7 +291,7 @@ class CounterExampleForge:
                 success=True,
                 level=FallbackLevel.L1_Z3,
                 counter_example=reason,
-                explanation=f"Z3 验证发现群公理不满足: {reason}",
+                explanation=f"直接验证发现群公理不满足: {reason}",
             )
 
     def check_commutativity(
@@ -294,7 +311,7 @@ class CounterExampleForge:
                 success=True,
                 level=FallbackLevel.L1_Z3,
                 counter_example=reason,
-                explanation=f"Z3 验证发现交换律不满足: {reason}",
+                explanation=f"直接验证发现交换律不满足: {reason}",
             )
 
     def find_non_associative_table(self, n: int = 3) -> CounterExampleResult:
@@ -332,7 +349,16 @@ class CounterExampleForge:
 
         # L2: LLM generates candidate, Z3 verifies
         if self.llm_client is not None:
-            return await self._fallback_l2(student_conjecture, context)
+            l2_result = await self._fallback_l2(student_conjecture, context)
+            # If L2 found a counter-example, return it
+            if l2_result.success:
+                return l2_result
+            # L2 failed — try L3 (LLM + heuristic verification)
+            l3_result = await self._fallback_l3(student_conjecture, context, l2_result)
+            if l3_result.success:
+                return l3_result
+            # L3 failed — fall through to L4
+            return await self._fallback_l4(student_conjecture, context)
 
         # L4: No LLM available
         return CounterExampleResult(
@@ -365,7 +391,7 @@ class CounterExampleForge:
                 ),
                 user_message=prompt,
             )
-            llm_text = resp.get("content", "") if isinstance(resp, dict) else str(resp)
+            llm_text = extract_content(resp)
         except Exception as e:
             return CounterExampleResult(
                 success=False,
@@ -393,8 +419,14 @@ class CounterExampleForge:
                     break
 
         if cayley_table is None:
-            # LLM didn't produce a valid Cayley table, try L4
-            return await self._fallback_l4(conjecture, context)
+            # LLM didn't produce a valid Cayley table — return failure
+            # so generate_counter_example can try L3 then L4
+            return CounterExampleResult(
+                success=False,
+                level=FallbackLevel.L2_LLM_Z3,
+                explanation="L2: LLM 未生成有效的 Cayley 表，无法进行 Z3 验证",
+                metadata={"llm_generated": True, "z3_verified": False},
+            )
 
         # Verify with Z3 (L1 verification on LLM-generated candidate)
         n_table = len(cayley_table)
@@ -439,8 +471,106 @@ class CounterExampleForge:
                 metadata={"llm_generated": True, "z3_verified": True},
             )
 
-        # LLM's candidate didn't violate anything — fall through to L4
-        return await self._fallback_l4(conjecture, context)
+        # LLM's candidate didn't violate anything — fall through to L3
+        return CounterExampleResult(
+            success=False,
+            level=FallbackLevel.L2_LLM_Z3,
+            explanation=f"L2: LLM 生成的 Cayley 表未违反猜想，需要尝试启发式验证",
+            metadata={"llm_generated": True, "z3_verified": False},
+        )
+
+    async def _fallback_l3(
+        self,
+        conjecture: str,
+        context: dict[str, Any],
+        l2_result: CounterExampleResult,
+    ) -> CounterExampleResult:
+        """L3: LLM + heuristic verification.
+
+        This layer handles conjectures that are not amenable to Cayley table
+        encoding (e.g., infinite structures, nonlinear properties).  The LLM
+        proposes a counter-example in natural language, and heuristic checks
+        verify internal consistency:
+
+        1. The counter-example references specific mathematical objects
+        2. The explanation contains a logical chain (premises → conclusion)
+        3. Key terms from the conjecture appear in the counter-example
+        """
+        try:
+            resp = await self.llm_client.chat(
+                system_prompt=(
+                    "你是数学反例专家。之前的 Cayley 表方法未能验证以下猜想。\n"
+                    "请用自然语言提供一个反例，或者说明猜想为何可能成立。\n"
+                    "如果有反例，请：\n"
+                    "1. 明确指出反例的数学对象（如具体的数、函数、矩阵等）\n"
+                    "2. 给出逻辑推导链条：为什么该对象违反猜想\n"
+                    "3. 确保推导中引用了猜想的关键条件"
+                ),
+                user_message=(
+                    f"猜想: {conjecture}\n"
+                    f"上下文: {context}\n"
+                    f"前次尝试: {l2_result.explanation}"
+                ),
+            )
+            llm_text = extract_content(resp)
+        except Exception as e:
+            return CounterExampleResult(
+                success=False,
+                level=FallbackLevel.L3_LLM_HEURISTIC,
+                explanation=f"L3 LLM 调用失败: {e}",
+            )
+
+        # Heuristic verification: check if the LLM's response
+        # contains a structured counter-example
+        has_counter_example = (
+            "反例" in llm_text
+            or "不成立" in llm_text
+            or "counter" in llm_text.lower()
+            or "violate" in llm_text.lower()
+        )
+
+        # Check for logical chain markers
+        logical_markers = ["因为", "所以", "由于", "因此", "则", "故",
+                           "because", "therefore", "since", "thus", "hence"]
+        has_logical_chain = any(m in llm_text for m in logical_markers)
+
+        # Check that key terms from the conjecture appear in the response
+        conjecture_terms = [t for t in conjecture.split() if len(t) > 1]
+        matched_terms = sum(1 for t in conjecture_terms if t in llm_text)
+        term_coverage = matched_terms / max(len(conjecture_terms), 1)
+
+        if has_counter_example and (has_logical_chain or term_coverage > 0.3):
+            return CounterExampleResult(
+                success=True,
+                level=FallbackLevel.L3_LLM_HEURISTIC,
+                counter_example=llm_text[:500],
+                explanation=(
+                    f"L3 启发式验证通过: LLM 提供了反例，"
+                    f"逻辑链={'有' if has_logical_chain else '无'}, "
+                    f"关键词覆盖={term_coverage:.0%}"
+                ),
+                metadata={
+                    "llm_generated": True,
+                    "z3_verified": False,
+                    "heuristic_verified": True,
+                    "has_logical_chain": has_logical_chain,
+                    "term_coverage": term_coverage,
+                },
+            )
+
+        return CounterExampleResult(
+            success=False,
+            level=FallbackLevel.L3_LLM_HEURISTIC,
+            explanation=f"L3 启发式验证未通过: {llm_text[:200]}",
+            metadata={
+                "llm_generated": True,
+                "z3_verified": False,
+                "heuristic_verified": False,
+                "has_counter_example": has_counter_example,
+                "has_logical_chain": has_logical_chain,
+                "term_coverage": term_coverage,
+            },
+        )
 
     async def _fallback_l4(
         self, conjecture: str, context: dict[str, Any]
@@ -455,7 +585,7 @@ class CounterExampleForge:
                 ),
                 user_message=f"猜想: {conjecture}\n上下文: {context}",
             )
-            llm_text = resp.get("content", "") if isinstance(resp, dict) else str(resp)
+            llm_text = extract_content(resp)
         except Exception as e:
             return CounterExampleResult(
                 success=False,

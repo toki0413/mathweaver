@@ -14,8 +14,6 @@ import { Orchestrator } from './orchestrator/engine'
 import { createLLMClient, type LLMClient } from './llm/client'
 import { getDag, CURRICULUM_LEVELS, type ConceptDAG } from './dag/concept_dag'
 import { CounterExampleForge } from './forge/forge'
-import { buildDefaultKB, type KnowledgeBase } from './rag/retriever'
-import { StateStore } from './persistence/store'
 import {
   type LLMConfig,
   type StartSessionRequest,
@@ -23,8 +21,18 @@ import {
   type CayleyTableRequest,
   type StructuredError,
   defaultLLMConfig,
-  type FourFieldState,
 } from './types'
+import logger from './utils/logger'
+
+// ---------------------------------------------------------------------------
+// Dynamic content generation — age-level labels
+// ---------------------------------------------------------------------------
+
+const AGE_LEVEL_LABELS: Record<string, string> = {
+  kids: '少儿（6-9 岁）',
+  tweens: '少年（10-13 岁）',
+  teens: '青少年（14-17 岁）',
+}
 
 // ---------------------------------------------------------------------------
 // Backend Manager (singleton)
@@ -34,15 +42,11 @@ class Backend {
   private orchestrator: Orchestrator | null = null
   private llmClient: LLMClient | null = null
   private llmConfig: LLMConfig = defaultLLMConfig()
-  private store: StateStore
-  private kb: KnowledgeBase
   private forge: CounterExampleForge
   private dag: ConceptDAG
   private initialized = false
 
   constructor() {
-    this.store = new StateStore(':memory:')
-    this.kb = buildDefaultKB()
     this.forge = new CounterExampleForge()
     this.dag = getDag('group_theory')
   }
@@ -63,7 +67,11 @@ class Backend {
       dbPath: ':memory:',
     })
     this.initialized = true
-    console.log(`[Backend] Initialized — LLM provider: ${this.llmConfig.provider}, model: ${this.llmConfig.model}`)
+    logger.info('Backend initialized', {
+      module: 'Backend',
+      provider: this.llmConfig.provider,
+      model: this.llmConfig.model,
+    })
   }
 
   /**
@@ -106,12 +114,12 @@ class Backend {
       const nodes = dag.getAllNodes()
       const summary = dag.getCurriculumSummary()
       const levelLabel = (summary.label as string) || dag.getLevel()
-      const milestoneCount = nodes.filter((n) => n.is_milestone).length
+      const milestoneCount = nodes.filter(n => n.is_milestone).length
 
       return {
         headline: `${levelLabel} · ${nodes.length} 个概念节点 · ${milestoneCount} 个里程碑`,
         level: dag.getLevel(),
-        nodes: nodes.map((n) => ({
+        nodes: nodes.map(n => ({
           id: n.id,
           name: n.name,
           description: n.description,
@@ -121,10 +129,10 @@ class Backend {
           is_milestone: n.is_milestone,
           domain: n.domain,
         })),
-        milestones: dag.getMilestoneNodes().map((n) => n.id),
+        milestones: dag.getMilestoneNodes().map(n => n.id),
         summary,
       }
-    } catch (err) {
+    } catch {
       return {
         headline: `未找到课程层级「${level}」`,
         detail: '该层级不在当前课程体系中。',
@@ -138,7 +146,7 @@ class Backend {
 
   async listCurricula(): Promise<Record<string, unknown>> {
     return {
-      curricula: CURRICULUM_LEVELS.map((level) => {
+      curricula: CURRICULUM_LEVELS.map(level => {
         const dag = getDag(level)
         const summary = dag.getCurriculumSummary()
         return {
@@ -242,10 +250,17 @@ class Backend {
     curriculumLevel?: string,
   ): Promise<Record<string, unknown>> {
     this.ensureReady()
-    return this.orchestrator!.submitProof(theoremId, studentSteps, curriculumLevel || 'group_theory')
+    return this.orchestrator!.submitProof(
+      theoremId,
+      studentSteps,
+      curriculumLevel || 'group_theory',
+    )
   }
 
-  async startGrill(studentId?: string, curriculumLevel?: string): Promise<Record<string, unknown>> {
+  async startGrill(
+    _studentId?: string,
+    curriculumLevel?: string,
+  ): Promise<Record<string, unknown>> {
     this.ensureReady()
     if (curriculumLevel) {
       this.orchestrator!.switchCurriculum(curriculumLevel)
@@ -254,7 +269,7 @@ class Backend {
   }
 
   async submitGrillAnswer(
-    qid: string,
+    _qid: string,
     answer: string,
     responseTimeMs?: number,
   ): Promise<Record<string, unknown>> {
@@ -265,12 +280,316 @@ class Backend {
   }
 
   // -------------------------------------------------------------------------
+  // Dynamic Content Generation (LLM-powered)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Generate AI-powered dynamic content: exercises, story scenes, or
+   * interactive challenges. Uses the configured LLM client directly (bypassing
+   * the orchestrator) so the frontend can request ad-hoc learning material.
+   *
+   * When the LLM client is null, unconfigured, or running in mock mode,
+   * pre-built fallback content is returned instead so the feature degrades
+   * gracefully in development environments.
+   */
+  async generateDynamicContent(req: {
+    type: 'exercise' | 'story' | 'challenge'
+    topic: string
+    ageLevel: 'kids' | 'tweens' | 'teens'
+    difficulty: number
+    currentTable?: number[][]
+    context?: string
+  }): Promise<Record<string, unknown>> {
+    const { type, topic, ageLevel, difficulty, currentTable, context } = req
+
+    // --- Fallback: LLM unavailable or in mock mode ---
+    if (!this.llmClient || !this.llmClient.isConfigured || this.llmClient.provider === 'mock') {
+      return this.getFallbackDynamicContent(type, topic, ageLevel, difficulty)
+    }
+
+    const systemPrompt = this.buildDynamicContentSystemPrompt(type, ageLevel)
+    const userMessage = this.buildDynamicContentUserMessage(
+      type,
+      topic,
+      ageLevel,
+      difficulty,
+      currentTable,
+      context,
+    )
+
+    try {
+      const resp = await this.llmClient.chat(systemPrompt, userMessage, undefined, 0.8)
+      return this.parseDynamicContentResponse(resp.content, type, topic, ageLevel, difficulty)
+    } catch (err) {
+      logger.error('generateDynamicContent LLM call failed', {
+        module: 'Backend',
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return this.getFallbackDynamicContent(type, topic, ageLevel, difficulty)
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
 
   private ensureReady(): void {
     if (!this.initialized || !this.orchestrator) {
       this.init()
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Dynamic content — private helpers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Build a system prompt tailored to the content type and age level.
+   * Each prompt instructs the model to return a pure JSON object so the
+   * response can be parsed reliably.
+   */
+  private buildDynamicContentSystemPrompt(type: string, ageLevel: string): string {
+    const ageLabel = AGE_LEVEL_LABELS[ageLevel] || ageLevel
+    const base =
+      `你是 MathWeaver 的动态内容生成引擎。你的任务是为 ${ageLabel} 的学生生成数学学习内容。` +
+      '所有内容必须使用中文，语言风格和难度必须严格匹配目标年龄段的认知水平。'
+
+    if (type === 'exercise') {
+      return (
+        base +
+        '\n\n请生成一道数学练习题，严格输出以下 JSON 对象（不要输出任何其他文字或 markdown 代码块标记）：\n' +
+        '{\n' +
+        '  "question": "题目正文",\n' +
+        '  "options": ["选项A", "选项B", "选项C", "选项D"],  // 选择题时提供，非选择题可省略\n' +
+        '  "hint": "解题提示，不给直接答案",\n' +
+        '  "answer": "标准答案",\n' +
+        '  "explanation": "解题过程的详细解释"\n' +
+        '}'
+      )
+    }
+
+    if (type === 'story') {
+      return (
+        base +
+        '\n\n请生成一个与数学主题相关的故事场景，严格输出以下 JSON 对象（不要输出任何其他文字或 markdown 代码块标记）：\n' +
+        '{\n' +
+        '  "title": "故事标题",\n' +
+        '  "text": "故事正文，200-400 字，要有情节、角色和数学元素的巧妙融入",\n' +
+        '  "visualDescription": "配图的视觉描述，用于生成插图，描述画面中的角色、场景、色彩和氛围",\n' +
+        '  "mathHook": "故事中蕴含的数学悬念或问题"\n' +
+        '}'
+      )
+    }
+
+    // challenge
+    return (
+      base +
+      '\n\n请生成一个互动挑战任务，严格输出以下 JSON 对象（不要输出任何其他文字或 markdown 代码块标记）：\n' +
+      '{\n' +
+      '  "title": "挑战标题",\n' +
+      '  "task": "挑战任务描述，明确告诉学生要做什么",\n' +
+      '  "hint": "完成挑战的提示",\n' +
+      '  "successCriteria": "成功标准，描述怎样算完成挑战",\n' +
+      '  "steps": ["建议步骤1", "建议步骤2", "建议步骤3"]\n' +
+      '}'
+    )
+  }
+
+  /**
+   * Build the user message that carries the generation parameters to the LLM.
+   */
+  private buildDynamicContentUserMessage(
+    type: string,
+    topic: string,
+    ageLevel: string,
+    difficulty: number,
+    currentTable?: number[][],
+    context?: string,
+  ): string {
+    const ageLabel = AGE_LEVEL_LABELS[ageLevel] || ageLevel
+    const diffLabel = difficulty < 0.33 ? '入门' : difficulty < 0.66 ? '进阶' : '挑战'
+    const typeLabel = type === 'exercise' ? '练习题' : type === 'story' ? '故事场景' : '互动挑战'
+
+    const parts: string[] = [
+      `主题: ${topic}`,
+      `年龄段: ${ageLabel}`,
+      `难度: ${difficulty.toFixed(2)}（${diffLabel}）`,
+      `内容类型: ${typeLabel}`,
+    ]
+
+    if (currentTable && currentTable.length > 0) {
+      const tableStr = currentTable.map(row => row.join('\t')).join('\n')
+      parts.push(`当前运算表:\n${tableStr}`)
+    }
+
+    if (context) {
+      parts.push(`上下文: ${context}`)
+    }
+
+    parts.push('请根据以上信息生成内容，严格输出 JSON。')
+    return parts.join('\n')
+  }
+
+  /**
+   * Parse the LLM response into a structured object. The response may be
+   * pure JSON, JSON wrapped in markdown code fences, or plain text. We try
+   * JSON extraction first, then fall back to wrapping the raw text.
+   */
+  private parseDynamicContentResponse(
+    content: string,
+    type: string,
+    topic: string,
+    ageLevel: string,
+    difficulty: number,
+  ): Record<string, unknown> {
+    const extracted = this.extractJsonFromText(content)
+
+    if (extracted) {
+      return {
+        type,
+        topic,
+        ageLevel,
+        difficulty,
+        ...extracted,
+        source: 'llm',
+        generatedAt: new Date().toISOString(),
+      }
+    }
+
+    // Fallback: wrap raw text into a best-effort structure based on type.
+    const base: Record<string, unknown> = {
+      type,
+      topic,
+      ageLevel,
+      difficulty,
+      source: 'llm_fallback',
+      generatedAt: new Date().toISOString(),
+    }
+
+    if (type === 'exercise') {
+      return {
+        ...base,
+        question: content,
+        hint: '',
+        answer: '',
+        explanation: content,
+      }
+    }
+
+    if (type === 'story') {
+      return {
+        ...base,
+        title: topic,
+        text: content,
+        visualDescription: '',
+        mathHook: '',
+      }
+    }
+
+    // challenge
+    return {
+      ...base,
+      title: topic,
+      task: content,
+      hint: '',
+      successCriteria: '',
+      steps: [],
+    }
+  }
+
+  /**
+   * Attempt to extract a JSON object from a string that may be pure JSON,
+   * wrapped in ```json fences, or contain JSON embedded in prose.
+   */
+  private extractJsonFromText(text: string): Record<string, unknown> | null {
+    if (!text) return null
+
+    // 1. Direct parse
+    try {
+      return JSON.parse(text) as Record<string, unknown>
+    } catch {
+      // continue
+    }
+
+    // 2. Extract from ```json ... ``` or ``` ... ``` code fences
+    const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
+    if (fenceMatch) {
+      try {
+        return JSON.parse(fenceMatch[1].trim()) as Record<string, unknown>
+      } catch {
+        // continue
+      }
+    }
+
+    // 3. Find the first balanced { ... } block
+    const start = text.indexOf('{')
+    const end = text.lastIndexOf('}')
+    if (start !== -1 && end !== -1 && end > start) {
+      try {
+        return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>
+      } catch {
+        // continue
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Return pre-built fallback content when the LLM is unavailable. The
+   * structure mirrors what the LLM would produce so the frontend can render
+   * it without special-casing.
+   */
+  private getFallbackDynamicContent(
+    type: string,
+    topic: string,
+    ageLevel: string,
+    difficulty: number,
+  ): Record<string, unknown> {
+    const base: Record<string, unknown> = {
+      type,
+      topic,
+      ageLevel,
+      difficulty,
+      source: 'fallback',
+      generatedAt: new Date().toISOString(),
+    }
+
+    if (type === 'exercise') {
+      return {
+        ...base,
+        question: `关于「${topic}」的练习题：请描述该主题的核心定义，并举出一个具体例子。`,
+        hint: '回想课堂上学过的定义，尝试用自己的话复述。',
+        answer: `${topic}的核心定义与示例`,
+        explanation:
+          `这是一道关于「${topic}」的入门练习题。请结合教材或课堂笔记组织你的回答。` +
+          `当前难度等级: ${difficulty.toFixed(2)}。`,
+      }
+    }
+
+    if (type === 'story') {
+      return {
+        ...base,
+        title: `${topic}的奇妙之旅`,
+        text:
+          `在一个充满数字的王国里，年轻的探险家发现了一块刻着「${topic}」的古老石碑。` +
+          `石碑上的符号闪烁着微光，仿佛在诉说着一个被遗忘的秘密。` +
+          `随着探险家一步步破解符号的含义，${topic}的奥秘逐渐展现在眼前……`,
+        visualDescription:
+          '一座古老的石碑矗立在数字王国的森林中央，石碑表面刻满发光的数学符号，' +
+          '周围环绕着漂浮的几何图形，色调温暖而神秘。',
+        mathHook: `石碑上的符号如何组合才能解开「${topic}」的秘密？`,
+      }
+    }
+
+    // challenge
+    return {
+      ...base,
+      title: `${topic}挑战`,
+      task: `请围绕「${topic}」主题，构造一个具体的例子并验证它是否满足相关性质。`,
+      hint: '从一个最简单的例子开始，逐步增加复杂度。',
+      successCriteria: '能给出一个正确例子并清晰说明验证过程。',
+      steps: ['回顾主题的定义', '构造一个具体的例子', '验证相关性质', '总结发现'],
     }
   }
 }

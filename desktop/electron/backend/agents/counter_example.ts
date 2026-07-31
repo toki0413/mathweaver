@@ -18,10 +18,7 @@ export class CounterExampleAgent extends BaseAgent {
   forge: CounterExampleForge
   conjectureHandler: ConjectureHandler
 
-  constructor(
-    forge: CounterExampleForge | null = null,
-    llmClient: LLMClient | null = null,
-  ) {
+  constructor(forge: CounterExampleForge | null = null, llmClient: LLMClient | null = null) {
     super(AgentRole.COUNTER_EXAMPLE, llmClient)
     this.forge = forge ?? new CounterExampleForge(llmClient)
     this.conjectureHandler = new ConjectureHandler(this.forge)
@@ -141,13 +138,7 @@ export class CounterExampleAgent extends BaseAgent {
 
       const isAbelian = isGroup && commResult !== null && !commResult.success
 
-      const content = this.formatResult(
-        axiomsResult,
-        assocResult,
-        commResult,
-        isGroup,
-        isAbelian,
-      )
+      const content = this.formatResult(axiomsResult, assocResult, commResult, isGroup, isAbelian)
 
       // Propose field updates based on verification
       const fieldUpdates: Record<string, Record<string, unknown>> = {}
@@ -168,7 +159,8 @@ export class CounterExampleAgent extends BaseAgent {
         metadata: {
           is_group: isGroup,
           is_abelian: isAbelian,
-          axiom_violation: axiomsResult && axiomsResult.success ? axiomsResult.counterExample : null,
+          axiom_violation:
+            axiomsResult && axiomsResult.success ? axiomsResult.counterExample : null,
           assoc_violation: assocResult && assocResult.success ? assocResult.counterExample : null,
           comm_violation: commResult && commResult.success ? commResult.counterExample : null,
           z3_level: axiomsResult ? axiomsResult.level : 'none',
@@ -211,7 +203,10 @@ export class CounterExampleAgent extends BaseAgent {
     const rawText = (percMeta['raw_text'] as string) ?? ctx.student_input
 
     // Use callTool for whitelist enforcement (3.3)
-    const result = this.callTool('test_conjecture', rawText) as import('../forge/forge').ConjectureResult
+    const result = this.callTool(
+      'test_conjecture',
+      rawText,
+    ) as import('../forge/forge').ConjectureResult
 
     const verdictMap: Record<string, string> = {
       confirmed: '猜想成立',

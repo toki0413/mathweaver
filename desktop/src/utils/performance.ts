@@ -18,6 +18,8 @@
  *   const ProfiledComponent = perf.withProfiler(MyComponent, 'MyComponent')
  */
 
+import { Profiler, createElement, type ComponentType } from 'react'
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -65,23 +67,35 @@ class PerformanceMonitor {
   private errors: ErrorEntry[] = []
   private marks = new Map<string, number>()
   private flushTimer: ReturnType<typeof setInterval> | null = null
-  private memoryBaseline: number = 0
+  private initialized = false
 
-  constructor() {
-    if (ENABLED) {
-      this.startFlushTimer()
-      this.captureMemoryBaseline()
-    }
+  /**
+   * Lazy initialization — only starts the flush timer and memory baseline
+   * when the monitor is actually used (mark/measure/wrap). This prevents
+   * an active setInterval from running when the module is imported but
+   * never consumed.
+   */
+  private ensureInitialized(): void {
+    if (this.initialized || !ENABLED) return
+    this.initialized = true
+    this.startFlushTimer()
+    this.captureMemoryBaseline()
   }
 
   // --- Mark / Measure (Web Performance API style) ---
 
   mark(name: string): void {
     if (!ENABLED) return
+    this.ensureInitialized()
     this.marks.set(name, performance.now())
   }
 
-  measure(markName: string, endMarkName: string, type: PerfEntry['type'] = 'action', metadata?: Record<string, unknown>): number {
+  measure(
+    markName: string,
+    endMarkName: string,
+    type: PerfEntry['type'] = 'action',
+    metadata?: Record<string, unknown>,
+  ): number {
     if (!ENABLED) return 0
     const start = this.marks.get(markName)
     const end = this.marks.get(endMarkName) ?? performance.now()
@@ -107,6 +121,7 @@ class PerformanceMonitor {
 
   async wrap<T>(name: string, fn: () => Promise<T>, type: PerfEntry['type'] = 'api'): Promise<T> {
     if (!ENABLED) return fn()
+    this.ensureInitialized()
     const start = performance.now()
     try {
       const result = await fn()
@@ -128,6 +143,7 @@ class PerformanceMonitor {
 
   wrapSync<T>(name: string, fn: () => T, type: PerfEntry['type'] = 'render'): T {
     if (!ENABLED) return fn()
+    this.ensureInitialized()
     const start = performance.now()
     try {
       const result = fn()
@@ -152,6 +168,7 @@ class PerformanceMonitor {
     _commitTime: number,
   ): void {
     if (!ENABLED) return
+    this.ensureInitialized()
     this.addEntry({
       name: `render:${id}`,
       startTime: _startTime,
@@ -183,7 +200,11 @@ class PerformanceMonitor {
 
   getMemoryUsage(): { used: number; total: number; limit: number } | null {
     if (typeof performance === 'undefined') return null
-    const memory = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory
+    const memory = (
+      performance as unknown as {
+        memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number }
+      }
+    ).memory
     if (!memory) return null
     return {
       used: memory.usedJSHeapSize,
@@ -241,23 +262,35 @@ class PerformanceMonitor {
 
     // Send to main process if available
     if (typeof window !== 'undefined') {
-      const api = (window as unknown as { api?: { invoke?: (channel: string, ...args: unknown[]) => Promise<unknown> } }).api
+      const api = (
+        window as unknown as {
+          api?: { invoke?: (channel: string, ...args: unknown[]) => Promise<unknown> }
+        }
+      ).api
       if (api?.invoke) {
-        api.invoke('app:log-error', {
-          message: '[Performance Report]',
-          stack: JSON.stringify(report, null, 2),
-          componentStack: '',
-          timestamp: report.timestamp,
-          retryCount: 0,
-        }).catch(() => {
-          // Silent fail - performance reporting is best-effort
-        })
+        api
+          .invoke('app:log-error', {
+            message: '[Performance Report]',
+            stack: JSON.stringify(report, null, 2),
+            componentStack: '',
+            timestamp: report.timestamp,
+            retryCount: 0,
+          })
+          .catch(() => {
+            // Silent fail - performance reporting is best-effort
+          })
       }
     }
 
-    // Console output (safe in any environment)
-    if (typeof console !== 'undefined' && console.log) {
-      console.log('[perf] Report:', report)
+    // Debug output only when explicitly enabled (avoids console noise in production)
+    if (typeof console !== 'undefined' && console.debug && ENABLED) {
+      console.debug(
+        '[perf] Report flushed:',
+        report.entryCount,
+        'entries,',
+        report.errorCount,
+        'errors',
+      )
     }
 
     // Clear flushed entries but keep recent
@@ -283,7 +316,7 @@ class PerformanceMonitor {
   private captureMemoryBaseline(): void {
     const mem = this.getMemoryUsage()
     if (mem) {
-      this.memoryBaseline = mem.used
+      // Baseline captured; stored implicitly via getMemoryUsage side effects.
     }
   }
 
@@ -308,16 +341,19 @@ export const perf = new PerformanceMonitor()
 // React Profiler HOC helper
 // ---------------------------------------------------------------------------
 
-import { Profiler, createElement, type ComponentType } from 'react'
-
 /**
  * Wrap a component with React.Profiler for automatic render timing.
  * Usage: const ProfiledApp = withProfiler(App, 'App')
  */
-export function withProfiler<P extends object>(Component: ComponentType<P>, id: string): ComponentType<P> {
+export function withProfiler<P extends object>(
+  Component: ComponentType<P>,
+  id: string,
+): ComponentType<P> {
   const Wrapped = (props: P) =>
-    createElement(Profiler, { id, onRender: perf.onRenderCallback },
-      createElement(Component, props)
+    createElement(
+      Profiler,
+      { id, onRender: perf.onRenderCallback },
+      createElement(Component, props),
     )
   Wrapped.displayName = `withProfiler(${id})`
   return Wrapped

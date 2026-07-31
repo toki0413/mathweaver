@@ -19,6 +19,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import type { ConceptNode } from '../types'
+import { createModuleLogger } from '../utils/logger'
+
+const log = createModuleLogger('ConceptDAG')
 
 // ---------------------------------------------------------------------------
 // 数据文件目录
@@ -207,14 +210,17 @@ function loadCurriculum(level: string = 'group_theory'): Partial<ConceptNode>[] 
     try {
       const raw = fs.readFileSync(curriculumPath, 'utf-8')
       const data = JSON.parse(raw) as Partial<ConceptNode>[]
-      console.info(
-        `[ConceptDAG] Loaded curriculum [${level}]: ${data.length} concepts from ${curriculumPath}`,
-      )
+      log.info('Loaded curriculum', {
+        level,
+        conceptCount: data.length,
+        path: curriculumPath,
+      })
       return data
     } catch (e) {
-      console.warn(
-        `[ConceptDAG] Failed to load curriculum JSON [${level}]: ${e}, using fallback`,
-      )
+      log.warn('Failed to load curriculum JSON, using fallback', {
+        level,
+        error: e instanceof Error ? e.message : String(e),
+      })
     }
   }
 
@@ -224,9 +230,7 @@ function loadCurriculum(level: string = 'group_theory'): Partial<ConceptNode>[] 
   }
 
   // 其他级别无回退——抛出异常以暴露错误
-  throw new Error(
-    `Curriculum file not found for level '${level}': ${curriculumPath}`,
-  )
+  throw new Error(`Curriculum file not found for level '${level}': ${curriculumPath}`)
 }
 
 /**
@@ -297,10 +301,7 @@ export class ConceptDAG {
    * @param seedData  可选的种子数据。若为 undefined，则从 JSON 文件加载。
    * @param level     课程级别，默认 'group_theory'。
    */
-  constructor(
-    seedData?: Partial<ConceptNode>[],
-    level: string = 'group_theory',
-  ) {
+  constructor(seedData?: Partial<ConceptNode>[], level: string = 'group_theory') {
     this.level = level
     const data = seedData ?? loadCurriculum(level)
 
@@ -389,7 +390,7 @@ export class ConceptDAG {
 
   /** 获取所有里程碑节点（is_milestone === true）。 */
   getMilestoneNodes(): ConceptNode[] {
-    return Array.from(this._nodes.values()).filter((n) => n.is_milestone)
+    return Array.from(this._nodes.values()).filter(n => n.is_milestone)
   }
 
   /** 获取节点总数。 */
@@ -404,12 +405,9 @@ export class ConceptDAG {
    */
   getCurriculumSummary(): Record<string, unknown> {
     const nodes = Array.from(this._nodes.values())
-    const maxAbstraction = nodes.reduce(
-      (max, n) => Math.max(max, n.abstraction_level),
-      0,
-    )
+    const maxAbstraction = nodes.reduce((max, n) => Math.max(max, n.abstraction_level), 0)
     const totalMinutes = nodes.reduce((sum, n) => sum + n.estimated_minutes, 0)
-    const domains = new Set(nodes.map((n) => n.domain))
+    const domains = new Set(nodes.map(n => n.domain))
 
     return {
       level: this.level,
@@ -479,5 +477,5 @@ export function setDefaultLevel(level: string): void {
     )
   }
   DEFAULT_LEVEL = level
-  console.info(`[ConceptDAG] Default curriculum level set to: ${level}`)
+  log.info('Default curriculum level set', { level })
 }

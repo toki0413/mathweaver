@@ -20,6 +20,7 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { existsSync, mkdirSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import winston from 'winston'
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,16 @@ function getLogDir(): string {
   // app.getPath('userData') is safe to call once the electron `app` module
   // has been required (it does not require app.whenReady()). The main process
   // always imports electron before this module, so this is available.
-  return join(app.getPath('userData'), 'logs')
+  // In test environments (jsdom) where Electron's app is not initialized,
+  // fall back to the system temp directory so the logger still works.
+  try {
+    if (app?.getPath) {
+      return join(app.getPath('userData'), 'logs')
+    }
+  } catch {
+    // app not available — fall through to temp directory
+  }
+  return join(tmpdir(), 'mathweaver-logs')
 }
 
 let logDirEnsured = false
@@ -122,7 +132,7 @@ function resolveLogLevel(): string {
   }
   // Verbose in development, quieter in packaged builds.
   try {
-    if (app.isPackaged) return 'info'
+    if (app?.isPackaged) return 'info'
   } catch {
     // app not available — fall through
   }
@@ -187,14 +197,10 @@ export function createModuleLogger(moduleName: string): ModuleLogger {
   }
 
   return {
-    error: (message: string, ...meta: unknown[]) =>
-      logger.error(message, tag(meta[0])),
-    warn: (message: string, ...meta: unknown[]) =>
-      logger.warn(message, tag(meta[0])),
-    info: (message: string, ...meta: unknown[]) =>
-      logger.info(message, tag(meta[0])),
-    debug: (message: string, ...meta: unknown[]) =>
-      logger.debug(message, tag(meta[0])),
+    error: (message: string, ...meta: unknown[]) => logger.error(message, tag(meta[0])),
+    warn: (message: string, ...meta: unknown[]) => logger.warn(message, tag(meta[0])),
+    info: (message: string, ...meta: unknown[]) => logger.info(message, tag(meta[0])),
+    debug: (message: string, ...meta: unknown[]) => logger.debug(message, tag(meta[0])),
   }
 }
 

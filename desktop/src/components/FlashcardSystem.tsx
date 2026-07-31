@@ -50,10 +50,7 @@ const MASTERED_INTERVAL_THRESHOLD = 21
 const MASTERED_REPS_THRESHOLD = 3
 const FLIP_DEBOUNCE_MS = 300
 
-const RATING_META: Record<
-  Rating,
-  { label: string; quality: number; cls: string; key: string }
-> = {
+const RATING_META: Record<Rating, { label: string; quality: number; cls: string; key: string }> = {
   again: { label: '再来一次', quality: 0, cls: 'fs-rate-again', key: '1' },
   hard: { label: '困难', quality: 3, cls: 'fs-rate-hard', key: '2' },
   good: { label: '良好', quality: 4, cls: 'fs-rate-good', key: '3' },
@@ -70,8 +67,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'grp-def',
     front: '群的定义',
-    back:
-      '设 G 是一个非空集合，· 是 G 上的二元运算。若满足：\n(1) 封闭性：∀a,b∈G, a·b∈G\n(2) 结合律：∀a,b,c∈G, (a·b)·c = a·(b·c)\n(3) 幺元：∃e∈G, ∀a∈G, e·a = a·e = a\n(4) 逆元：∀a∈G, ∃a⁻¹∈G, a·a⁻¹ = a⁻¹·a = e\n则称 (G, ·) 为群。',
+    back: '设 G 是一个非空集合，· 是 G 上的二元运算。若满足：\n(1) 封闭性：∀a,b∈G, a·b∈G\n(2) 结合律：∀a,b,c∈G, (a·b)·c = a·(b·c)\n(3) 幺元：∃e∈G, ∀a∈G, e·a = a·e = a\n(4) 逆元：∀a∈G, ∃a⁻¹∈G, a·a⁻¹ = a⁻¹·a = e\n则称 (G, ·) 为群。',
     category: '基础',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -80,8 +76,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'subgroup',
     front: '子群',
-    back:
-      '设 H 是群 G 的非空子集。若 H 在 G 的运算下自身构成群，则称 H 为 G 的子群，记作 H ≤ G。\n\n判定定理：H ≤ G ⟺ ∀a,b∈H, ab⁻¹∈H。\n\n子群的幺元与群的幺元相同。',
+    back: '设 H 是群 G 的非空子集。若 H 在 G 的运算下自身构成群，则称 H 为 G 的子群，记作 H ≤ G。\n\n判定定理：H ≤ G ⟺ ∀a,b∈H, ab⁻¹∈H。\n\n子群的幺元与群的幺元相同。',
     category: '子结构',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -90,8 +85,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'normal-subgroup',
     front: '正规子群',
-    back:
-      '设 N 是群 G 的子群。若 ∀g∈G, gNg⁻¹ = N（即 ∀g∈G, ∀n∈N, gng⁻¹∈N），则称 N 为 G 的正规子群，记作 N ◁ G。\n\n等价条件：∀g∈G, gN = Ng（左陪集等于右陪集）。\n\n商群 G/N 有定义当且仅当 N ◁ G。',
+    back: '设 N 是群 G 的子群。若 ∀g∈G, gNg⁻¹ = N（即 ∀g∈G, ∀n∈N, gng⁻¹∈N），则称 N 为 G 的正规子群，记作 N ◁ G。\n\n等价条件：∀g∈G, gN = Ng（左陪集等于右陪集）。\n\n商群 G/N 有定义当且仅当 N ◁ G。',
     category: '子结构',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -100,8 +94,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'homomorphism',
     front: '同态',
-    back:
-      '设 (G, ·) 和 (H, *) 是群。若映射 φ: G → H 满足 ∀a,b∈G, φ(a·b) = φ(a) * φ(b)，则称 φ 为 G 到 H 的群同态。\n\n核 ker(φ) = {g∈G : φ(g) = e_H} 是 G 的正规子群。\n像 Im(φ) 是 H 的子群。',
+    back: '设 (G, ·) 和 (H, *) 是群。若映射 φ: G → H 满足 ∀a,b∈G, φ(a·b) = φ(a) * φ(b)，则称 φ 为 G 到 H 的群同态。\n\n核 ker(φ) = {g∈G : φ(g) = e_H} 是 G 的正规子群。\n像 Im(φ) 是 H 的子群。',
     category: '映射',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -110,8 +103,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'isomorphism',
     front: '同构',
-    back:
-      '若群同态 φ: G → H 是双射（单射且满射），则称 φ 为同构，记作 G ≅ H。\n\n同构的群具有完全相同的群论结构，仅在元素记号上不同。同态基本定理：G/ker(φ) ≅ Im(φ)。',
+    back: '若群同态 φ: G → H 是双射（单射且满射），则称 φ 为同构，记作 G ≅ H。\n\n同构的群具有完全相同的群论结构，仅在元素记号上不同。同态基本定理：G/ker(φ) ≅ Im(φ)。',
     category: '映射',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -120,8 +112,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'cyclic-group',
     front: '循环群',
-    back:
-      '若群 G 中存在元素 g，使得 G = ⟨g⟩ = {gⁿ : n∈ℤ}，则称 G 为循环群，g 为生成元。\n\n循环群必是交换群。有限循环群 Z_n 的阶为 n，其子群个数等于 n 的正约数个数，每个子群仍是循环群。',
+    back: '若群 G 中存在元素 g，使得 G = ⟨g⟩ = {gⁿ : n∈ℤ}，则称 G 为循环群，g 为生成元。\n\n循环群必是交换群。有限循环群 Z_n 的阶为 n，其子群个数等于 n 的正约数个数，每个子群仍是循环群。',
     category: '群类型',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -130,8 +121,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'abelian-group',
     front: '交换群 (Abel 群)',
-    back:
-      '若群 G 满足 ∀a,b∈G, a·b = b·a，则称 G 为交换群（或阿贝尔群 / Abel 群）。\n\n所有循环群都是交换群，但交换群不一定是循环群（例如 Klein 四元群 V₄ ≅ Z₂×Z₂）。',
+    back: '若群 G 满足 ∀a,b∈G, a·b = b·a，则称 G 为交换群（或阿贝尔群 / Abel 群）。\n\n所有循环群都是交换群，但交换群不一定是循环群（例如 Klein 四元群 V₄ ≅ Z₂×Z₂）。',
     category: '群类型',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -140,8 +130,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'coset',
     front: '陪集',
-    back:
-      '设 H ≤ G, g∈G。集合 gH = {g·h : h∈H} 称为 g 关于 H 的左陪集，Hg = {h·g : h∈H} 称为右陪集。\n\n性质：|gH| = |H|；任意两个左陪集要么相等，要么不相交；G 可划分为若干不相交左陪集之并。',
+    back: '设 H ≤ G, g∈G。集合 gH = {g·h : h∈H} 称为 g 关于 H 的左陪集，Hg = {h·g : h∈H} 称为右陪集。\n\n性质：|gH| = |H|；任意两个左陪集要么相等，要么不相交；G 可划分为若干不相交左陪集之并。',
     category: '结构',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -150,8 +139,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'quotient-group',
     front: '商群',
-    back:
-      '设 N ◁ G。商群 G/N = {gN : g∈G}，其运算为 (gN)(hN) = (g·h)N。\n\n|G/N| = [G:N] = |G| / |N|，幺元为 eN = N，元素 gN 的逆元为 g⁻¹N。\n\n商群将「模掉 N 的差异」后剩余的群结构。',
+    back: '设 N ◁ G。商群 G/N = {gN : g∈G}，其运算为 (gN)(hN) = (g·h)N。\n\n|G/N| = [G:N] = |G| / |N|，幺元为 eN = N，元素 gN 的逆元为 g⁻¹N。\n\n商群将「模掉 N 的差异」后剩余的群结构。',
     category: '结构',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -160,8 +148,7 @@ const DEFAULT_CARDS: Flashcard[] = [
   {
     id: 'lagrange',
     front: '拉格朗日定理',
-    back:
-      '设 G 是有限群，H ≤ G。则 |G| = [G:H] · |H|，即子群的阶整除群的阶。\n\n推论：\n(1) 有限群中任意元素的阶整除群的阶\n(2) 素数阶群必为循环群\n(3) |G| 为素数时 G 无非平凡子群',
+    back: '设 G 是有限群，H ≤ G。则 |G| = [G:H] · |H|，即子群的阶整除群的阶。\n\n推论：\n(1) 有限群中任意元素的阶整除群的阶\n(2) 素数阶群必为循环群\n(3) |G| 为素数时 G 无非平凡子群',
     category: '定理',
     ease: DEFAULT_EASE,
     interval: 0,
@@ -350,7 +337,7 @@ const STYLES = `
   border: 1px solid var(--border);
   border-radius: 6px;
   text-align: center;
-  overflow-y: auto;
+  overflow: hidden;
 }
 .fs-card-back {
   transform: rotateY(180deg);
@@ -570,9 +557,7 @@ const STYLES = `
 
 function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
   // --- 状态 ---
-  const [cardStates, setCardStates] = useState<Flashcard[]>(
-    () => cards ?? DEFAULT_CARDS
-  )
+  const [cardStates, setCardStates] = useState<Flashcard[]>(() => cards ?? DEFAULT_CARDS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
@@ -629,30 +614,30 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
     const now = Date.now()
     if (now - lastFlipRef.current < FLIP_DEBOUNCE_MS) return
     lastFlipRef.current = now
-    setIsFlipped((f) => !f)
+    setIsFlipped(f => !f)
   }, [])
 
   const handlePrev = useCallback(() => {
     setIsFlipped(false)
-    setCurrentIndex((i) => (i - 1 + total) % total)
+    setCurrentIndex(i => (i - 1 + total) % total)
   }, [total])
 
   const handleNext = useCallback(() => {
     setIsFlipped(false)
-    setCurrentIndex((i) => (i + 1) % total)
+    setCurrentIndex(i => (i + 1) % total)
   }, [total])
 
   const handleRate = useCallback(
     (rating: Rating) => {
       if (!currentCard) return
 
-      setCardStates((prev) => {
+      setCardStates(prev => {
         const next = [...prev]
         next[currentIndex] = sm2(next[currentIndex], rating)
         return next
       })
 
-      setReviewedIds((prev) => {
+      setReviewedIds(prev => {
         const nextSet = new Set(prev)
         nextSet.add(currentCard.id)
         return nextSet
@@ -660,19 +645,19 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
 
       setIsFlipped(false)
       // 评分后自动前进到下一张
-      setCurrentIndex((i) => (i + 1) % total)
+      setCurrentIndex(i => (i + 1) % total)
     },
-    [currentCard, currentIndex, total]
+    [currentCard, currentIndex, total],
   )
 
   const handleReset = useCallback(() => {
-    setCardStates((prev) =>
-      prev.map((c) => ({
+    setCardStates(prev =>
+      prev.map(c => ({
         ...c,
         ease: DEFAULT_EASE,
         interval: 0,
         reps: 0,
-      }))
+      })),
     )
     setCurrentIndex(0)
     setIsFlipped(false)
@@ -684,11 +669,7 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       // 输入框中不拦截
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
       }
 
@@ -762,9 +743,7 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
       <style>{STYLES}</style>
 
       <h3 className="fs-title">闪卡复习</h3>
-      <p className="fs-subtitle">
-        翻转卡片复习群论概念，根据记忆程度评分以调整复习间隔
-      </p>
+      <p className="fs-subtitle">翻转卡片复习群论概念，根据记忆程度评分以调整复习间隔</p>
 
       {/* 进度跟踪 */}
       <div className="fs-progress">
@@ -775,14 +754,8 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
           <span className="fs-progress-pct">掌握度 {masteryPercent}%</span>
         </div>
         <div className="fs-progress-bar">
-          <div
-            className="fs-progress-fill-reviewed"
-            style={{ width: `${reviewedPercent}%` }}
-          />
-          <div
-            className="fs-progress-fill-mastered"
-            style={{ width: `${masteryPercent}%` }}
-          />
+          <div className="fs-progress-fill-reviewed" style={{ width: `${reviewedPercent}%` }} />
+          <div className="fs-progress-fill-mastered" style={{ width: `${masteryPercent}%` }} />
         </div>
         <div className="fs-progress-legend">
           <span>
@@ -808,19 +781,20 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
         >
           {/* 正面：概念名称 / 问题 */}
           <div className="fs-card-face fs-card-front">
-            <span className={`fs-card-status ${status}`}>
-              {statusLabels[status]}
-            </span>
+            <span className={`fs-card-status ${status}`}>{statusLabels[status]}</span>
             <div className="fs-card-category">{currentCard.category}</div>
             <div className="fs-card-question">{currentCard.front}</div>
             <div className="fs-card-hint">点击翻转查看答案</div>
           </div>
 
           {/* 背面：定义 / 答案 */}
-          <div className="fs-card-face fs-card-back">
-            <span className={`fs-card-status ${status}`}>
-              {statusLabels[status]}
-            </span>
+          <div
+            className="fs-card-face fs-card-back"
+            tabIndex={isFlipped ? 0 : -1}
+            role="region"
+            aria-label="答案"
+          >
+            <span className={`fs-card-status ${status}`}>{statusLabels[status]}</span>
             <div className="fs-card-category">{currentCard.category}</div>
             <div className="fs-card-answer">{currentCard.back}</div>
           </div>
@@ -829,7 +803,7 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
 
       {/* 评分按钮（翻转后显示） */}
       <div className={`fs-rating${isFlipped ? ' visible' : ''}`}>
-        {RATING_ORDER.map((r) => {
+        {RATING_ORDER.map(r => {
           const meta = RATING_META[r]
           return (
             <button
@@ -841,9 +815,7 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
               aria-label={`${meta.label}，下次间隔 ${formatInterval(ratingPreviews[r])}`}
             >
               <span>{meta.label}</span>
-              <span className="fs-rate-interval">
-                {formatInterval(ratingPreviews[r])}
-              </span>
+              <span className="fs-rate-interval">{formatInterval(ratingPreviews[r])}</span>
             </button>
           )
         })}
@@ -851,23 +823,13 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
 
       {/* 导航 */}
       <div className="fs-nav">
-        <button
-          type="button"
-          className="fs-nav-btn"
-          onClick={handlePrev}
-          aria-label="上一张"
-        >
+        <button type="button" className="fs-nav-btn" onClick={handlePrev} aria-label="上一张">
           {'\u2190'} 上一张
         </button>
         <span className="fs-counter">
           {currentIndex + 1} / {total}
         </span>
-        <button
-          type="button"
-          className="fs-nav-btn"
-          onClick={handleNext}
-          aria-label="下一张"
-        >
+        <button type="button" className="fs-nav-btn" onClick={handleNext} aria-label="下一张">
           下一张 {'\u2192'}
         </button>
       </div>

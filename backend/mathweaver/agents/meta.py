@@ -23,6 +23,7 @@ import logging
 from typing import Any
 
 from ..evolution.param_learner import ParameterLearner
+from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from .base import AgentContext, BaseAgent
 
@@ -157,9 +158,7 @@ class MetaEvolutionAgent(BaseAgent):
                 user_message=user_message,
                 temperature=0.5,
             )
-            if isinstance(resp, dict):
-                return resp.get("content", "")
-            return str(resp)
+            return extract_content(resp)
         except Exception as e:
             logger.warning("MetaEvolution LLM analysis failed: %s", e)
             return ""

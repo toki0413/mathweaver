@@ -27,41 +27,118 @@ export interface ImageInputProps {
 /* -------------------------------------------------------------------------- */
 
 const SYMBOL_MAP: Record<string, string> = {
-  '×': '\\times', '·': '\\cdot', '÷': '\\div',
-  '±': '\\pm', '∓': '\\mp',
-  '√': '\\sqrt', '∛': '\\sqrt[3]', '∜': '\\sqrt[4]',
-  'π': '\\pi', '∞': '\\infty',
-  '≤': '\\leq', '≥': '\\geq', '≠': '\\neq', '≈': '\\approx',
-  '≡': '\\equiv', '∝': '\\propto',
-  '→': '\\to', '←': '\\leftarrow', '↔': '\\leftrightarrow',
-  '⇒': '\\Rightarrow', '⇐': '\\Leftarrow', '⇔': '\\Leftrightarrow',
-  '∑': '\\sum', '∏': '\\prod', '∫': '\\int', '∮': '\\oint',
-  '∂': '\\partial', '∇': '\\nabla',
-  'Δ': '\\Delta', 'δ': '\\delta', 'ε': '\\epsilon', 'θ': '\\theta',
-  'λ': '\\lambda', 'μ': '\\mu', 'σ': '\\sigma', 'ω': '\\omega',
-  'φ': '\\phi', 'ψ': '\\psi', 'α': '\\alpha', 'β': '\\beta',
-  'γ': '\\gamma', 'ρ': '\\rho', 'τ': '\\tau', 'η': '\\eta',
-  'ζ': '\\zeta', 'ν': '\\nu', 'ξ': '\\xi', 'κ': '\\kappa',
-  'χ': '\\chi', 'ι': '\\iota',
-  '°': '^\\circ', '′': "'", '″': "''",
-  '…': '\\ldots', '⋯': '\\cdots', '⋮': '\\vdots', '⋱': '\\ddots',
-  '∈': '\\in', '∉': '\\notin', '∀': '\\forall', '∃': '\\exists',
-  '∪': '\\cup', '∩': '\\cap', '⊂': '\\subset', '⊃': '\\supset',
-  '⊆': '\\subseteq', '⊇': '\\supseteq', '∅': '\\emptyset',
-  'ℝ': '\\mathbb{R}', 'ℕ': '\\mathbb{N}', 'ℤ': '\\mathbb{Z}',
-  'ℚ': '\\mathbb{Q}', 'ℂ': '\\mathbb{C}',
+  '×': '\\times',
+  '·': '\\cdot',
+  '÷': '\\div',
+  '±': '\\pm',
+  '∓': '\\mp',
+  '√': '\\sqrt',
+  '∛': '\\sqrt[3]',
+  '∜': '\\sqrt[4]',
+  π: '\\pi',
+  '∞': '\\infty',
+  '≤': '\\leq',
+  '≥': '\\geq',
+  '≠': '\\neq',
+  '≈': '\\approx',
+  '≡': '\\equiv',
+  '∝': '\\propto',
+  '→': '\\to',
+  '←': '\\leftarrow',
+  '↔': '\\leftrightarrow',
+  '⇒': '\\Rightarrow',
+  '⇐': '\\Leftarrow',
+  '⇔': '\\Leftrightarrow',
+  '∑': '\\sum',
+  '∏': '\\prod',
+  '∫': '\\int',
+  '∮': '\\oint',
+  '∂': '\\partial',
+  '∇': '\\nabla',
+  Δ: '\\Delta',
+  δ: '\\delta',
+  ε: '\\epsilon',
+  θ: '\\theta',
+  λ: '\\lambda',
+  μ: '\\mu',
+  σ: '\\sigma',
+  ω: '\\omega',
+  φ: '\\phi',
+  ψ: '\\psi',
+  α: '\\alpha',
+  β: '\\beta',
+  γ: '\\gamma',
+  ρ: '\\rho',
+  τ: '\\tau',
+  η: '\\eta',
+  ζ: '\\zeta',
+  ν: '\\nu',
+  ξ: '\\xi',
+  κ: '\\kappa',
+  χ: '\\chi',
+  ι: '\\iota',
+  '°': '^\\circ',
+  '′': "'",
+  '″': "''",
+  '…': '\\ldots',
+  '⋯': '\\cdots',
+  '⋮': '\\vdots',
+  '⋱': '\\ddots',
+  '∈': '\\in',
+  '∉': '\\notin',
+  '∀': '\\forall',
+  '∃': '\\exists',
+  '∪': '\\cup',
+  '∩': '\\cap',
+  '⊂': '\\subset',
+  '⊃': '\\supset',
+  '⊆': '\\subseteq',
+  '⊇': '\\supseteq',
+  '∅': '\\emptyset',
+  ℝ: '\\mathbb{R}',
+  ℕ: '\\mathbb{N}',
+  ℤ: '\\mathbb{Z}',
+  ℚ: '\\mathbb{Q}',
+  ℂ: '\\mathbb{C}',
 }
 
 const SUP_MAP: Record<string, string> = {
-  '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
-  '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
-  '⁻': '-', '⁺': '+', '⁽': '(', '⁾': ')',
+  '⁰': '0',
+  '¹': '1',
+  '²': '2',
+  '³': '3',
+  '⁴': '4',
+  '⁵': '5',
+  '⁶': '6',
+  '⁷': '7',
+  '⁸': '8',
+  '⁹': '9',
+  '⁻': '-',
+  '⁺': '+',
+  '⁽': '(',
+  '⁾': ')',
 }
 const SUB_MAP: Record<string, string> = {
-  '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
-  '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
-  '₋': '-', '₊': '+', 'ₐ': 'a', 'ₓ': 'x', 'ᵧ': 'y',
-  'ₙ': 'n', 'ₘ': 'm', 'ₖ': 'k', 'ᵢ': 'i', 'ⱼ': 'j',
+  '₀': '0',
+  '₁': '1',
+  '₂': '2',
+  '₃': '3',
+  '₄': '4',
+  '₅': '5',
+  '₆': '6',
+  '₇': '7',
+  '₈': '8',
+  '₉': '9',
+  '₋': '-',
+  '₊': '+',
+  ₐ: 'a',
+  ₓ: 'x',
+  ᵧ: 'y',
+  ₙ: 'n',
+  ₘ: 'm',
+  ₖ: 'k',
+  ᵢ: 'i',
+  ⱼ: 'j',
 }
 
 /** 将 OCR 原始文本做一次基础清洗，转成 LaTeX 友好的形式 */
@@ -79,14 +156,24 @@ function cleanupOcrText(raw: string): string {
   // 2) Unicode 上标 / 下标 → ^{...} / _{...}
   const supChars = Object.keys(SUP_MAP).join('')
   if (supChars) {
-    text = text.replace(new RegExp(`[${supChars}]+`, 'g'), (run) =>
-      `^{${run.split('').map((c) => SUP_MAP[c] || c).join('')}}`,
+    text = text.replace(
+      new RegExp(`[${supChars}]+`, 'g'),
+      run =>
+        `^{${run
+          .split('')
+          .map(c => SUP_MAP[c] || c)
+          .join('')}}`,
     )
   }
   const subChars = Object.keys(SUB_MAP).join('')
   if (subChars) {
-    text = text.replace(new RegExp(`[${subChars}]+`, 'g'), (run) =>
-      `_{${run.split('').map((c) => SUB_MAP[c] || c).join('')}}`,
+    text = text.replace(
+      new RegExp(`[${subChars}]+`, 'g'),
+      run =>
+        `_{${run
+          .split('')
+          .map(c => SUB_MAP[c] || c)
+          .join('')}}`,
     )
   }
 
@@ -101,7 +188,7 @@ function cleanupOcrText(raw: string): string {
   // 5) 规整空白：压缩行内多余空格、去除首尾空行
   text = text
     .split('\n')
-    .map((l) => l.replace(/[ \t]{2,}/g, ' ').trim())
+    .map(l => l.replace(/[ \t]{2,}/g, ' ').trim())
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
@@ -142,12 +229,18 @@ interface TesseractWorkerLike {
   terminate: () => Promise<void>
 }
 
+/** Minimal type shape for the tesseract.js module (handles both ESM and CJS exports). */
+interface TesseractModule {
+  createWorker?: CreateWorker
+  default?: { createWorker?: CreateWorker }
+}
+
 async function loadTesseract(): Promise<CreateWorker> {
-  let mod: any
+  let mod: TesseractModule
   try {
     // tesseract.js 为可选依赖，运行时动态加载；@vite-ignore 避免 Vite 在未安装时构建报错。
-    // @ts-ignore - 可选依赖，类型声明可能不存在
-    mod = await import(/* @vite-ignore */ 'tesseract.js')
+    // 使用类型断言而非 any，确保后续属性访问有类型检查。
+    mod = (await import(/* @vite-ignore */ 'tesseract.js')) as unknown as TesseractModule
   } catch {
     throw new Error('未能加载 OCR 引擎（tesseract.js），请检查网络连接或确认已安装该依赖')
   }
@@ -155,7 +248,7 @@ async function loadTesseract(): Promise<CreateWorker> {
   if (typeof createWorker !== 'function') {
     throw new Error('OCR 引擎接口异常，请确认 tesseract.js 版本兼容')
   }
-  return createWorker as CreateWorker
+  return createWorker
 }
 
 /* -------------------------------------------------------------------------- */
@@ -420,7 +513,7 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
   const stopCamera = useCallback(() => {
     const stream = streamRef.current
     if (stream) {
-      stream.getTracks().forEach((t) => t.stop())
+      stream.getTracks().forEach(t => t.stop())
       streamRef.current = null
     }
     if (videoRef.current) {
@@ -532,7 +625,7 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
     return () => {
       const stream = streamRef.current
       if (stream) {
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach(t => t.stop())
         streamRef.current = null
       }
     }
@@ -553,7 +646,7 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
         role="button"
         tabIndex={0}
         aria-label="拖放或点击选择数学题图片"
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             openFilePicker()
@@ -590,11 +683,7 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
       {/* 图片预览 */}
       {imagePreview && (
         <div className="cw-img-preview-wrap">
-          <img
-            className="cw-img-preview"
-            src={imagePreview}
-            alt="待识别的数学题图片"
-          />
+          <img className="cw-img-preview" src={imagePreview} alt="待识别的数学题图片" />
           <div className="cw-img-preview-toolbar">
             <button
               type="button"
@@ -712,7 +801,7 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
           <textarea
             className="cw-img-textarea"
             value={recognizedText}
-            onChange={(e) => setRecognizedText(e.target.value)}
+            onChange={e => setRecognizedText(e.target.value)}
             placeholder="识别结果将显示在此处，可手动编辑后插入…"
             spellCheck={false}
             aria-label="识别结果编辑框"
@@ -749,20 +838,10 @@ function ImageInputImpl({ onRecognized, disabled = false }: ImageInputProps) {
       {/* 摄像头拍照浮层 */}
       {cameraActive && (
         <div className="cw-img-camera-overlay" role="dialog" aria-label="摄像头拍照">
-          <video
-            ref={videoRef}
-            className="cw-img-camera-video"
-            autoPlay
-            muted
-            playsInline
-          />
+          <video ref={videoRef} className="cw-img-camera-video" autoPlay muted playsInline />
           <p className="cw-img-camera-tip">将摄像头对准数学题，点击「拍摄」</p>
           <div className="cw-img-camera-actions">
-            <button
-              type="button"
-              className="cw-img-btn cw-img-btn--primary"
-              onClick={capturePhoto}
-            >
+            <button type="button" className="cw-img-btn cw-img-btn--primary" onClick={capturePhoto}>
               拍摄
             </button>
             <button type="button" className="cw-img-btn" onClick={stopCamera}>

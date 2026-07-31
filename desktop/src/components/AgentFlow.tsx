@@ -53,7 +53,7 @@ export function AgentFlow({ phases }: AgentFlowProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   const handleNodeClick = useCallback((index: number) => {
-    setSelectedIndex((prev) => (prev === index ? null : index))
+    setSelectedIndex(prev => (prev === index ? null : index))
   }, [])
 
   if (!phases || phases.length === 0) {
@@ -84,7 +84,7 @@ export function AgentFlow({ phases }: AgentFlowProps) {
                 aria-pressed={isSelected}
                 aria-label={info ? info.name : phase}
                 onClick={() => handleNodeClick(index)}
-                onKeyDown={(e) => {
+                onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     handleNodeClick(index)
@@ -104,9 +104,7 @@ export function AgentFlow({ phases }: AgentFlowProps) {
           <div className="agent-detail-name">
             {selectedInfo ? selectedInfo.name : selectedPhase}
           </div>
-          <div className="agent-detail-role">
-            {selectedInfo ? selectedInfo.description : ''}
-          </div>
+          <div className="agent-detail-role">{selectedInfo ? selectedInfo.description : ''}</div>
           <div className="agent-detail-io">
             <div className="agent-detail-input">
               <div className="agent-detail-label">输入</div>

@@ -15,14 +15,78 @@
 // ---------------------------------------------------------------------------
 
 const MOCK_DAG_NODES = [
-  { id: 'group_definition', name: '群的定义', description: '群是具有一个二元运算的集合，满足封闭性、结合律、有幺元、有逆元。', prerequisites: [], abstraction_level: 1, difficulty: 0.3, is_milestone: true },
-  { id: 'subgroup', name: '子群', description: '群的子集在群的运算下仍构成群。', prerequisites: ['group_definition'], abstraction_level: 2, difficulty: 0.4, is_milestone: false },
-  { id: 'cyclic_group', name: '循环群', description: '由单个元素生成的群。', prerequisites: ['group_definition'], abstraction_level: 2, difficulty: 0.4, is_milestone: false },
-  { id: 'coset', name: '陪集', description: '群的子群在群中的左/右陪集。', prerequisites: ['subgroup'], abstraction_level: 3, difficulty: 0.6, is_milestone: false },
-  { id: 'quotient_group', name: '商群', description: '正规子群的陪集构成的群。', prerequisites: ['coset'], abstraction_level: 4, difficulty: 0.7, is_milestone: true },
-  { id: 'symmetric_group', name: '对称群', description: 'n 个元素的全体置换构成的群。', prerequisites: ['group_definition'], abstraction_level: 3, difficulty: 0.6, is_milestone: true },
-  { id: 'homomorphism', name: '同态与同构', description: '保持群结构的映射。', prerequisites: ['group_definition'], abstraction_level: 4, difficulty: 0.7, is_milestone: true },
-  { id: 'direct_product', name: '直积', description: '两个群的笛卡尔积。', prerequisites: ['group_definition'], abstraction_level: 3, difficulty: 0.5, is_milestone: false },
+  {
+    id: 'group_definition',
+    name: '群的定义',
+    description: '群是具有一个二元运算的集合，满足封闭性、结合律、有幺元、有逆元。',
+    prerequisites: [],
+    abstraction_level: 1,
+    difficulty: 0.3,
+    is_milestone: true,
+  },
+  {
+    id: 'subgroup',
+    name: '子群',
+    description: '群的子集在群的运算下仍构成群。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 2,
+    difficulty: 0.4,
+    is_milestone: false,
+  },
+  {
+    id: 'cyclic_group',
+    name: '循环群',
+    description: '由单个元素生成的群。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 2,
+    difficulty: 0.4,
+    is_milestone: false,
+  },
+  {
+    id: 'coset',
+    name: '陪集',
+    description: '群的子群在群中的左/右陪集。',
+    prerequisites: ['subgroup'],
+    abstraction_level: 3,
+    difficulty: 0.6,
+    is_milestone: false,
+  },
+  {
+    id: 'quotient_group',
+    name: '商群',
+    description: '正规子群的陪集构成的群。',
+    prerequisites: ['coset'],
+    abstraction_level: 4,
+    difficulty: 0.7,
+    is_milestone: true,
+  },
+  {
+    id: 'symmetric_group',
+    name: '对称群',
+    description: 'n 个元素的全体置换构成的群。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 3,
+    difficulty: 0.6,
+    is_milestone: true,
+  },
+  {
+    id: 'homomorphism',
+    name: '同态与同构',
+    description: '保持群结构的映射。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 4,
+    difficulty: 0.7,
+    is_milestone: true,
+  },
+  {
+    id: 'direct_product',
+    name: '直积',
+    description: '两个群的笛卡尔积。',
+    prerequisites: ['group_definition'],
+    abstraction_level: 3,
+    difficulty: 0.5,
+    is_milestone: false,
+  },
 ]
 
 const MOCK_RESPONSES = [
@@ -39,13 +103,15 @@ let responseIndex = 0
 // ---------------------------------------------------------------------------
 
 const mockApi = {
-  invoke: async (channel: string, ..._args: unknown[]): Promise<unknown> => {
+  invoke: async (_channel: string, ..._args: unknown[]): Promise<unknown> => {
     // Simulate network delay
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return null
   },
 
-  on: (_channel: string, _callback: (data: unknown) => void): (() => void) => () => {},
+  on:
+    (_channel: string, _callback: (data: unknown) => void): (() => void) =>
+    () => {},
 
   send: (_channel: string, ..._args: unknown[]) => {},
 
@@ -59,13 +125,13 @@ const mockApi = {
 
   // Session
   startSession: async (req: { student_id: string; target_node_id?: string }) => {
-    const node = MOCK_DAG_NODES.find((n) => n.id === (req.target_node_id || 'group_definition'))
+    const node = MOCK_DAG_NODES.find(n => n.id === (req.target_node_id || 'group_definition'))
     return {
       session_id: `web-session-${Date.now()}`,
       target_node: req.target_node_id || 'group_definition',
       node_name: node?.name || '群的定义',
       node_description: node?.description || '',
-      learning_path: MOCK_DAG_NODES.slice(0, 3).map((n) => ({ name: n.name })),
+      learning_path: MOCK_DAG_NODES.slice(0, 3).map(n => ({ name: n.name })),
       phase: 'PERCEIVE',
     }
   },
@@ -116,7 +182,15 @@ const mockApi = {
           is_struggling: false,
         },
       },
-      phase_trace: ['PERCEIVE', 'ABSTRACT', 'VERIFY', 'DIAGNOSE', 'REFLECT', 'COLLABORATE', 'DELIVER'],
+      phase_trace: [
+        'PERCEIVE',
+        'ABSTRACT',
+        'VERIFY',
+        'DIAGNOSE',
+        'REFLECT',
+        'COLLABORATE',
+        'DELIVER',
+      ],
       decision: { action: 'continue', reason: '学生表现良好，继续推进' },
       visual_data: {
         four_field_gauges: {
@@ -142,7 +216,7 @@ const mockApi = {
   verifyGroup: async (table: number[][]) => {
     const n = table.length
     // Basic checks
-    const closed = table.every((row) => row.every((v) => v >= 0 && v < n))
+    const closed = table.every(row => row.every(v => v >= 0 && v < n))
     return {
       is_group: closed,
       is_abelian: closed,
@@ -161,7 +235,14 @@ const mockApi = {
 
   findNonAssociative: async (n: number) => ({
     found: n >= 3,
-    table: n >= 3 ? [[0, 1, 2], [1, 1, 0], [2, 0, 2]] : null,
+    table:
+      n >= 3
+        ? [
+            [0, 1, 2],
+            [1, 1, 0],
+            [2, 0, 2],
+          ]
+        : null,
     reason: n >= 3 ? '找到了非结合运算表' : '阶数太小',
   }),
 
@@ -174,12 +255,7 @@ const mockApi = {
 
   // Proof
   getTheorems: async () => ({
-    theorems: [
-      'Lagrange 定理',
-      '群的幺元唯一性',
-      '逆元唯一性',
-      '循环群的子群结构',
-    ],
+    theorems: ['Lagrange 定理', '群的幺元唯一性', '逆元唯一性', '循环群的子群结构'],
   }),
 
   submitProof: async (theoremId: string, steps: string[]) => ({
@@ -219,7 +295,7 @@ const mockApi = {
     },
   }),
 
-  submitGrillAnswer: async (qid: string, answer: string) => ({
+  submitGrillAnswer: async (_qid: string, _answer: string) => ({
     grill: {
       active: true,
       current_question: {
@@ -270,14 +346,31 @@ const mockApi = {
 
   setLLMConfig: async (config: Record<string, unknown>) => ({
     success: true,
-    config: { provider: 'mock', apiKey: '', baseUrl: '', model: 'demo', temperature: 0.7, maxTokens: 2048, ...config },
+    config: {
+      provider: 'mock',
+      apiKey: '',
+      baseUrl: '',
+      model: 'demo',
+      temperature: 0.7,
+      maxTokens: 2048,
+      ...config,
+    },
   }),
 
   getLLMPresets: async () => [
-    { id: 'mock', label: '演示模式 (Web)', provider: 'mock', baseUrl: '', defaultModel: 'demo', requiresApiKey: false, helpUrl: '', description: 'Web 演示模式，无需配置' },
+    {
+      id: 'mock',
+      label: '演示模式 (Web)',
+      provider: 'mock',
+      baseUrl: '',
+      defaultModel: 'demo',
+      requiresApiKey: false,
+      helpUrl: '',
+      description: 'Web 演示模式，无需配置',
+    },
   ],
 
-  getSetting: async (key: string) => null,
+  getSetting: async (_key: string) => null,
   setSetting: async (_key: string, _value: unknown) => true,
   isOnboardingComplete: async () => false,
   setOnboardingComplete: async (_value: boolean) => true,
@@ -295,13 +388,16 @@ const mockApi = {
   },
 
   loadSession: async () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = '.json'
       input.onchange = () => {
         const file = input.files?.[0]
-        if (!file) { resolve(null); return }
+        if (!file) {
+          resolve(null)
+          return
+        }
         const reader = new FileReader()
         reader.onload = () => resolve(reader.result as string)
         reader.readAsText(file)
@@ -339,10 +435,9 @@ const mockApi = {
 // ---------------------------------------------------------------------------
 
 function injectWebApi() {
-  const w = window as unknown as { api?: typeof mockApi; electronAPI?: typeof mockApi }
+  const w = window as unknown as { api?: typeof mockApi }
   if (!w.api) {
     w.api = mockApi
-    w.electronAPI = mockApi
     console.log('[MathWeaver Web] Mock API injected — running in web demo mode')
   }
 }

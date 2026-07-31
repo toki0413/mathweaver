@@ -58,7 +58,9 @@ function GaugeTooltip({ visible, x, y, title, lines, accentColor }: TooltipProps
     >
       <div className="gauge-tooltip-title">{title}</div>
       {lines.map((line, i) => (
-        <div key={i} className="gauge-tooltip-line">{line}</div>
+        <div key={i} className="gauge-tooltip-line">
+          {line}
+        </div>
       ))}
     </div>
   )
@@ -117,6 +119,7 @@ function RadialGaugeImpl({
       return () => clearTimeout(t)
     }
     setPrevValue(value)
+    return undefined
   }, [value, prevValue])
 
   const clamped = Math.max(0, Math.min(1, value))
@@ -132,13 +135,16 @@ function RadialGaugeImpl({
   const showActive = hovered || focused
 
   // Sparkline points
-  const sparkPoints = history.length > 1
-    ? history.map((h, i) => {
-        const sx = (i / (history.length - 1)) * (size * 0.6) + size * 0.2
-        const sy = size * 0.82 - h * size * 0.12
-        return `${sx},${sy}`
-      }).join(' ')
-    : null
+  const sparkPoints =
+    history.length > 1
+      ? history
+          .map((h, i) => {
+            const sx = (i / (history.length - 1)) * (size * 0.6) + size * 0.2
+            const sy = size * 0.82 - h * size * 0.12
+            return `${sx},${sy}`
+          })
+          .join(' ')
+      : null
 
   const tooltipLines: string[] = [
     `数值: ${Math.round(clamped * 100)}${metricInfo?.unit || '%'}`,
@@ -151,7 +157,12 @@ function RadialGaugeImpl({
     <div
       ref={wrapRef}
       className={`gauge-wrap ${showActive ? 'gauge-active' : ''} ${pulsing ? 'gauge-pulse' : ''}`}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        position: 'relative',
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
@@ -193,7 +204,7 @@ function RadialGaugeImpl({
           }}
         />
         {/* Tick marks at 0%, 50%, 100% */}
-        {[0, 0.5, 1].map((tick) => {
+        {[0, 0.5, 1].map(tick => {
           const angle = 135 + 270 * tick * arcFraction
           const rad = (angle * Math.PI) / 180
           const inner = radius - size * 0.05
@@ -229,13 +240,7 @@ function RadialGaugeImpl({
         </text>
         {/* Mini sparkline below value */}
         {sparkPoints && showActive && (
-          <polyline
-            points={sparkPoints}
-            fill="none"
-            stroke={color}
-            strokeWidth={1}
-            opacity={0.6}
-          />
+          <polyline points={sparkPoints} fill="none" stroke={color} strokeWidth={1} opacity={0.6} />
         )}
       </svg>
       <span
@@ -319,7 +324,7 @@ function MasteryRadarImpl({ dimensions, overall, size = 180 }: MasteryRadarProps
   const vbSize = size + labelPad * 2
 
   const gridLevels = [0.25, 0.5, 0.75, 1.0]
-  const gridPolygons = gridLevels.map((level) => {
+  const gridPolygons = gridLevels.map(level => {
     const pts = dimensions
       .map((_, i) => {
         const angle = startAngle + i * angleStep
@@ -341,7 +346,7 @@ function MasteryRadarImpl({ dimensions, overall, size = 180 }: MasteryRadarProps
     }
   })
 
-  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(' ')
+  const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ')
 
   const labels = dimensions.map((dim, i) => {
     const angle = startAngle + i * angleStep
@@ -431,7 +436,7 @@ function MasteryRadarImpl({ dimensions, overall, size = 180 }: MasteryRadarProps
               fill="var(--accent)"
               opacity={0.25}
             />
-          ) : null
+          ) : null,
         )}
         {/* Labels */}
         {labels.map((lbl, i) => (
@@ -487,9 +492,7 @@ function MasteryRadarImpl({ dimensions, overall, size = 180 }: MasteryRadarProps
           }}
         >
           <div className="gauge-tooltip-title">{hoveredData.label}</div>
-          <div className="gauge-tooltip-line">
-            得分: {Math.round(hoveredData.value * 100)}%
-          </div>
+          <div className="gauge-tooltip-line">得分: {Math.round(hoveredData.value * 100)}%</div>
           {hoveredData.description && (
             <div className="gauge-tooltip-line" style={{ maxWidth: '140px' }}>
               {hoveredData.description}
@@ -563,7 +566,12 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
           const prev = i === 0 ? 0 : BAND_THRESHOLDS[i - 1]
           const x1 = barX + barWidth * prev
           const w = barWidth * (thresh - prev)
-          const colors = ['rgba(152,195,121,0.06)', 'rgba(198,120,221,0.06)', 'rgba(229,192,123,0.06)', 'rgba(224,108,117,0.06)']
+          const colors = [
+            'rgba(152,195,121,0.06)',
+            'rgba(198,120,221,0.06)',
+            'rgba(229,192,123,0.06)',
+            'rgba(224,108,117,0.06)',
+          ]
           return (
             <rect
               key={i}
@@ -658,7 +666,12 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
             fill={trendColor}
             style={{
               display: 'inline-block',
-              animation: trend === 'rising' ? 'trendBounceUp 1s ease infinite' : trend === 'falling' ? 'trendBounceDown 1s ease infinite' : 'none',
+              animation:
+                trend === 'rising'
+                  ? 'trendBounceUp 1s ease infinite'
+                  : trend === 'falling'
+                    ? 'trendBounceDown 1s ease infinite'
+                    : 'none',
             }}
           >
             {trendArrow}
@@ -674,11 +687,21 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
         {/* Band labels on hover */}
         {hovered && (
           <g style={{ fontSize: '0.5rem', fill: 'var(--muted)' }}>
-            <text x={barX + barWidth * 0.1} y={52} textAnchor="middle">热身</text>
-            <text x={barX + barWidth * 0.3} y={52} textAnchor="middle">基础</text>
-            <text x={barX + barWidth * 0.5} y={52} textAnchor="middle">标准</text>
-            <text x={barX + barWidth * 0.7} y={52} textAnchor="middle">进阶</text>
-            <text x={barX + barWidth * 0.9} y={52} textAnchor="middle">挑战</text>
+            <text x={barX + barWidth * 0.1} y={52} textAnchor="middle">
+              热身
+            </text>
+            <text x={barX + barWidth * 0.3} y={52} textAnchor="middle">
+              基础
+            </text>
+            <text x={barX + barWidth * 0.5} y={52} textAnchor="middle">
+              标准
+            </text>
+            <text x={barX + barWidth * 0.7} y={52} textAnchor="middle">
+              进阶
+            </text>
+            <text x={barX + barWidth * 0.9} y={52} textAnchor="middle">
+              挑战
+            </text>
           </g>
         )}
       </svg>

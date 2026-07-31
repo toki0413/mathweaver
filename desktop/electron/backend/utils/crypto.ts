@@ -92,10 +92,7 @@ export function encrypt(plaintext: string): string {
   const iv = crypto.randomBytes(IV_LENGTH)
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
 
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final(),
-  ])
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
   const authTag = cipher.getAuthTag()
 
   // Pack iv || authTag || ciphertext, then base64 and version-tag.

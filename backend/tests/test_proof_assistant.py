@@ -1,12 +1,13 @@
 """Tests for the proof assistant (``mathweaver/proof/assistant.py``).
 
 Covers:
-- All 16 theorem templates load (5 group-theory, 4 high-school,
-  4 middle-school, 3 elementary).
+- All 34 theorem templates load (5 group-theory, 4 high-school,
+  4 middle-school, 3 elementary, 3 calculus, 3 linear-algebra,
+  3 discrete-math, 3 number-theory, 3 physics, 3 chemistry).
 - ``submit_proof`` for a correct proof of every theorem (parametrised).
 - ``submit_proof`` edge cases: partial proof, merged student steps
   (greedy multi-match), empty steps, extra/unexpected steps.
-- ``get_theorems_by_level`` for all four curriculum levels.
+- ``get_theorems_by_level`` for all ten curriculum levels.
 - Keyword normalisation (superscripts -> ASCII, math operators stripped).
 - Unknown ``theorem_id`` returns an error listing available theorems.
 """
@@ -50,6 +51,36 @@ LEVEL_THEOREMS = {
         "commutative_addition",
         "fraction_equivalence",
         "distributive_law",
+    ],
+    "calculus": [
+        "power_rule",
+        "ftc_part1",
+        "chain_rule",
+    ],
+    "linear_algebra": [
+        "rank_nullity",
+        "dim_invariance",
+        "independence_implies_unique",
+    ],
+    "discrete_math": [
+        "handshake_lemma",
+        "tree_n_minus_1_edges",
+        "bfs_shortest_path",
+    ],
+    "number_theory": [
+        "euclid_infinite_primes",
+        "euclid_lemma",
+        "fermat_little_theorem",
+    ],
+    "physics": [
+        "kinematic_equations",
+        "work_energy_theorem",
+        "shm_equation",
+    ],
+    "chemistry": [
+        "half_life_first_order",
+        "equilibrium_constant",
+        "huckel_benzene",
     ],
 }
 
@@ -155,11 +186,12 @@ CORRECT_PROOFS: dict[str, list[dict[str, str]]] = {
         {"claim": "移项：x = (-b ± √(b²-4ac))/2a", "justification": "移项"},
     ],
     "congruent_sss": [
-        {"claim": "叠合放置：EF 与 BC 重合，D 在异侧", "justification": ""},
-        {"claim": "连接 AD", "justification": "辅助线"},
-        {"claim": "△ABD 是等腰三角形，AB = DE，∠BAD = ∠DAC", "justification": "底角相等"},
-        {"claim": "△ACD 是等腰三角形，AC = DF，∠CAD = ∠DAB", "justification": "底角相等"},
-        {"claim": "∠BAC = ∠DAE，△ABC ≅ △DEF (SAS)", "justification": "全等"},
+        {"claim": "叠合放置：EF 与 BC 重合，E→B, F→C，D 在异侧", "justification": ""},
+        {"claim": "连接 AD，此时 AB = DB 且 AC = DC", "justification": "辅助线"},
+        {"claim": "△ABD 是等腰三角形，AB = DB，底角 ∠BAD = ∠BDA", "justification": "底角相等"},
+        {"claim": "△ACD 是等腰三角形，AC = DC，底角 ∠CAD = ∠CDA", "justification": "底角相等"},
+        {"claim": "相加：∠BAC = ∠BAD + ∠DAC = ∠BDA + ∠CDA = ∠BDC", "justification": "等量代换"},
+        {"claim": "由 SAS（AB = DB, AC = DC, 夹角 ∠BAC = ∠BDC），△ABC ≅ △DBC", "justification": "SAS 全等判定"},
     ],
     # -- Elementary --
     "commutative_addition": [
@@ -182,6 +214,143 @@ CORRECT_PROOFS: dict[str, list[dict[str, str]]] = {
         {"claim": "c 个 a = a × c", "justification": ""},
         {"claim": "a × (b + c) = a×b + a×c", "justification": ""},
     ],
+    # -- Calculus --
+    "power_rule": [
+        {"claim": "f'(x) = lim [(x+h)ⁿ - xⁿ] / h，二项式展开 (x+h)ⁿ", "justification": "极限定义"},
+        {"claim": "(x+h)ⁿ 展开 Σ C(n,k) xⁿ⁻ᵏ hᵏ", "justification": "二项式定理"},
+        {"claim": "(x+h)ⁿ - xⁿ = n·xⁿ⁻¹·h + O(h²)", "justification": "取 k≥1"},
+        {"claim": "除以 h：n·xⁿ⁻¹ + O(h)", "justification": "除法"},
+        {"claim": "取极限 f'(x) = n·xⁿ⁻¹", "justification": "h→0"},
+    ],
+    "ftc_part1": [
+        {"claim": "F'(x) = lim [F(x+h) - F(x)] / h", "justification": "导数定义"},
+        {"claim": "F(x+h) - F(x) = ∫ₓ^{x+h} f(t) dt", "justification": "积分性质"},
+        {"claim": "由积分中值定理 ∫ₓ^{x+h} f(t) dt = f(c)·h", "justification": "中值定理"},
+        {"claim": "[F(x+h) - F(x)] / h = f(c)", "justification": "除法"},
+        {"claim": "h→0 时 c→x，f(c) → f(x)，F'(x) = f(x)", "justification": "连续性"},
+    ],
+    "chain_rule": [
+        {"claim": "h'(x) = lim [f(g(x+Δx)) - f(g(x))] / Δx", "justification": "导数定义"},
+        {"claim": "令 Δg = g(x+Δx) - g(x)", "justification": "中间变量"},
+        {"claim": "[f(g(x)+Δg) - f(g(x))] / Δg · Δg/Δx", "justification": "引入 Δg"},
+        {"claim": "Δx→0 时 Δg→0，第一项 → f'(g(x))", "justification": "可导连续"},
+        {"claim": "第二项 Δg/Δx → g'(x)，h'(x) = f'(g(x))·g'(x)", "justification": "导数"},
+    ],
+    # -- Linear Algebra --
+    "rank_nullity": [
+        {"claim": "设 ker(T) 的基为 v₁,...,v_k，nullity(T) = k", "justification": ""},
+        {"claim": "将 ker(T) 的基扩充为 V 的基 v₁,...,v_k,w₁,...,w_{n-k}", "justification": "基扩充"},
+        {"claim": "T(w₁),...,T(w_{n-k}) 线性无关：Σ cᵢ T(wᵢ) = 0 则 Σ cᵢ wᵢ ∈ ker(T)", "justification": "线性无关"},
+        {"claim": "由基的线性无关性 cᵢ = 0", "justification": "线性无关"},
+        {"claim": "生成：T(v) = Σ bⱼ T(wⱼ)", "justification": "生成"},
+        {"claim": "rank(T) = n - k = n - nullity(T)", "justification": "结论"},
+    ],
+    "dim_invariance": [
+        {"claim": "B₁ 生成 V 且 B₂ 线性无关，由替换定理 m ≤ n", "justification": "替换定理"},
+        {"claim": "B₂ 生成 V 且 B₁ 线性无关，由替换定理 n ≤ m", "justification": "替换定理"},
+        {"claim": "所以 n = m", "justification": "双向不等式"},
+    ],
+    "independence_implies_unique": [
+        {"claim": "两个表示相减：Σ (aᵢ - bᵢ) vᵢ = 0", "justification": "相减"},
+        {"claim": "由线性无关性：aᵢ - bᵢ = 0", "justification": "线性无关"},
+        {"claim": "所以 aᵢ = bᵢ", "justification": "结论"},
+    ],
+    # -- Discrete Math --
+    "handshake_lemma": [
+        {"claim": "每条边 e = {u, w} 对 deg(u) 贡献 1，对 deg(w) 贡献 1", "justification": "双重计数"},
+        {"claim": "每条边对度数之和贡献 2", "justification": ""},
+        {"claim": "所有边贡献完毕：Σ deg(v) = 2|E|", "justification": "结论"},
+    ],
+    "tree_n_minus_1_edges": [
+        {"claim": "对顶点数 n 归纳", "justification": "归纳法"},
+        {"claim": "n=1 时：单顶点无边，0 = 1-1 ✓", "justification": "基础"},
+        {"claim": "假设 n=k 时成立。取 n=k+1 的树 T", "justification": "归纳假设"},
+        {"claim": "树无圈 ⟹ 存在度数为 1 的叶子节点 v", "justification": "叶子"},
+        {"claim": "删除 v 得到 k 个顶点的树 T'", "justification": "删除叶子"},
+        {"claim": "由归纳假设 T' 有 k-1 条边", "justification": "归纳"},
+        {"claim": "T 有 k 条边 = (k+1)-1 ✓", "justification": "结论"},
+    ],
+    "bfs_shortest_path": [
+        {"claim": "BFS 按层扩展：第 0 层 = {s}，第 k 层 = 与第 k-1 层相邻但未访问", "justification": "BFS"},
+        {"claim": "设 d(v) 为 BFS 给出的层数，δ(v) 为真实最短距离", "justification": ""},
+        {"claim": "对 d(v) 归纳：d(v) = k ⟹ δ(v) = k", "justification": "归纳"},
+        {"claim": "基础：d(s) = 0 = δ(s) ✓", "justification": "基础"},
+        {"claim": "δ(v) ≤ k：BFS 通过第 k-1 层到达 v", "justification": "上界"},
+        {"claim": "δ(v) ≥ k：若更短路径存在则 v 在 < k 层被访问，矛盾", "justification": "下界"},
+        {"claim": "所以 d(v) = δ(v) = k，BFS 给出最短路径", "justification": "结论"},
+    ],
+    # -- Number Theory --
+    "euclid_infinite_primes": [
+        {"claim": "构造 N = p₁ × p₂ × ... × p_n + 1", "justification": "构造"},
+        {"claim": "N > 1，所以 N 至少有一个素因子 q", "justification": ""},
+        {"claim": "q 是素数，若 q 在列表中则 q | (p₁×...×p_n)", "justification": ""},
+        {"claim": "q | N 且 q | (p₁×...×p_n) ⟹ q | 1，矛盾", "justification": "矛盾"},
+        {"claim": "与所有素数都在列表中矛盾，故素数无穷多", "justification": "矛盾"},
+    ],
+    "euclid_lemma": [
+        {"claim": "假设 p ∤ a", "justification": "反证"},
+        {"claim": "因为 p 是素数，gcd(p, a) = 1", "justification": ""},
+        {"claim": "由 Bezout 定理：存在 x, y 使 px + ay = 1", "justification": "Bezout"},
+        {"claim": "两边乘以 b：pbx + aby = b", "justification": ""},
+        {"claim": "p | pbx 且 p | aby（因为 p | ab）", "justification": ""},
+        {"claim": "所以 p | b", "justification": "结论"},
+    ],
+    "fermat_little_theorem": [
+        {"claim": "先证若 gcd(a,p)=1 则 a^{p-1} ≡ 1 (mod p)", "justification": ""},
+        {"claim": "考虑集合 S = {1,...,p-1}，乘以 a 得 aS", "justification": ""},
+        {"claim": "aS 的元素互不相同，aS 是 {1,...,p-1} 的排列", "justification": "排列"},
+        {"claim": "乘积相等：(p-1)! ≡ a^{p-1}·(p-1)! (mod p)", "justification": ""},
+        {"claim": "消去 (p-1)! 得 a^{p-1} ≡ 1 (mod p)", "justification": ""},
+        {"claim": "两边乘以 a：a^p ≡ a (mod p)", "justification": "结论"},
+    ],
+    # -- Physics --
+    "kinematic_equations": [
+        {"claim": "加速度定义：a = dv/dt = const", "justification": "微分方程"},
+        {"claim": "积分：v(t) = at + C，由 v(0) = v₀ 得 C = v₀，v(t) = v₀ + at", "justification": "积分"},
+        {"claim": "速度定义：v = dx/dt", "justification": "微分"},
+        {"claim": "积分：x(t) = v₀t + ½at² + C'，由 x(0) = x₀ 得 C' = x₀", "justification": "积分"},
+        {"claim": "所以 x(t) = x₀ + v₀t + ½at²", "justification": "结论"},
+    ],
+    "work_energy_theorem": [
+        {"claim": "牛顿第二定律：F = ma = m·dv/dt", "justification": "牛顿"},
+        {"claim": "功的定义：W = ∫F dx = ∫m·(dv/dt) dx", "justification": "功"},
+        {"claim": "链式法则：dv/dt = v·(dv/dx)", "justification": "链式法则"},
+        {"claim": "代入：W = ∫mv dv", "justification": "代入"},
+        {"claim": "积分：W = ½mv₂² - ½mv₁²", "justification": "积分"},
+        {"claim": "动能变化量 ΔKE = W_net", "justification": "结论"},
+    ],
+    "shm_equation": [
+        {"claim": "牛顿第二定律：m·d²x/dt² = -kx", "justification": "牛顿"},
+        {"claim": "改写：d²x/dt² + (k/m)x = 0，令 ω² = k/m", "justification": ""},
+        {"claim": "特征方程 r² + ω² = 0，根为 r = ±iω", "justification": "特征方程"},
+        {"claim": "通解：x(t) = A·cos(ωt) + B·sin(ωt) = C·cos(ωt + φ)", "justification": "通解"},
+        {"claim": "周期 T = 2π/ω = 2π√(m/k)，ω = √(k/m)", "justification": "周期"},
+    ],
+    # -- Chemistry --
+    "half_life_first_order": [
+        {"claim": "分离变量：dC/C = -k dt", "justification": "分离变量"},
+        {"claim": "积分：ln(C/C₀) = -kt，C(t) = C₀·e^(-kt)", "justification": "积分"},
+        {"claim": "半衰期定义：C(t₁/₂) = C₀/2", "justification": "定义"},
+        {"claim": "C₀·e^(-k·t₁/₂) = C₀/2", "justification": "代入"},
+        {"claim": "e^(-k·t₁/₂) = 1/2，C₀ 被消去", "justification": "消去 C₀"},
+        {"claim": "t₁/₂ = ln2/k（与初始浓度无关）", "justification": "结论"},
+    ],
+    "equilibrium_constant": [
+        {"claim": "平衡条件：正反应速率 = 逆反应速率", "justification": "平衡"},
+        {"claim": "k_f·[A]_eq = k_r·[B]_eq，K = [B]/[A] = k_f/k_r", "justification": ""},
+        {"claim": "由 Arrhenius 方程：k = A·e^(-Ea/RT)", "justification": "Arrhenius"},
+        {"claim": "ΔG° = Ea,f - Ea,r", "justification": "活化能"},
+        {"claim": "K = k_f/k_r = e^(-ΔG°/RT)", "justification": "结论"},
+        {"claim": "指前因子比已包含在 ΔG° 中", "justification": ""},
+    ],
+    "huckel_benzene": [
+        {"claim": "建立 6×6 久期矩阵 H（对角元 α，相邻非对角元 β）", "justification": ""},
+        {"claim": "苯是环状分子，H 是循环矩阵", "justification": "循环矩阵"},
+        {"claim": "循环矩阵特征值可用 DFT：ε_j = α + 2β·cos(2πj/6)", "justification": "DFT"},
+        {"claim": "j=0: α + 2β；j=1,5: α + β（二重简并）", "justification": "简并"},
+        {"claim": "j=2,4: α - β（二重简并）；j=3: α - 2β", "justification": "简并"},
+        {"claim": "离域能 = 6α+8β - (6α+6β) = 2β（稳定化）", "justification": "离域能"},
+    ],
 }
 
 
@@ -194,10 +363,10 @@ def pa() -> ProofAssistant:
 # Template loading & inventory
 # ---------------------------------------------------------------------------
 
-def test_all_16_templates_loaded(pa: ProofAssistant):
-    """Exactly 16 templates should be registered across the four levels."""
+def test_all_templates_loaded(pa: ProofAssistant):
+    """Exactly 34 templates should be registered across all ten levels."""
     available = pa.get_available_theorems()
-    assert len(available) == 16
+    assert len(available) == 34
     assert sorted(available) == sorted(ALL_THEOREMS)
 
 
@@ -209,12 +378,18 @@ def test_get_theorems_by_level(pa: ProofAssistant, level, theorems):
 
 
 def test_get_theorems_by_level_counts(pa: ProofAssistant):
-    """Level counts: 5 + 4 + 4 + 3 = 16."""
+    """Level counts: 5+4+4+3+3+3+3+3+3+3 = 34."""
     counts = {
         "group_theory": 5,
         "high_school": 4,
         "middle_school": 4,
         "elementary": 3,
+        "calculus": 3,
+        "linear_algebra": 3,
+        "discrete_math": 3,
+        "number_theory": 3,
+        "physics": 3,
+        "chemistry": 3,
     }
     for level, count in counts.items():
         assert len(pa.get_theorems_by_level(level)) == count
@@ -492,7 +667,9 @@ def test_get_hint_unknown_theorem(pa: ProofAssistant):
 def test_get_theorem_info(pa: ProofAssistant):
     """get_theorem_info returns one entry per template with step counts."""
     info = pa.get_theorem_info()
-    assert len(info) == 16
+    assert len(info) == 34  # 5 group + 4 high + 4 middle + 3 elementary
+                             # + 3 calculus + 3 linear + 3 discrete
+                             # + 3 number + 3 physics + 3 chemistry
     first = info[0]
     assert {"name", "description", "given", "to_prove", "num_expected_steps"} <= set(first)
     assert all(entry["num_expected_steps"] > 0 for entry in info)

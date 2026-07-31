@@ -15,11 +15,11 @@ type TestState = 'idle' | 'testing' | 'success' | 'error'
  * 打开时自动拉取配置与预设，选中预设会自动填充表单字段。
  */
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
-  const llmConfig = useStore((s) => s.llmConfig)
-  const llmPresets = useStore((s) => s.llmPresets)
-  const fetchLLMConfig = useStore((s) => s.fetchLLMConfig)
-  const fetchLLMPresets = useStore((s) => s.fetchLLMPresets)
-  const saveLLMConfig = useStore((s) => s.saveLLMConfig)
+  const llmConfig = useStore(s => s.llmConfig)
+  const llmPresets = useStore(s => s.llmPresets)
+  const fetchLLMConfig = useStore(s => s.fetchLLMConfig)
+  const fetchLLMPresets = useStore(s => s.fetchLLMPresets)
+  const saveLLMConfig = useStore(s => s.saveLLMConfig)
 
   const [provider, setProvider] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -58,12 +58,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   }, [llmConfig])
 
   const selectedPreset = useMemo(
-    () => llmPresets.find((p) => p.id === selectedPresetId) || null,
-    [llmPresets, selectedPresetId]
+    () => llmPresets.find(p => p.id === selectedPresetId) || null,
+    [llmPresets, selectedPresetId],
   )
 
   const handlePresetSelect = (presetId: string) => {
-    const preset = llmPresets.find((p) => p.id === presetId)
+    const preset = llmPresets.find(p => p.id === presetId)
     if (!preset) return
     setSelectedPresetId(preset.id)
     setProvider(preset.provider)
@@ -121,13 +121,8 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
   // 底部统一的状态消息（成功为绿，错误为红）
   const footerMessage =
-    testState === 'error'
-      ? testMessage
-      : testState === 'success'
-        ? testMessage
-        : saveMessage
-  const footerColor =
-    testState === 'error' ? 'var(--err)' : undefined
+    testState === 'error' ? testMessage : testState === 'success' ? testMessage : saveMessage
+  const footerColor = testState === 'error' ? 'var(--err)' : undefined
 
   if (!open) return null
 
@@ -160,7 +155,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 暂无可用预设
               </div>
             )}
-            {llmPresets.map((p) => (
+            {llmPresets.map(p => (
               <div
                 key={p.id}
                 className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
@@ -187,7 +182,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               className="text-input"
               type="text"
               value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
+              onChange={e => setBaseUrl(e.target.value)}
               placeholder="https://api.example.com/v1"
             />
           </div>
@@ -199,10 +194,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 className="text-input"
                 type={showApiKey ? 'text' : 'password'}
                 value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
+                onChange={e => setApiKey(e.target.value)}
                 placeholder={selectedPreset && selectedPreset.requiresApiKey ? '必填' : '选填'}
               />
-              <button className="toggle-btn" onClick={() => setShowApiKey((v) => !v)}>
+              <button className="toggle-btn" onClick={() => setShowApiKey(v => !v)}>
                 {showApiKey ? '隐藏' : '显示'}
               </button>
             </div>
@@ -224,7 +219,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               className="text-input"
               type="text"
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={e => setModel(e.target.value)}
               placeholder="model-name"
             />
           </div>
@@ -239,7 +234,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 max={1}
                 step={0.1}
                 value={temperature}
-                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                onChange={e => setTemperature(parseFloat(e.target.value))}
               />
               <span className="slider-value">{temperature.toFixed(1)}</span>
             </div>
@@ -252,7 +247,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               type="number"
               min={1}
               value={maxTokens}
-              onChange={(e) => setMaxTokens(Number(e.target.value) || 0)}
+              onChange={e => setMaxTokens(Number(e.target.value) || 0)}
             />
           </div>
         </div>
