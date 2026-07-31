@@ -103,7 +103,7 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
   test('grill mode has no critical axe violations', async ({ page }) => {
     await switchMode(page, '挑战')
     // Wait for the grill panel to render
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
 
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
 
@@ -430,11 +430,11 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
     // Switch to grill mode where the conjecture input lives.
     await switchMode(page, '挑战')
     // Wait for grill panel
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
 
     // The conjecture input may not be visible until visualData is populated.
     // Start a grill session to populate data.
-    await page.getByRole('button', { name: '开始面试' }).click()
+    await page.getByRole('button', { name: '开始挑战' }).click()
     await page.waitForTimeout(1000)
 
     const conjectureInput = page.locator('.conjecture-input')

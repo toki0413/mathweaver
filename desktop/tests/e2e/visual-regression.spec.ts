@@ -117,7 +117,7 @@ test.describe('Visual Regression — Mode Layouts', () => {
   test('grill mode full-page layout', async ({ page }) => {
     await page.getByRole('tab', { name: '挑战', exact: true }).click()
     // Wait for the grill panel to render.
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
     await settlePage(page, 500)
 
     await expect(page).toHaveScreenshot('grill-mode-layout.png', {
@@ -319,10 +319,10 @@ test.describe('Visual Regression — After Interactions', () => {
 
   test('grill panel after starting interview', async ({ page }) => {
     await page.getByRole('tab', { name: '挑战', exact: true }).click()
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
 
     // Start the grill session.
-    await page.getByRole('button', { name: '开始面试' }).click()
+    await page.getByRole('button', { name: '开始挑战' }).click()
     // Wait for the mock API response (500ms delay) plus render.
     await page.waitForTimeout(1500)
     await settlePage(page, 300)

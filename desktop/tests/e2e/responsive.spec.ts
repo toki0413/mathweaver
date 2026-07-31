@@ -414,7 +414,7 @@ test.describe('Mobile Mode Switching', () => {
       'aria-selected',
       'true',
     )
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
 
     // Proof mode — proof panel visible.
     await page.getByRole('tab', { name: '证明', exact: true }).click()

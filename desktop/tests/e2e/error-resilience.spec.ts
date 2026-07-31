@@ -211,7 +211,7 @@ test.describe('Error Handling & Resilience', () => {
     // Wait for the lazy-loaded GrillPanel to render (it may show a
     // Suspense fallback briefly while the chunk is fetched), then start
     // a grill session to populate data.
-    const startBtn = page.getByRole('button', { name: '开始面试' })
+    const startBtn = page.getByRole('button', { name: '开始挑战' })
     await startBtn.waitFor({ state: 'visible', timeout: 10000 })
     await startBtn.click()
     await page.waitForTimeout(1000)
@@ -373,7 +373,7 @@ test.describe('Error Handling & Resilience', () => {
 
     // Wait for the lazy-loaded GrillPanel to render (it may show a
     // Suspense fallback briefly while the chunk is fetched).
-    const startBtn = page.getByRole('button', { name: '开始面试' })
+    const startBtn = page.getByRole('button', { name: '开始挑战' })
     await startBtn.waitFor({ state: 'visible', timeout: 10000 })
     await startBtn.click()
 

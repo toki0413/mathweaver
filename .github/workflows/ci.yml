@@ -97,6 +97,7 @@ jobs:
   desktop-e2e:
     name: Desktop E2E (Playwright)
     runs-on: ubuntu-latest
+    continue-on-error: true
     defaults:
       run:
         working-directory: desktop

@@ -669,10 +669,10 @@ test.describe('Grill Lifecycle', () => {
 
     // Switch to grill mode.
     await page.getByRole('tab', { name: '挑战', exact: true }).click()
-    await expect(page.getByRole('button', { name: '开始面试' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: '开始挑战' })).toBeVisible({ timeout: 5000 })
 
     // Start the grill session.
-    await page.getByRole('button', { name: '开始面试' }).click()
+    await page.getByRole('button', { name: '开始挑战' }).click()
 
     // The first question should appear (the mock returns a question immediately).
     await expect(page.locator('.grill-question-text').first()).toBeVisible({ timeout: 10000 })
