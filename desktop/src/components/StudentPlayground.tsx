@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import type { AgeLevel } from '../utils/ageAdapt'
 import { getEncouragement } from '../utils/ageAdapt'
 import { soundSystem } from '../utils/sound'
@@ -74,7 +74,9 @@ interface Props {
   table: number[][]
   size: number
   ageLevel: AgeLevel
-  onHighlightCell?: (cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null) => void
+  onHighlightCell?: (
+    cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null,
+  ) => void
   /** 发现新性质时回调 */
   onDiscovery?: (property: string, ageLevel: AgeLevel) => void
 }
@@ -133,13 +135,24 @@ export function StudentPlayground({ table, size, ageLevel, onHighlightCell, onDi
 
         {/* 模式内容 */}
         {mode === 'bump' && (
-          <BumpGame table={table} size={size} ageLevel={ageLevel} onHighlightCell={onHighlightCell} onDiscovery={onDiscovery} />
+          <BumpGame
+            table={table}
+            size={size}
+            ageLevel={ageLevel}
+            onHighlightCell={onHighlightCell}
+            onDiscovery={onDiscovery}
+          />
         )}
         {mode === 'match' && (
           <MatchGame table={table} size={size} ageLevel={ageLevel} onDiscovery={onDiscovery} />
         )}
         {mode === 'colors' && (
-          <ColorView table={table} size={size} ageLevel={ageLevel} onHighlightCell={onHighlightCell} />
+          <ColorView
+            table={table}
+            size={size}
+            ageLevel={ageLevel}
+            onHighlightCell={onHighlightCell}
+          />
         )}
       </div>
     </>
@@ -154,14 +167,18 @@ interface BumpGameProps {
   table: number[][]
   size: number
   ageLevel: AgeLevel
-  onHighlightCell?: (cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null) => void
+  onHighlightCell?: (
+    cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null,
+  ) => void
   onDiscovery?: (property: string, ageLevel: AgeLevel) => void
 }
 
 function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpGameProps) {
   const [elemA, setElemA] = useState<number | null>(null)
   const [elemB, setElemB] = useState<number | null>(null)
-  const [bumpResult, setBumpResult] = useState<{ a: number; b: number; result: number } | null>(null)
+  const [bumpResult, setBumpResult] = useState<{ a: number; b: number; result: number } | null>(
+    null,
+  )
   const [bumpAnim, setBumpAnim] = useState(false)
   const [history, setHistory] = useState<BumpRecord[]>([])
   const [discoveredCommutative, setDiscoveredCommutative] = useState<Set<string>>(new Set())
@@ -187,7 +204,10 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
     for (let e = 0; e < size; e++) {
       let ok = true
       for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) { ok = false; break }
+        if (table[e]?.[j] !== j) {
+          ok = false
+          break
+        }
       }
       if (ok) return e
     }
@@ -199,23 +219,68 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
     if (ageLevel === 'kids') {
       return [
         { id: 'free' as GuidedTask, label: '自由玩', icon: '🎲', desc: '随便碰碰看！' },
-        { id: 'find_identity' as GuidedTask, label: '找老大', icon: '👑', desc: '找一个球，碰谁都不变的！' },
-        { id: 'find_inverses' as GuidedTask, label: '找搭档', icon: '🤝', desc: '找两个球，碰了变成老大的！' },
-        { id: 'find_commutative' as GuidedTask, label: '换位置', icon: '🔄', desc: '碰碰看，换位置结果一样吗？' },
+        {
+          id: 'find_identity' as GuidedTask,
+          label: '找老大',
+          icon: '👑',
+          desc: '找一个球，碰谁都不变的！',
+        },
+        {
+          id: 'find_inverses' as GuidedTask,
+          label: '找搭档',
+          icon: '🤝',
+          desc: '找两个球，碰了变成老大的！',
+        },
+        {
+          id: 'find_commutative' as GuidedTask,
+          label: '换位置',
+          icon: '🔄',
+          desc: '碰碰看，换位置结果一样吗？',
+        },
       ]
     } else if (ageLevel === 'tweens') {
       return [
         { id: 'free' as GuidedTask, label: '自由探索', icon: '🎲', desc: '自由运算，观察规律' },
-        { id: 'find_identity' as GuidedTask, label: '找单位元', icon: '👑', desc: '找 e 使 e∗a = a 对所有 a 成立' },
-        { id: 'find_inverses' as GuidedTask, label: '找逆元', icon: '🤝', desc: '找 a,b 使 a∗b = e（单位元）' },
-        { id: 'find_commutative' as GuidedTask, label: '验证交换律', icon: '🔄', desc: '检查 a∗b = b∗a 是否成立' },
+        {
+          id: 'find_identity' as GuidedTask,
+          label: '找单位元',
+          icon: '👑',
+          desc: '找 e 使 e∗a = a 对所有 a 成立',
+        },
+        {
+          id: 'find_inverses' as GuidedTask,
+          label: '找逆元',
+          icon: '🤝',
+          desc: '找 a,b 使 a∗b = e（单位元）',
+        },
+        {
+          id: 'find_commutative' as GuidedTask,
+          label: '验证交换律',
+          icon: '🔄',
+          desc: '检查 a∗b = b∗a 是否成立',
+        },
       ]
     }
     return [
       { id: 'free' as GuidedTask, label: 'Free', icon: '🎲', desc: 'Free exploration' },
-      { id: 'find_identity' as GuidedTask, label: 'Find Identity', icon: '👑', desc: 'Find e such that e∗a = a' },
-      { id: 'find_inverses' as GuidedTask, label: 'Find Inverses', icon: '🤝', desc: 'Find a,b such that a∗b = e' },
-      { id: 'find_commutative' as GuidedTask, label: 'Commutativity', icon: '🔄', desc: 'Check if a∗b = b∗a' },
+      {
+        id: 'find_identity' as GuidedTask,
+        label: 'Find Identity',
+        icon: '👑',
+        desc: 'Find e such that e∗a = a',
+      },
+      {
+        id: 'find_inverses' as GuidedTask,
+        label: 'Find Inverses',
+        icon: '🤝',
+        desc: 'Find a,b such that a∗b = e',
+      },
+      {
+        id: 'find_commutative' as GuidedTask,
+        label: 'Commutativity',
+        icon: '🔄',
+        desc: 'Check if a∗b = b∗a',
+      },
     ]
   }, [ageLevel])
 
@@ -249,7 +314,10 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
           const key = `${Math.min(a, b)}:${Math.max(a, b)}`
           if (!discoveredCommutative.has(key)) {
             setDiscoveredCommutative(prev => new Set(prev).add(key))
-            if (!taskCompleted.has('find_commutative') && discoveredCommutative.size + 1 >= Math.min(3, (size * (size - 1)) / 2)) {
+            if (
+              !taskCompleted.has('find_commutative') &&
+              discoveredCommutative.size + 1 >= Math.min(3, (size * (size - 1)) / 2)
+            ) {
               setTaskCompleted(prev => new Set(prev).add('find_commutative'))
               onDiscovery?.('commutativity', ageLevel)
               setShowConceptCheck(true)
@@ -260,7 +328,17 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
         }
       }
     },
-    [guidedTask, taskCompleted, discoveredCommutative, identity, ageLevel, onDiscovery, table, lookup, size],
+    [
+      guidedTask,
+      taskCompleted,
+      discoveredCommutative,
+      identity,
+      ageLevel,
+      onDiscovery,
+      table,
+      lookup,
+      size,
+    ],
   )
 
   // 概念检查问题（根据完成的任务生成）
@@ -270,12 +348,7 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       if (ageLevel === 'kids') {
         return {
           question: `你发现 ${identity} 碰谁都是原来的数！为什么说它是"老大"？`,
-          options: [
-            '因为它最大',
-            '因为它碰了别人，别人都不变',
-            '因为它颜色最亮',
-            '因为它出现最多',
-          ],
+          options: ['因为它最大', '因为它碰了别人，别人都不变', '因为它颜色最亮', '因为它出现最多'],
           correctIndex: 1,
           explanation: '对！老大（单位元）碰了谁，谁就不变。这就是"单位元"的定义：e∗a = a。',
         }
@@ -322,24 +395,14 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       if (ageLevel === 'kids') {
         return {
           question: '你发现换位置碰结果也一样！这说明什么？',
-          options: [
-            '这个家族里谁先谁后都一样',
-            '颜色都一样',
-            '数字都一样大',
-            '碰了会消失',
-          ],
+          options: ['这个家族里谁先谁后都一样', '颜色都一样', '数字都一样大', '碰了会消失'],
           correctIndex: 0,
           explanation: '对！在这个家族里，a 碰 b 和 b 碰 a 结果一样。这叫"交换律"。',
         }
       }
       return {
         question: '你验证了 a∗b = b∗a 对多对元素成立。这意味着什么？',
-        options: [
-          '这个运算是可交换的（阿贝尔的）',
-          '这个运算不封闭',
-          '没有单位元',
-          '没有逆元',
-        ],
+        options: ['这个运算是可交换的（阿贝尔的）', '这个运算不封闭', '没有单位元', '没有逆元'],
         correctIndex: 0,
         explanation: '正确。a∗b = b∗a 对所有 a,b 成立意味着该群是阿贝尔群（交换群）。',
       }
@@ -426,9 +489,7 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       </div>
       {/* 当前任务描述 */}
       {guidedTask !== 'free' && (
-        <div className="sp-task-desc">
-          📋 {guidedTasks.find(t => t.id === guidedTask)?.desc}
-        </div>
+        <div className="sp-task-desc">📋 {guidedTasks.find(t => t.id === guidedTask)?.desc}</div>
       )}
 
       {/* 碰撞区域 */}
@@ -436,10 +497,7 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
         {/* 槽位 A */}
         <div className={`sp-bump-slot ${elemA !== null ? 'filled' : ''}`}>
           {elemA !== null ? (
-            <div
-              className="sp-element-orb"
-              style={{ background: getElementColor(elemA) }}
-            >
+            <div className="sp-element-orb" style={{ background: getElementColor(elemA) }}>
               {elemA}
             </div>
           ) : (
@@ -450,17 +508,12 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
         </div>
 
         {/* 运算符 */}
-        <div className="sp-bump-operator">
-          {ageLevel === 'kids' ? '✨' : '∗'}
-        </div>
+        <div className="sp-bump-operator">{ageLevel === 'kids' ? '✨' : '∗'}</div>
 
         {/* 槽位 B */}
         <div className={`sp-bump-slot ${elemB !== null ? 'filled' : ''}`}>
           {elemB !== null ? (
-            <div
-              className="sp-element-orb"
-              style={{ background: getElementColor(elemB) }}
-            >
+            <div className="sp-element-orb" style={{ background: getElementColor(elemB) }}>
               {elemB}
             </div>
           ) : (
@@ -492,10 +545,12 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
               <div
                 key={i}
                 className="sp-particle"
-                style={{
-                  '--angle': `${i * 45}deg`,
-                  '--color': getElementColor(bumpResult?.result ?? 0),
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--angle': `${i * 45}deg`,
+                    '--color': getElementColor(bumpResult?.result ?? 0),
+                  } as React.CSSProperties
+                }
               />
             ))}
           </div>
@@ -510,18 +565,26 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
             <span className="sp-formal-op">{ageLevel === 'kids' ? '碰' : ' ∗ '}</span>
             <span style={{ color: getElementColor(bumpResult.b) }}>{bumpResult.b}</span>
             <span className="sp-formal-op"> = </span>
-            <span style={{ color: getElementColor(bumpResult.result), fontWeight: 700 }}>{bumpResult.result}</span>
+            <span style={{ color: getElementColor(bumpResult.result), fontWeight: 700 }}>
+              {bumpResult.result}
+            </span>
           </div>
           {ageLevel !== 'kids' && (
             <div className="sp-formal-table-ref">
               <span className="sp-formal-ref-label">📋 运算表位置：</span>
-              <code>table[{bumpResult.a}][{bumpResult.b}] = {bumpResult.result}</code>
+              <code>
+                table[{bumpResult.a}][{bumpResult.b}] = {bumpResult.result}
+              </code>
             </div>
           )}
           {ageLevel === 'kids' && (
             <div className="sp-formal-table-ref">
               <span className="sp-formal-ref-label">📋 密码表位置：</span>
-              <span>第 <strong style={{ color: getElementColor(bumpResult.a) }}>{bumpResult.a}</strong> 行，第 <strong style={{ color: getElementColor(bumpResult.b) }}>{bumpResult.b}</strong> 列</span>
+              <span>
+                第 <strong style={{ color: getElementColor(bumpResult.a) }}>{bumpResult.a}</strong>{' '}
+                行，第{' '}
+                <strong style={{ color: getElementColor(bumpResult.b) }}>{bumpResult.b}</strong> 列
+              </span>
             </div>
           )}
         </div>
@@ -531,13 +594,24 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       <div className="sp-bump-pool">
         <div className="sp-pool-label">
           {guidedTask === 'free'
-            ? (ageLevel === 'kids' ? '👆 点两个球碰一碰！' : ageLevel === 'tweens' ? '选择两个元素进行运算' : 'Select two elements to compute')
+            ? ageLevel === 'kids'
+              ? '👆 点两个球碰一碰！'
+              : ageLevel === 'tweens'
+                ? '选择两个元素进行运算'
+                : 'Select two elements to compute'
             : guidedTask === 'find_identity'
-              ? (ageLevel === 'kids' ? '👑 哪个球碰了别人不变？试试看！' : '找 e 使 e∗a = a，逐个测试！')
+              ? ageLevel === 'kids'
+                ? '👑 哪个球碰了别人不变？试试看！'
+                : '找 e 使 e∗a = a，逐个测试！'
               : guidedTask === 'find_inverses'
-                ? (ageLevel === 'kids' ? '🤝 找两个球碰了变老大的！' : identity >= 0 ? `找 a,b 使 a∗b = ${identity}（单位元）` : '先找到单位元才能找逆元！')
-                : (ageLevel === 'kids' ? '🔄 换位置碰，结果一样吗？' : '测试 a∗b 和 b∗a 是否相等')
-          }
+                ? ageLevel === 'kids'
+                  ? '🤝 找两个球碰了变老大的！'
+                  : identity >= 0
+                    ? `找 a,b 使 a∗b = ${identity}（单位元）`
+                    : '先找到单位元才能找逆元！'
+                : ageLevel === 'kids'
+                  ? '🔄 换位置碰，结果一样吗？'
+                  : '测试 a∗b 和 b∗a 是否相等'}
         </div>
         <div className="sp-pool-orbs">
           {elements.map(n => (
@@ -567,11 +641,17 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
           <div className="sp-history-list">
             {history.map((h, i) => (
               <div key={i} className="sp-history-item">
-                <span className="sp-hist-orb" style={{ background: getElementColor(h.a) }}>{h.a}</span>
+                <span className="sp-hist-orb" style={{ background: getElementColor(h.a) }}>
+                  {h.a}
+                </span>
                 <span className="sp-hist-op">∗</span>
-                <span className="sp-hist-orb" style={{ background: getElementColor(h.b) }}>{h.b}</span>
+                <span className="sp-hist-orb" style={{ background: getElementColor(h.b) }}>
+                  {h.b}
+                </span>
                 <span className="sp-hist-op">=</span>
-                <span className="sp-hist-orb" style={{ background: getElementColor(h.result) }}>{h.result}</span>
+                <span className="sp-hist-orb" style={{ background: getElementColor(h.result) }}>
+                  {h.result}
+                </span>
               </div>
             ))}
           </div>
@@ -581,7 +661,8 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       {/* 发现交换律提示 */}
       {discoveredCommutative.size > 0 && ageLevel === 'kids' && (
         <div className="sp-discovery-hint">
-          🔍 {ageLevel === 'kids' ? '你发现有些数字换位置碰，结果一样！' : 'Commutativity detected!'}
+          🔍{' '}
+          {ageLevel === 'kids' ? '你发现有些数字换位置碰，结果一样！' : 'Commutativity detected!'}
         </div>
       )}
 
@@ -591,7 +672,11 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
           <div className="sp-concept-header">
             <span className="sp-concept-icon">🎓</span>
             <span className="sp-concept-title">
-              {ageLevel === 'kids' ? '想一想！' : ageLevel === 'tweens' ? '概念检查' : 'Concept Check'}
+              {ageLevel === 'kids'
+                ? '想一想！'
+                : ageLevel === 'tweens'
+                  ? '概念检查'
+                  : 'Concept Check'}
             </span>
           </div>
           <div className="sp-concept-question">{conceptQuestion.question}</div>
@@ -671,7 +756,10 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
     for (let e = 0; e < size; e++) {
       let ok = true
       for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) { ok = false; break }
+        if (table[e]?.[j] !== j) {
+          ok = false
+          break
+        }
       }
       if (ok) return e
     }
@@ -706,7 +794,12 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
 
   const handleCardClick = useCallback(
     (n: number) => {
-      if (matched.has(`pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`)) return
+      if (
+        matched.has(
+          `pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`,
+        )
+      )
+        return
       if (selected === null) {
         setSelected(n)
         setFlipped(prev => new Set(prev).add(n))
@@ -764,9 +857,17 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
     [selected, matched, areInverses, elements, inverseMap, identity, onDiscovery, ageLevel],
   )
 
-  const isCardFlipped = (n: number) => flipped.has(n) || matched.has(`pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`)
-  const isCardMatched = (n: number) => matched.has(`pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`)
-  const isCardWrong = (n: number) => wrongPair !== null && (wrongPair[0] === n || wrongPair[1] === n)
+  const isCardFlipped = (n: number) =>
+    flipped.has(n) ||
+    matched.has(
+      `pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`,
+    )
+  const isCardMatched = (n: number) =>
+    matched.has(
+      `pair-${Math.min(n, inverseMap.get(n) ?? n)}-${Math.max(n, inverseMap.get(n) ?? n)}`,
+    )
+  const isCardWrong = (n: number) =>
+    wrongPair !== null && (wrongPair[0] === n || wrongPair[1] === n)
 
   const matchCount = matched.size
   const totalPairs = useMemo(() => {
@@ -782,15 +883,22 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
       {/* 进度 */}
       <div className="sp-match-progress">
         <span className="sp-match-count">
-          {ageLevel === 'kids' ? '🤝 找到' : ageLevel === 'tweens' ? '已配对' : 'Matched'}: {matchCount} / {totalPairs}
+          {ageLevel === 'kids' ? '🤝 找到' : ageLevel === 'tweens' ? '已配对' : 'Matched'}:{' '}
+          {matchCount} / {totalPairs}
         </span>
         <div className="sp-match-bar">
-          <div className="sp-match-bar-fill" style={{ width: `${totalPairs > 0 ? (matchCount / totalPairs) * 100 : 0}%` }} />
+          <div
+            className="sp-match-bar-fill"
+            style={{ width: `${totalPairs > 0 ? (matchCount / totalPairs) * 100 : 0}%` }}
+          />
         </div>
       </div>
 
       {/* 卡片网格 */}
-      <div className="sp-match-grid" style={{ gridTemplateColumns: `repeat(${Math.min(size, 4)}, 1fr)` }}>
+      <div
+        className="sp-match-grid"
+        style={{ gridTemplateColumns: `repeat(${Math.min(size, 4)}, 1fr)` }}
+      >
         {elements.map(n => {
           const flipped_ = isCardFlipped(n)
           const matched_ = isCardMatched(n)
@@ -852,7 +960,9 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
                 <span className="sp-formal-op"> 碰 </span>
                 <span style={{ color: getElementColor(lastMatch.b) }}>{lastMatch.b}</span>
                 <span className="sp-formal-op"> = </span>
-                <span style={{ color: getElementColor(lastMatch.e), fontWeight: 700 }}>{lastMatch.e}（老大）</span>
+                <span style={{ color: getElementColor(lastMatch.e), fontWeight: 700 }}>
+                  {lastMatch.e}（老大）
+                </span>
               </>
             ) : (
               <>
@@ -860,7 +970,9 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
                 <span className="sp-formal-op"> ∗ </span>
                 <span style={{ color: getElementColor(lastMatch.b) }}>{lastMatch.b}</span>
                 <span className="sp-formal-op"> = </span>
-                <span style={{ color: getElementColor(lastMatch.e), fontWeight: 700 }}>{lastMatch.e}</span>
+                <span style={{ color: getElementColor(lastMatch.e), fontWeight: 700 }}>
+                  {lastMatch.e}
+                </span>
                 <span className="sp-formal-note"> （单位元 e）</span>
               </>
             )}
@@ -874,7 +986,11 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
           <div className="sp-concept-header">
             <span className="sp-concept-icon">🎓</span>
             <span className="sp-concept-title">
-              {ageLevel === 'kids' ? '想一想！' : ageLevel === 'tweens' ? '概念检查' : 'Concept Check'}
+              {ageLevel === 'kids'
+                ? '想一想！'
+                : ageLevel === 'tweens'
+                  ? '概念检查'
+                  : 'Concept Check'}
             </span>
           </div>
           <div className="sp-concept-question">
@@ -963,7 +1079,9 @@ interface ColorViewProps {
   table: number[][]
   size: number
   ageLevel: AgeLevel
-  onHighlightCell?: (cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null) => void
+  onHighlightCell?: (
+    cell: { row: number; col: number; type: 'computation' | 'identity' | 'symmetry' } | null,
+  ) => void
 }
 
 function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
@@ -985,7 +1103,10 @@ function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
     for (let e = 0; e < size; e++) {
       let ok = true
       for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) { ok = false; break }
+        if (table[e]?.[j] !== j) {
+          ok = false
+          break
+        }
       }
       if (ok) return e
     }
@@ -1019,11 +1140,7 @@ function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
             <tr>
               <th className="sp-corner-cell">∗</th>
               {Array.from({ length: size }).map((_, j) => (
-                <th
-                  key={j}
-                  className="sp-header-cell"
-                  style={{ background: getElementColor(j) }}
-                >
+                <th key={j} className="sp-header-cell" style={{ background: getElementColor(j) }}>
                   {j}
                 </th>
               ))}
@@ -1032,10 +1149,7 @@ function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
           <tbody>
             {table.map((row, i) => (
               <tr key={i}>
-                <th
-                  className="sp-header-cell"
-                  style={{ background: getElementColor(i) }}
-                >
+                <th className="sp-header-cell" style={{ background: getElementColor(i) }}>
                   {i}
                 </th>
                 {row.map((val, j) => {
@@ -1072,17 +1186,29 @@ function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
       <div className="sp-color-patterns">
         {isSymmetric && (
           <div className="sp-pattern-badge symmetric">
-            {ageLevel === 'kids' ? '⚖ 换位置也一样！' : ageLevel === 'tweens' ? '⚖ 满足交换律' : '⚖ Commutative (symmetric)'}
+            {ageLevel === 'kids'
+              ? '⚖ 换位置也一样！'
+              : ageLevel === 'tweens'
+                ? '⚖ 满足交换律'
+                : '⚖ Commutative (symmetric)'}
           </div>
         )}
         {!isSymmetric && (
           <div className="sp-pattern-badge non-symmetric">
-            {ageLevel === 'kids' ? '❌ 有些位置换了不一样！' : ageLevel === 'tweens' ? '❌ 不满足交换律' : '❌ Non-commutative'}
+            {ageLevel === 'kids'
+              ? '❌ 有些位置换了不一样！'
+              : ageLevel === 'tweens'
+                ? '❌ 不满足交换律'
+                : '❌ Non-commutative'}
           </div>
         )}
         {identity !== -1 && (
           <div className="sp-pattern-badge identity">
-            {ageLevel === 'kids' ? `👑 老大是 ${identity}（看那一行一列的彩虹色）` : ageLevel === 'tweens' ? `👑 单位元 = ${identity}` : `Identity: ${identity}`}
+            {ageLevel === 'kids'
+              ? `👑 老大是 ${identity}（看那一行一列的彩虹色）`
+              : ageLevel === 'tweens'
+                ? `👑 单位元 = ${identity}`
+                : `Identity: ${identity}`}
           </div>
         )}
         <div className="sp-pattern-hint">

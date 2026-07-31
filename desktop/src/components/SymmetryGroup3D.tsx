@@ -725,25 +725,31 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
         </div>
 
         {/* Permutation mapping visualization */}
-        <div className="perm-mapping" style={{
-          margin: '8px 0',
-          padding: '8px 12px',
-          background: 'rgba(0,0,0,0.15)',
-          borderRadius: '6px',
-          fontSize: '13px',
-          fontFamily: 'var(--mono, monospace)',
-          color: '#c8c8d0',
-        }}>
+        <div
+          className="perm-mapping"
+          style={{
+            margin: '8px 0',
+            padding: '8px 12px',
+            background: 'rgba(0,0,0,0.15)',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontFamily: 'var(--mono, monospace)',
+            color: '#c8c8d0',
+          }}
+        >
           <span style={{ color: '#88bbff', marginRight: '8px' }}>映射:</span>
           {permutations[selectedPerm].perm.map((target, src) => (
-            <span key={src} style={{
-              display: 'inline-block',
-              marginRight: '8px',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              background: target !== src ? 'rgba(229,192,123,0.2)' : 'transparent',
-              color: target !== src ? '#e5c07b' : '#666',
-            }}>
+            <span
+              key={src}
+              style={{
+                display: 'inline-block',
+                marginRight: '8px',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: target !== src ? 'rgba(229,192,123,0.2)' : 'transparent',
+                color: target !== src ? '#e5c07b' : '#666',
+              }}
+            >
               {src}→{target}
               {stepIndex >= 0 && src <= stepIndex && target !== src && (
                 <span style={{ color: '#98c379', marginLeft: '2px' }}> ✓</span>
@@ -772,11 +778,16 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
               cursor: 'pointer',
             }}
           >
-            {stepIndex >= 0 ? `▶ 步骤 ${stepIndex + 1}/${permutations[selectedPerm].perm.length}` : '▶ 逐步演示'}
+            {stepIndex >= 0
+              ? `▶ 步骤 ${stepIndex + 1}/${permutations[selectedPerm].perm.length}`
+              : '▶ 逐步演示'}
           </button>
           <button
             className="perm-btn"
-            onClick={() => { setAutoRotate(!autoRotate); setStepIndex(-1) }}
+            onClick={() => {
+              setAutoRotate(!autoRotate)
+              setStepIndex(-1)
+            }}
             style={{
               padding: '4px 12px',
               fontSize: '12px',

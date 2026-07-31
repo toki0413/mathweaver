@@ -8,7 +8,7 @@
   --bg-elev: #ddd5c5; /* Highest elevation (drawers, modals) */
 
   /* Borders */
-  --border: rgba(26, 26, 26, 0.10);
+  --border: rgba(26, 26, 26, 0.1);
   --border-subtle: rgba(26, 26, 26, 0.06);
   --border-strong: rgba(26, 26, 26, 0.22);
 
@@ -26,16 +26,17 @@
 
   /* Layer 3: 语义色 — 竹绿/赭石/深朱砂/青黛 */
   --ok: #4a7c59; /* 竹绿 — Success */
-  --ok-bg: rgba(74, 124, 89, 0.10);
+  --ok-bg: rgba(74, 124, 89, 0.1);
   --warn: #b8862e; /* 赭石 — Warning */
-  --warn-bg: rgba(184, 134, 46, 0.10);
+  --warn-bg: rgba(184, 134, 46, 0.1);
   --err: #9e2b22; /* 深朱砂 — Error */
-  --err-bg: rgba(158, 43, 34, 0.10);
+  --err-bg: rgba(158, 43, 34, 0.1);
   --info: #5c6b8c; /* 青黛蓝 — Info */
-  --info-bg: rgba(92, 107, 140, 0.10);
+  --info-bg: rgba(92, 107, 140, 0.1);
 
   /* Fonts — 宋体为主 */
-  --mono: 'JetBrains Mono', 'Source Han Mono SC', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --mono:
+    'JetBrains Mono', 'Source Han Mono SC', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, 'Iowan Old Style', serif;
   --sans:
     'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
@@ -67,8 +68,8 @@
   --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.03), 0 1px 3px rgba(26, 26, 26, 0.04);
   --shadow-md: 0 2px 8px rgba(26, 26, 26, 0.05), 0 4px 16px rgba(26, 26, 26, 0.05);
   --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.06), 0 16px 48px rgba(26, 26, 26, 0.08);
-  --shadow-accent: 0 2px 8px rgba(196, 57, 47, 0.15), 0 4px 16px rgba(196, 57, 47, 0.10);
-  --shadow-glow: 0 0 0 3px rgba(196, 57, 47, 0.10);
+  --shadow-accent: 0 2px 8px rgba(196, 57, 47, 0.15), 0 4px 16px rgba(196, 57, 47, 0.1);
+  --shadow-glow: 0 0 0 3px rgba(196, 57, 47, 0.1);
 
   /* Button text on accent background */
   --accent-text: #faf6ed;
@@ -956,7 +957,7 @@ textarea.text-input {
 }
 
 .mock-banner-btn {
-  background: var(--warn-btn-bg, #B45309);
+  background: var(--warn-btn-bg, #b45309);
   color: #fff;
   border: none;
   border-radius: var(--r-sm, 4px);
@@ -3332,9 +3333,15 @@ textarea:focus-visible {
 }
 
 @keyframes cellPulse {
-  0% { background: var(--bg2); }
-  50% { background: rgba(198, 120, 221, 0.25); }
-  100% { background: var(--bg2); }
+  0% {
+    background: var(--bg2);
+  }
+  50% {
+    background: rgba(198, 120, 221, 0.25);
+  }
+  100% {
+    background: var(--bg2);
+  }
 }
 
 .cayley-badges span {

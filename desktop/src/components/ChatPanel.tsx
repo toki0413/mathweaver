@@ -240,51 +240,46 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
    * 2. Questions in the message (lines ending with ?)
    * 3. Falls back to contextual defaults based on message phase
    */
-  const parseSuggestions = useCallback(
-    (content: string, phase?: string): string[] => {
-      const suggestions: string[] = []
-      const lines = content.split('\n')
+  const parseSuggestions = useCallback((content: string, phase?: string): string[] => {
+    const suggestions: string[] = []
+    const lines = content.split('\n')
 
-      // Pattern 1: explicit suggestion lists
-      for (const line of lines) {
-        const trimmed = line.trim()
-        // "建议：xxx" / "你可以：xxx" / "接下来：xxx"
-        const explicitMatch = trimmed.match(
-          /^(?:建议|你可以|接下来|试试|你可以尝试)[：:]\s*(.+)/,
-        )
-        if (explicitMatch) {
-          const text = explicitMatch[1].trim()
-          if (text.length > 0 && text.length < 40) {
-            suggestions.push(text)
-          }
-        }
-        // Numbered or bulleted items: "1. xxx" / "- xxx" / "• xxx"
-        const bulletMatch = trimmed.match(/^(?:\d+[.、)]|[-•*])\s*(.+)/)
-        if (bulletMatch) {
-          const text = bulletMatch[1].trim()
-          if (text.length > 2 && text.length < 40 && !suggestions.includes(text)) {
-            suggestions.push(text)
-          }
+    // Pattern 1: explicit suggestion lists
+    for (const line of lines) {
+      const trimmed = line.trim()
+      // "建议：xxx" / "你可以：xxx" / "接下来：xxx"
+      const explicitMatch = trimmed.match(/^(?:建议|你可以|接下来|试试|你可以尝试)[：:]\s*(.+)/)
+      if (explicitMatch) {
+        const text = explicitMatch[1].trim()
+        if (text.length > 0 && text.length < 40) {
+          suggestions.push(text)
         }
       }
-
-      // Pattern 2: if content has questions, suggest "为什么？" etc.
-      if (suggestions.length === 0) {
-        // Contextual defaults based on phase
-        const phaseSuggestions: Record<string, string[]> = {
-          session_start: ['详细解释这个概念', '出一个例子', '直接开始练习'],
-          explore: ['举个例子', '为什么这样？', '继续深入'],
-          assess: ['提示一下', '换个角度解释', '出一道类似的题'],
-          idle: ['我想学习新概念', '复习已学内容', '出一道挑战题'],
+      // Numbered or bulleted items: "1. xxx" / "- xxx" / "• xxx"
+      const bulletMatch = trimmed.match(/^(?:\d+[.、)]|[-•*])\s*(.+)/)
+      if (bulletMatch) {
+        const text = bulletMatch[1].trim()
+        if (text.length > 2 && text.length < 40 && !suggestions.includes(text)) {
+          suggestions.push(text)
         }
-        const defaults = phaseSuggestions[phase || 'idle'] || phaseSuggestions.idle
-        suggestions.push(...defaults.slice(0, 3))
       }
+    }
 
-      return suggestions.slice(0, 4) // Limit to 4 suggestions
-    },
-    [],
-  )
+    // Pattern 2: if content has questions, suggest "为什么？" etc.
+    if (suggestions.length === 0) {
+      // Contextual defaults based on phase
+      const phaseSuggestions: Record<string, string[]> = {
+        session_start: ['详细解释这个概念', '出一个例子', '直接开始练习'],
+        explore: ['举个例子', '为什么这样？', '继续深入'],
+        assess: ['提示一下', '换个角度解释', '出一道类似的题'],
+        idle: ['我想学习新概念', '复习已学内容', '出一道挑战题'],
+      }
+      const defaults = phaseSuggestions[phase || 'idle'] || phaseSuggestions.idle
+      suggestions.push(...defaults.slice(0, 3))
+    }
+
+    return suggestions.slice(0, 4) // Limit to 4 suggestions
+  }, [])
 
   const handleSuggestionClick = useCallback(
     (text: string) => {
@@ -359,11 +354,8 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
 
           // Guided choices: only show suggestions on the last system message
           // when not searching and not loading
-          const isLastSystem =
-            !term && !loading && msg.role === 'system' && i === chat.length - 1
-          const suggestions = isLastSystem
-            ? parseSuggestions(msg.content, msg.phase)
-            : []
+          const isLastSystem = !term && !loading && msg.role === 'system' && i === chat.length - 1
+          const suggestions = isLastSystem ? parseSuggestions(msg.content, msg.phase) : []
 
           return (
             <div key={i} className={`chat-msg ${msg.role} cw-msg`}>

@@ -73,8 +73,8 @@ describe('SIR model conservation law', () => {
     const steps = 500
     let state = [N - 1, 1, 0] // [S, I, R]
     const fn = (s: number[]) => [
-      -beta * s[0] * s[1] / N,
-      beta * s[0] * s[1] / N - gamma * s[1],
+      (-beta * s[0] * s[1]) / N,
+      (beta * s[0] * s[1]) / N - gamma * s[1],
       gamma * s[1],
     ]
     for (let i = 0; i < steps; i++) {
@@ -92,7 +92,7 @@ describe('Harmonic oscillator energy conservation', () => {
   it('mechanical energy is conserved for undamped oscillator', () => {
     const m = 1
     const k = 10
-    const omega0 = Math.sqrt(k / m)
+    const _omega0 = Math.sqrt(k / m)
     const dt = 0.001
     const steps = 10000
     let state = [1, 0] // [x, v]
@@ -138,13 +138,18 @@ describe('Lotka-Volterra conservation invariant', () => {
       alpha * s[0] - beta * s[0] * s[1],
       delta * s[0] * s[1] - gamma * s[1],
     ]
-    const V0 = delta * state[0] - gamma * Math.log(state[0]) + beta * state[1] - alpha * Math.log(state[1])
+    const V0 =
+      delta * state[0] - gamma * Math.log(state[0]) + beta * state[1] - alpha * Math.log(state[1])
     for (let i = 0; i < steps; i++) {
       state = rk4(state, fn, {}, dt)
       // Guard against negative populations (numerical issue)
       if (state[0] <= 0 || state[1] <= 0) break
     }
-    const V = delta * state[0] - gamma * Math.log(Math.max(state[0], 1e-10)) + beta * state[1] - alpha * Math.log(Math.max(state[1], 1e-10))
+    const V =
+      delta * state[0] -
+      gamma * Math.log(Math.max(state[0], 1e-10)) +
+      beta * state[1] -
+      alpha * Math.log(Math.max(state[1], 1e-10))
     // Drift should be < 1% for RK4 with dt=0.01
     expect(Math.abs((V - V0) / V0)).toBeLessThan(0.01)
   })

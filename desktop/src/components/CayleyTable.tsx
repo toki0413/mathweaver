@@ -163,7 +163,11 @@ function CayleyTableBase({
   // (6) Inverse element check — for each element, find if an inverse exists
   const { hasInverses, inverseMap, noInverseElements } = useMemo(() => {
     if (!isClosed || identityRows.size === 0) {
-      return { hasInverses: false, inverseMap: new Map<number, number>(), noInverseElements: [] as number[] }
+      return {
+        hasInverses: false,
+        inverseMap: new Map<number, number>(),
+        noInverseElements: [] as number[],
+      }
     }
     const identity = [...identityRows][0]
     const invMap = new Map<number, number>()
@@ -348,10 +352,14 @@ function CayleyTableBase({
                     className={classes.join(' ')}
                     onMouseEnter={() => handleMouseEnter(i, j)}
                     role="gridcell"
-                    style={colorMode ? {
-                      background: getElementColor(val),
-                      borderRadius: '3px',
-                    } : undefined}
+                    style={
+                      colorMode
+                        ? {
+                            background: getElementColor(val),
+                            borderRadius: '3px',
+                          }
+                        : undefined
+                    }
                   >
                     <input
                       type="number"
@@ -362,11 +370,15 @@ function CayleyTableBase({
                       onFocus={() => handleFocus(i, j)}
                       onBlur={handleBlur}
                       aria-label={`元素 ${i} 与元素 ${j} 的运算结果`}
-                      style={colorMode ? {
-                        color: '#fff',
-                        fontWeight: 700,
-                        textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                      } : undefined}
+                      style={
+                        colorMode
+                          ? {
+                              color: '#fff',
+                              fontWeight: 700,
+                              textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                            }
+                          : undefined
+                      }
                     />
                   </td>
                 )
@@ -398,37 +410,54 @@ function CayleyTableBase({
             {colorMode ? '🎨 颜色' : '🎨 OFF'}
           </button>
         )}
-        <div className="cayley-axiom-progress" style={{
-          flex: 1,
-          padding: '6px 10px',
-          background: 'var(--bg3, #f5f0e8)',
-          borderRadius: '8px',
-        }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px' }}>
-          <span style={{ color: 'var(--muted)', fontWeight: 600 }}>群公理满足度</span>
-          <span style={{
-            fontWeight: 700,
-            color: axiomProgress.count === axiomProgress.total ? 'var(--ok)' : 'var(--accent)',
-          }}>
-            {axiomProgress.count}/{axiomProgress.total}
-          </span>
-        </div>
-        <div style={{
-          height: '6px',
-          background: 'var(--bg2, #fff)',
-          borderRadius: '3px',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${(axiomProgress.count / axiomProgress.total) * 100}%`,
-            background: axiomProgress.count === axiomProgress.total
-              ? 'linear-gradient(90deg, var(--ok), var(--accent2))'
-              : 'linear-gradient(90deg, var(--accent), var(--accent2))',
-            borderRadius: '3px',
-            transition: 'width 0.4s ease',
-          }} />
-        </div>
+        <div
+          className="cayley-axiom-progress"
+          style={{
+            flex: 1,
+            padding: '6px 10px',
+            background: 'var(--bg3, #f5f0e8)',
+            borderRadius: '8px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '4px',
+              fontSize: '12px',
+            }}
+          >
+            <span style={{ color: 'var(--muted)', fontWeight: 600 }}>群公理满足度</span>
+            <span
+              style={{
+                fontWeight: 700,
+                color: axiomProgress.count === axiomProgress.total ? 'var(--ok)' : 'var(--accent)',
+              }}
+            >
+              {axiomProgress.count}/{axiomProgress.total}
+            </span>
+          </div>
+          <div
+            style={{
+              height: '6px',
+              background: 'var(--bg2, #fff)',
+              borderRadius: '3px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${(axiomProgress.count / axiomProgress.total) * 100}%`,
+                background:
+                  axiomProgress.count === axiomProgress.total
+                    ? 'linear-gradient(90deg, var(--ok), var(--accent2))'
+                    : 'linear-gradient(90deg, var(--accent), var(--accent2))',
+                borderRadius: '3px',
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -441,7 +470,10 @@ function CayleyTableBase({
       >
         <span
           className={isClosed ? 'closure-check-pass' : 'closure-check-fail'}
-          style={{ cursor: 'pointer', opacity: activeProperty && activeProperty !== 'closure' ? 0.5 : 1 }}
+          style={{
+            cursor: 'pointer',
+            opacity: activeProperty && activeProperty !== 'closure' ? 0.5 : 1,
+          }}
           onClick={() => setActiveProperty(activeProperty === 'closure' ? null : 'closure')}
           title="点击高亮无效单元格"
         >
@@ -449,15 +481,23 @@ function CayleyTableBase({
         </span>
         <span
           className={isAssociative ? 'assoc-check-pass' : 'assoc-check-fail'}
-          style={{ cursor: 'pointer', opacity: activeProperty && activeProperty !== 'associativity' ? 0.5 : 1 }}
-          onClick={() => setActiveProperty(activeProperty === 'associativity' ? null : 'associativity')}
+          style={{
+            cursor: 'pointer',
+            opacity: activeProperty && activeProperty !== 'associativity' ? 0.5 : 1,
+          }}
+          onClick={() =>
+            setActiveProperty(activeProperty === 'associativity' ? null : 'associativity')
+          }
           title="点击高亮违反结合律的单元格"
         >
           {isAssociative ? '✓ 结合律' : '✗ 非结合律'}
         </span>
         <span
           className={identityRows.size > 0 ? 'closure-check-pass' : 'closure-check-fail'}
-          style={{ cursor: 'pointer', opacity: activeProperty && activeProperty !== 'identity' ? 0.5 : 1 }}
+          style={{
+            cursor: 'pointer',
+            opacity: activeProperty && activeProperty !== 'identity' ? 0.5 : 1,
+          }}
           onClick={() => setActiveProperty(activeProperty === 'identity' ? null : 'identity')}
           title="点击高亮单位元"
         >
@@ -465,16 +505,26 @@ function CayleyTableBase({
         </span>
         <span
           className={hasInverses ? 'closure-check-pass' : 'closure-check-fail'}
-          style={{ cursor: 'pointer', opacity: activeProperty && activeProperty !== 'inverses' ? 0.5 : 1 }}
+          style={{
+            cursor: 'pointer',
+            opacity: activeProperty && activeProperty !== 'inverses' ? 0.5 : 1,
+          }}
           onClick={() => setActiveProperty(activeProperty === 'inverses' ? null : 'inverses')}
           title="点击高亮逆元对"
         >
-          {hasInverses ? '✓ 逆元' : `✗ 逆元缺失${noInverseElements.length > 0 ? `(${noInverseElements.join(',')})` : ''}`}
+          {hasInverses
+            ? '✓ 逆元'
+            : `✗ 逆元缺失${noInverseElements.length > 0 ? `(${noInverseElements.join(',')})` : ''}`}
         </span>
         <span
           className={isCommutative ? 'closure-check-pass' : 'assoc-check-fail'}
-          style={{ cursor: 'pointer', opacity: activeProperty && activeProperty !== 'commutativity' ? 0.5 : 1 }}
-          onClick={() => setActiveProperty(activeProperty === 'commutativity' ? null : 'commutativity')}
+          style={{
+            cursor: 'pointer',
+            opacity: activeProperty && activeProperty !== 'commutativity' ? 0.5 : 1,
+          }}
+          onClick={() =>
+            setActiveProperty(activeProperty === 'commutativity' ? null : 'commutativity')
+          }
           title="点击高亮不交换的对称对"
         >
           {isCommutative ? '✓ 交换律' : '✗ 非交换'}
@@ -484,7 +534,8 @@ function CayleyTableBase({
       {/* Detailed violation feedback */}
       {!isClosed && (
         <div className="cayley-violation-detail">
-          <strong>未闭合：</strong>表格中存在超出范围的值（红色高亮）。每个运算结果必须在 0 到 {size - 1} 之间。
+          <strong>未闭合：</strong>表格中存在超出范围的值（红色高亮）。每个运算结果必须在 0 到{' '}
+          {size - 1} 之间。
         </div>
       )}
       {!isAssociative && assocViolation && (
@@ -502,8 +553,8 @@ function CayleyTableBase({
       )}
       {!hasInverses && isClosed && identityRows.size > 0 && noInverseElements.length > 0 && (
         <div className="cayley-violation-detail">
-          <strong>逆元缺失：</strong>元素 {noInverseElements.join(', ')} 找不到对应的逆元。
-          逆元 b 满足 a∗b = b∗a = e（单位元）。点击"逆元"徽章高亮已有的逆元对。
+          <strong>逆元缺失：</strong>元素 {noInverseElements.join(', ')} 找不到对应的逆元。 逆元 b
+          满足 a∗b = b∗a = e（单位元）。点击"逆元"徽章高亮已有的逆元对。
         </div>
       )}
       {isClosed && isAssociative && isCommutative && hasInverses && identityRows.size > 0 && (

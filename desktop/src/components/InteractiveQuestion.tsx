@@ -521,9 +521,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
         if (!selectedLeft) return
 
         // Check if this right text is already used by another pair
-        const alreadyUsed = Object.entries(matchedPairs).find(
-          ([_, val]) => val === text,
-        )
+        const alreadyUsed = Object.entries(matchedPairs).find(([_, val]) => val === text)
         if (alreadyUsed) {
           // Unmatch the previous pairing
           setMatchedPairs(prev => {
@@ -545,9 +543,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
     (leftId: string): number | null => {
       const idx = matchPairs.findIndex(p => p.id === leftId)
       if (idx === -1) return null
-      const matchEntry = Object.entries(matchedPairs).find(
-        ([key]) => key === leftId,
-      )
+      const matchEntry = Object.entries(matchedPairs).find(([key]) => key === leftId)
       if (!matchEntry) return null
       return idx + 1
     },
@@ -563,7 +559,14 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
       <style>{SCOPED_CSS}</style>
 
       {/* Type badge + mode toggle */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '4px',
+        }}
+      >
         <span className={`iq-type-badge ${activeType}`}>
           {activeType === 'choice' && '🔘 选择题'}
           {activeType === 'truefalse' && '⚖ 判断题'}
@@ -614,11 +617,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
             ))}
           </div>
           <div className="iq-submit-row">
-            <button
-              className="iq-submit-btn primary"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-            >
+            <button className="iq-submit-btn primary" onClick={handleSubmit} disabled={!canSubmit}>
               提交选择
             </button>
           </div>
@@ -656,11 +655,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
             </div>
           </div>
           <div className="iq-submit-row">
-            <button
-              className="iq-submit-btn primary"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-            >
+            <button className="iq-submit-btn primary" onClick={handleSubmit} disabled={!canSubmit}>
               确认判断
             </button>
           </div>
@@ -684,7 +679,9 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
                   <div
                     key={pair.id}
                     className={`iq-match-item ${isSelected ? 'selected-left' : ''} ${isMatched ? 'matched' : ''}`}
-                    onClick={() => !disabled && !isMatched && handleMatchClick('left', pair.id, pair.left)}
+                    onClick={() =>
+                      !disabled && !isMatched && handleMatchClick('left', pair.id, pair.left)
+                    }
                   >
                     {pairNum && <span className="iq-match-pair-num">{pairNum}</span>}
                     <MathText>{pair.left}</MathText>
@@ -700,7 +697,9 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
                   <div
                     key={i}
                     className={`iq-match-item ${isUsed ? 'matched' : ''}`}
-                    onClick={() => !disabled && !isUsed && handleMatchClick('right', opt.id, opt.text)}
+                    onClick={() =>
+                      !disabled && !isUsed && handleMatchClick('right', opt.id, opt.text)
+                    }
                   >
                     <MathText>{opt.text}</MathText>
                   </div>
@@ -709,11 +708,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
             </div>
           </div>
           <div className="iq-submit-row">
-            <button
-              className="iq-submit-btn primary"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-            >
+            <button className="iq-submit-btn primary" onClick={handleSubmit} disabled={!canSubmit}>
               提交配对 ({Object.keys(matchedPairs).length}/{matchPairs.length})
             </button>
           </div>
@@ -784,11 +779,7 @@ const OpenAnswerInput: React.FC<OpenAnswerInputProps> = ({
         disabled={disabled}
       />
       <div className="iq-submit-row">
-        <button
-          className="iq-submit-btn primary"
-          onClick={onSubmit}
-          disabled={!canSubmit}
-        >
+        <button className="iq-submit-btn primary" onClick={onSubmit} disabled={!canSubmit}>
           提交回答
         </button>
       </div>

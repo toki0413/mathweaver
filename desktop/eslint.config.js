@@ -24,6 +24,7 @@ export default tseslint.config(
       '**/*.config.{ts,js}',
       'electron/preload/index.d.ts',
       'src/types/electron.d.ts',
+      'test/mock-api.js',
     ],
   },
 

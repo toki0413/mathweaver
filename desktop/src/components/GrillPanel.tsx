@@ -329,61 +329,95 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
             </div>
           )}
 
-          <div className="grill-progress-bar" style={{
-            margin: '8px 0 12px',
-            padding: '8px 12px',
-            background: 'var(--bg2, #1a2330)',
-            borderRadius: '8px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px', color: 'var(--muted, #8b95a5)' }}>
+          <div
+            className="grill-progress-bar"
+            style={{
+              margin: '8px 0 12px',
+              padding: '8px 12px',
+              background: 'var(--bg2, #1a2330)',
+              borderRadius: '8px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '6px',
+                fontSize: '12px',
+                color: 'var(--muted, #8b95a5)',
+              }}
+            >
               <span>本次挑战进度</span>
-              <span>第 {questionsAsked} 题{summary?.total_branches ? ` / ${summary.total_branches}` : ''}</span>
+              <span>
+                第 {questionsAsked} 题
+                {summary?.total_branches ? ` / ${summary.total_branches}` : ''}
+              </span>
             </div>
-            <div style={{
-              height: '6px',
-              background: 'var(--bg3, #212d3d)',
-              borderRadius: '3px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${Math.min((questionsAsked / (summary?.total_branches || 10)) * 100, 100)}%`,
-                background: 'linear-gradient(90deg, var(--ok, #98c379), var(--accent, #c89665))',
+            <div
+              style={{
+                height: '6px',
+                background: 'var(--bg3, #212d3d)',
                 borderRadius: '3px',
-                transition: 'width 0.5s ease',
-              }} />
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${Math.min((questionsAsked / (summary?.total_branches || 10)) * 100, 100)}%`,
+                  background: 'linear-gradient(90deg, var(--ok, #98c379), var(--accent, #c89665))',
+                  borderRadius: '3px',
+                  transition: 'width 0.5s ease',
+                }}
+              />
             </div>
             {summary && (
-              <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '11px', color: 'var(--muted, #8b95a5)' }}>
-                <span style={{ color: 'var(--ok, #98c379)' }}>✓ {summary.correct_answers} 正确</span>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  marginTop: '4px',
+                  fontSize: '11px',
+                  color: 'var(--muted, #8b95a5)',
+                }}
+              >
+                <span style={{ color: 'var(--ok, #98c379)' }}>
+                  ✓ {summary.correct_answers} 正确
+                </span>
                 <span>共 {questionsAsked} 题</span>
               </div>
             )}
           </div>
 
           {wrongQuestions.length > 0 && !isReAskPhase && (
-            <div style={{
-              margin: '8px 0',
-              padding: '8px 12px',
-              background: 'rgba(224, 108, 117, 0.1)',
-              border: '1px solid rgba(224, 108, 117, 0.3)',
-              borderRadius: '8px',
-              fontSize: '13px',
-              color: 'var(--danger, #e06c75)',
-            }}>
+            <div
+              style={{
+                margin: '8px 0',
+                padding: '8px 12px',
+                background: 'rgba(224, 108, 117, 0.1)',
+                border: '1px solid rgba(224, 108, 117, 0.3)',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: 'var(--danger, #e06c75)',
+              }}
+            >
               📌 还有 {wrongQuestions.length} 道错题将在结束时重新出现
             </div>
           )}
 
           {isReAskPhase && wrongQuestions.length > 0 ? (
             <div className="grill-reask-section">
-              <div style={{
-                padding: '10px 14px',
-                background: 'rgba(229, 192, 123, 0.1)',
-                borderRadius: '8px',
-                marginBottom: '12px',
-              }}>
-                <div style={{ fontWeight: 700, color: 'var(--warn, #e5c07b)', marginBottom: '4px' }}>
+              <div
+                style={{
+                  padding: '10px 14px',
+                  background: 'rgba(229, 192, 123, 0.1)',
+                  borderRadius: '8px',
+                  marginBottom: '12px',
+                }}
+              >
+                <div
+                  style={{ fontWeight: 700, color: 'var(--warn, #e5c07b)', marginBottom: '4px' }}
+                >
                   🔄 错题复习 ({wrongQuestions.length} 道剩余)
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--muted, #8b95a5)' }}>
@@ -562,7 +596,9 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                   cursor: 'pointer',
                 }}
               >
-                {wrongQuestions.length > 0 ? `结束并复习错题 (${wrongQuestions.length})` : '结束挑战'}
+                {wrongQuestions.length > 0
+                  ? `结束并复习错题 (${wrongQuestions.length})`
+                  : '结束挑战'}
               </button>
             </div>
           )}

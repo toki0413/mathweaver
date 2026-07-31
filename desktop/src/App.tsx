@@ -1320,11 +1320,7 @@ export default function App() {
                 />
               </div>
 
-              <CollapsibleSection
-                title="学习状态"
-                hint="认知与情绪指标"
-                defaultOpen={false}
-              >
+              <CollapsibleSection title="学习状态" hint="认知与情绪指标" defaultOpen={false}>
                 <FourFieldDashboard
                   fields={fourFields}
                   decision={decision}
@@ -1396,11 +1392,7 @@ export default function App() {
                 </div>
               )}
 
-              <CollapsibleSection
-                title="学习状态"
-                hint="认知与情绪指标"
-                defaultOpen={false}
-              >
+              <CollapsibleSection title="学习状态" hint="认知与情绪指标" defaultOpen={false}>
                 <FourFieldDashboard
                   fields={fourFields}
                   decision={decision}
@@ -1435,11 +1427,7 @@ export default function App() {
               </CollapsibleSection>
             </div>
             <div className="sidebar-col">
-              <CollapsibleSection
-                title="学习状态"
-                hint="认知与情绪指标"
-                defaultOpen={false}
-              >
+              <CollapsibleSection title="学习状态" hint="认知与情绪指标" defaultOpen={false}>
                 <FourFieldDashboard
                   fields={fourFields}
                   decision={decision}
@@ -1510,11 +1498,7 @@ export default function App() {
                 />
               </div>
 
-              <CollapsibleSection
-                title="学习状态"
-                hint="认知与情绪指标"
-                defaultOpen={false}
-              >
+              <CollapsibleSection title="学习状态" hint="认知与情绪指标" defaultOpen={false}>
                 <FourFieldDashboard
                   fields={fourFields}
                   decision={decision}

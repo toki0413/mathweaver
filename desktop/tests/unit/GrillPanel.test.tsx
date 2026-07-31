@@ -319,7 +319,9 @@ describe('GrillPanel', () => {
       const cut = answer.lastIndexOf(' ', 50)
       const expectedL1 = answer.slice(0, cut) + '...'
       // MathText wraps content in spans, so use a function matcher on textContent
-      expect(screen.getAllByText((_, node) => node?.textContent === expectedL1).length).toBeGreaterThan(0)
+      expect(
+        screen.getAllByText((_, node) => node?.textContent === expectedL1).length,
+      ).toBeGreaterThan(0)
 
       // L2 and answer should NOT be visible yet
       expect(screen.queryByText('参考答案')).not.toBeInTheDocument()
@@ -343,7 +345,9 @@ describe('GrillPanel', () => {
       const firstEnd = answer.search(/[。！？.!?;]/)
       const expectedL2 = answer.slice(0, firstEnd + 1) + '...'
       // MathText wraps content in spans, so use a function matcher on textContent
-      expect(screen.getAllByText((_, node) => node?.textContent === expectedL2).length).toBeGreaterThan(0)
+      expect(
+        screen.getAllByText((_, node) => node?.textContent === expectedL2).length,
+      ).toBeGreaterThan(0)
 
       // Full answer should NOT be visible yet
       expect(screen.queryByText('参考答案')).not.toBeInTheDocument()

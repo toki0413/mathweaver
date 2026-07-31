@@ -54,7 +54,10 @@ interface ModelPreset {
   /** 状态变量名 */
   stateNames: string[]
   /** 守恒律验证：返回 { label, drift } 或 null */
-  verifyConservation?: (history: number[][], params: Record<string, number>) => { label: string; drift: string } | null
+  verifyConservation?: (
+    history: number[][],
+    params: Record<string, number>,
+  ) => { label: string; drift: string } | null
 }
 
 interface Props {
@@ -140,34 +143,80 @@ const MODELS: ModelPreset[] = [
     description: '经典捕食者-猎物动力学，展示种群振荡与生态平衡',
     equations: ['dx/dt = αx - βxy', 'dy/dt = δxy - γy'],
     params: [
-      { key: 'alpha', label: 'α 猎物增长率', min: 0.1, max: 3, step: 0.05, default: 1.1, unit: '1/yr' },
-      { key: 'beta', label: 'β 捕食率', min: 0.1, max: 3, step: 0.05, default: 0.4, unit: '1/(predator·yr)' },
-      { key: 'gamma', label: 'γ 捕食者死亡率', min: 0.1, max: 3, step: 0.05, default: 0.4, unit: '1/yr' },
-      { key: 'delta', label: 'δ 捕食转化率', min: 0.1, max: 3, step: 0.05, default: 0.1, unit: '1/(prey·yr)' },
+      {
+        key: 'alpha',
+        label: 'α 猎物增长率',
+        min: 0.1,
+        max: 3,
+        step: 0.05,
+        default: 1.1,
+        unit: '1/yr',
+      },
+      {
+        key: 'beta',
+        label: 'β 捕食率',
+        min: 0.1,
+        max: 3,
+        step: 0.05,
+        default: 0.4,
+        unit: '1/(predator·yr)',
+      },
+      {
+        key: 'gamma',
+        label: 'γ 捕食者死亡率',
+        min: 0.1,
+        max: 3,
+        step: 0.05,
+        default: 0.4,
+        unit: '1/yr',
+      },
+      {
+        key: 'delta',
+        label: 'δ 捕食转化率',
+        min: 0.1,
+        max: 3,
+        step: 0.05,
+        default: 0.1,
+        unit: '1/(prey·yr)',
+      },
     ],
     stateNames: ['猎物 x', '捕食者 y'],
     initialState: () => [40, 9], // [prey, predator] 初始种群 [个体]
     step: (state, p, dt) =>
       rk4(
         state,
-        (s, pp) => [pp.alpha * s[0] - pp.beta * s[0] * s[1], pp.delta * s[0] * s[1] - pp.gamma * s[1]],
+        (s, pp) => [
+          pp.alpha * s[0] - pp.beta * s[0] * s[1],
+          pp.delta * s[0] * s[1] - pp.gamma * s[1],
+        ],
         p,
         dt,
       ),
     render: (ctx, history, _p, w, h) => {
       drawTimeSeries(ctx, history, w, h, COLORS.series.slice(0, 2), ['猎物', '捕食者'])
     },
-    explain: (p) => {
+    explain: p => {
       const eq = Math.sqrt((p.alpha * p.gamma) / (p.beta * p.delta))
       return `当 α=${p.alpha.toFixed(2)}、β=${p.beta.toFixed(2)} 时，系统平衡点位于 (x*=${(p.gamma / p.delta).toFixed(1)}, y*=${(p.alpha / p.beta).toFixed(1)})。${eq > LV_EQUILIBRIUM_RATIO_THRESHOLD ? '猎物种群占优，捕食者依赖度高' : '两者数量接近，生态较稳定'}。增大 β 会压低猎物峰值、抬升捕食者低谷。`
     },
     verifyConservation: (history, p) => {
       if (history.length < 2) return null
-      const V0 = p.delta * history[0][0] - p.gamma * Math.log(history[0][0]) + p.beta * history[0][1] - p.alpha * Math.log(history[0][1])
+      const V0 =
+        p.delta * history[0][0] -
+        p.gamma * Math.log(history[0][0]) +
+        p.beta * history[0][1] -
+        p.alpha * Math.log(history[0][1])
       const last = history[history.length - 1]
-      const V = p.delta * last[0] - p.gamma * Math.log(Math.max(last[0], 1e-10)) + p.beta * last[1] - p.alpha * Math.log(Math.max(last[1], 1e-10))
+      const V =
+        p.delta * last[0] -
+        p.gamma * Math.log(Math.max(last[0], 1e-10)) +
+        p.beta * last[1] -
+        p.alpha * Math.log(Math.max(last[1], 1e-10))
       const drift = V0 > 0 ? ((V - V0) / V0) * 100 : 0
-      return { label: '守恒量 V = δx − γln(x) + βy − αln(y)', drift: `${drift > 0 ? '+' : ''}${drift.toFixed(3)}%` }
+      return {
+        label: '守恒量 V = δx − γln(x) + βy − αln(y)',
+        drift: `${drift > 0 ? '+' : ''}${drift.toFixed(3)}%`,
+      }
     },
   },
 
@@ -180,12 +229,28 @@ const MODELS: ModelPreset[] = [
     description: '易感-感染-恢复三仓室模型，模拟疫情传播与群体免疫',
     equations: ['dS/dt = -βSI/N', 'dI/dt = βSI/N - γI', 'dR/dt = γI'],
     params: [
-      { key: 'beta', label: 'β 传染率', min: 0.05, max: 1.5, step: 0.01, default: 0.35, unit: '1/day' },
-      { key: 'gamma', label: 'γ 恢复率', min: 0.05, max: 0.5, step: 0.01, default: 0.1, unit: '1/day' },
+      {
+        key: 'beta',
+        label: 'β 传染率',
+        min: 0.05,
+        max: 1.5,
+        step: 0.01,
+        default: 0.35,
+        unit: '1/day',
+      },
+      {
+        key: 'gamma',
+        label: 'γ 恢复率',
+        min: 0.05,
+        max: 0.5,
+        step: 0.01,
+        default: 0.1,
+        unit: '1/day',
+      },
       { key: 'N', label: 'N 总人口', min: 100, max: 10000, step: 100, default: 1000, unit: '人' },
     ],
     stateNames: ['易感 S', '感染 I', '恢复 R'],
-    initialState: (p) => [p.N - 1, 1, 0], // [S, I, R] 初始: 1 感染者 [人]
+    initialState: p => [p.N - 1, 1, 0], // [S, I, R] 初始: 1 感染者 [人]
     step: (state, p, dt) =>
       rk4(
         state,
@@ -193,8 +258,8 @@ const MODELS: ModelPreset[] = [
           if (!pp.N || pp.N <= 0) throw new Error('SIR: N 必须为正数')
           const N = pp.N
           return [
-            -pp.beta * s[0] * s[1] / N,
-            pp.beta * s[0] * s[1] / N - pp.gamma * s[1],
+            (-pp.beta * s[0] * s[1]) / N,
+            (pp.beta * s[0] * s[1]) / N - pp.gamma * s[1],
             pp.gamma * s[1],
           ]
         },
@@ -204,10 +269,10 @@ const MODELS: ModelPreset[] = [
     render: (ctx, history, _p, w, h) => {
       drawTimeSeries(ctx, history, w, h, COLORS.series.slice(0, 3), ['S', 'I', 'R'])
     },
-    explain: (p) => {
+    explain: p => {
       const R0 = p.beta / p.gamma
       const herd = R0 > 1 ? (1 - 1 / R0) * 100 : 0
-      return `基本再生数 R₀ = β/γ = ${R0.toFixed(2)}。${R0 > 1 ? `疫情会爆发，需 ${(herd).toFixed(0)}% 群体免疫才能阻断传播` : '疫情自然消退，不会大规模爆发'}。降低 β（戴口罩/隔离）或提高 γ（早治疗）可直接压低 R₀。`
+      return `基本再生数 R₀ = β/γ = ${R0.toFixed(2)}。${R0 > 1 ? `疫情会爆发，需 ${herd.toFixed(0)}% 群体免疫才能阻断传播` : '疫情自然消退，不会大规模爆发'}。降低 β（戴口罩/隔离）或提高 γ（早治疗）可直接压低 R₀。`
     },
     verifyConservation: (history, _p) => {
       if (history.length < 2) return null
@@ -235,28 +300,31 @@ const MODELS: ModelPreset[] = [
     stateNames: ['位移 x', '速度 v'],
     initialState: () => [1, 0], // [x, v] 初始位移 1m, 初速 0 [m, m/s]
     step: (state, p, dt) =>
-      rk4(
-        state,
-        (s, pp) => [s[1], -(pp.k / pp.m) * s[0] - (pp.c / pp.m) * s[1]],
-        p,
-        dt,
-      ),
+      rk4(state, (s, pp) => [s[1], -(pp.k / pp.m) * s[0] - (pp.c / pp.m) * s[1]], p, dt),
     render: (ctx, history, _p, w, h) => {
       drawPhasePortrait(ctx, history, w, h, COLORS.series[0], COLORS.series[1])
     },
-    explain: (p) => {
+    explain: p => {
       const omega0 = Math.sqrt(p.k / p.m)
       const zeta = p.c / (2 * Math.sqrt(p.k * p.m))
-      const regime = zeta < 1 ? '欠阻尼（振荡衰减）' : Math.abs(zeta - 1) < FLOAT_EPSILON ? '临界阻尼' : '过阻尼（无振荡）'
+      const regime =
+        zeta < 1
+          ? '欠阻尼（振荡衰减）'
+          : Math.abs(zeta - 1) < FLOAT_EPSILON
+            ? '临界阻尼'
+            : '过阻尼（无振荡）'
       return `固有频率 ω₀ = ${omega0.toFixed(2)} rad/s，阻尼比 ζ = ${zeta.toFixed(3)}。系统处于${regime}状态。${zeta < 1 ? `振荡频率 ωd = ${(omega0 * Math.sqrt(1 - zeta * zeta)).toFixed(2)} rad/s` : '返回平衡点最快且不振荡'}。`
     },
     verifyConservation: (history, p) => {
-      if (history.length < 2 || p.c > 0) return null  // 仅无阻尼时验证
+      if (history.length < 2 || p.c > 0) return null // 仅无阻尼时验证
       const E0 = 0.5 * p.m * history[0][1] ** 2 + 0.5 * p.k * history[0][0] ** 2
       const last = history[history.length - 1]
       const E = 0.5 * p.m * last[1] ** 2 + 0.5 * p.k * last[0] ** 2
       const drift = E0 > 0 ? ((E - E0) / E0) * 100 : 0
-      return { label: '机械能 E = ½mv² + ½kx²', drift: `${drift > 0 ? '+' : ''}${drift.toFixed(3)}%` }
+      return {
+        label: '机械能 E = ½mv² + ½kx²',
+        drift: `${drift > 0 ? '+' : ''}${drift.toFixed(3)}%`,
+      }
     },
   },
 
@@ -274,13 +342,12 @@ const MODELS: ModelPreset[] = [
       { key: 'P0', label: 'P₀ 初始种群', min: 1, max: 500, step: 1, default: 10, unit: '个体' },
     ],
     stateNames: ['种群 P'],
-    initialState: (p) => [p.P0],
-    step: (state, p, dt) =>
-      rk4(state, (s, pp) => [pp.r * s[0] * (1 - s[0] / pp.K)], p, dt),
+    initialState: p => [p.P0],
+    step: (state, p, dt) => rk4(state, (s, pp) => [pp.r * s[0] * (1 - s[0] / pp.K)], p, dt),
     render: (ctx, history, _p, w, h) => {
       drawTimeSeries(ctx, history, w, h, [COLORS.series[2]], ['P(t)'])
     },
-    explain: (p) => {
+    explain: p => {
       const tHalfK = (1 / p.r) * Math.log((p.K - p.P0) / p.P0)
       return `增长率 r=${p.r.toFixed(2)} 1/时间，承载力 K=${p.K}。种群从 P₀=${p.P0} 出发，约 t=${tHalfK.toFixed(1)} 时达到 K/2（拐点，增长最快）。之后增速放缓，渐近趋近 K。增大 r 使拐点提前；增大 K 抬高终值。`
     },
@@ -305,7 +372,7 @@ const MODELS: ModelPreset[] = [
     render: (ctx, _history, p, w, h) => {
       drawCayleyGraph(ctx, p.n, p.gen, p.gen2, w, h)
     },
-    explain: (p) => {
+    explain: p => {
       if (p.gen2 === 0) {
         return `Z_${p.n} 的 Cayley 图：${p.n} 个节点排成环，生成元 a=${p.gen} 对应的边连接 i → (i+${p.gen}) mod ${p.n}。每个节点恰好有一条 a-边出、一条 a-边入，形成 ${gcd(p.n, p.gen) === 1 ? '单个循环（生成元有效）' : `${Math.floor(p.n / gcd(p.n, p.gen))} 个不连通环（生成元不生成全群）`}。`
       }
@@ -550,13 +617,7 @@ function drawCayleyGraph(
   }
 }
 
-function drawArrow(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) {
+function drawArrow(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
   const dx = x2 - x1
   const dy = y2 - y1
   const len = Math.sqrt(dx * dx + dy * dy)
@@ -588,7 +649,7 @@ function drawArrow(
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
+function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
   const [modelId, setModelId] = useState(MODELS[0].id)
   const [params, setParams] = useState<Record<string, number>>(() => {
     const p: Record<string, number> = {}
@@ -657,12 +718,9 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
     model.render(ctx, history, params, w, h)
   }, [history, model, params])
 
-  const handleParamChange = useCallback(
-    (key: string, value: number) => {
-      setParams(prev => ({ ...prev, [key]: value }))
-    },
-    [],
-  )
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setParams(prev => ({ ...prev, [key]: value }))
+  }, [])
 
   const handleReset = useCallback(() => {
     stateRef.current = model.initialState(params)
@@ -901,7 +959,13 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
             📸 快照
           </button>
           <span style={{ flex: 1 }} />
-          <span style={{ fontSize: 12, color: 'var(--text-3, #888)', fontFamily: 'var(--font-mono, monospace)' }}>
+          <span
+            style={{
+              fontSize: 12,
+              color: 'var(--text-3, #888)',
+              fontFamily: 'var(--font-mono, monospace)',
+            }}
+          >
             t = {simTimeDisplay.toFixed(1)}s · {history.length} pts
           </span>
         </div>
@@ -938,18 +1002,37 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
         <div className="ml-section">
           <span
             className="ml-cat-badge"
-            style={{ background: `${categoryColors[model.category]}22`, color: categoryColors[model.category] }}
+            style={{
+              background: `${categoryColors[model.category]}22`,
+              color: categoryColors[model.category],
+            }}
           >
             {model.category}
           </span>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1, #e0e0e8)', margin: '0 0 4px' }}>
+          <p
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-1, #e0e0e8)',
+              margin: '0 0 4px',
+            }}
+          >
             {model.name} · {model.nameEn}
           </p>
-          <p style={{ fontSize: 12, color: 'var(--text-3, #888)', margin: '0 0 8px', lineHeight: 1.5 }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: 'var(--text-3, #888)',
+              margin: '0 0 8px',
+              lineHeight: 1.5,
+            }}
+          >
             {model.description}
           </p>
           {model.equations.map((eq, i) => (
-            <div key={i} className="ml-eq">{eq}</div>
+            <div key={i} className="ml-eq">
+              {eq}
+            </div>
           ))}
         </div>
 
@@ -999,7 +1082,14 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
             </button>
           </div>
           {showPrediction && prediction && (
-            <div style={{ fontSize: 12, color: 'var(--accent-2, #6a9bcc)', fontStyle: 'italic', padding: '4px 0' }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--accent-2, #6a9bcc)',
+                fontStyle: 'italic',
+                padding: '4px 0',
+              }}
+            >
               你的预测：{prediction}
             </div>
           )}
@@ -1019,7 +1109,9 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
             <div className="ml-section">
               <p className="ml-section-title">守恒律验证</p>
               <div className="ml-explain" style={{ borderLeftColor: 'var(--accent-2, #4a7c59)' }}>
-                <div style={{ fontSize: 12, color: 'var(--text-3, #888)', marginBottom: 4 }}>{cons.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3, #888)', marginBottom: 4 }}>
+                  {cons.label}
+                </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-2, #4a7c59)' }}>
                   漂移: {cons.drift}
                 </div>
@@ -1040,7 +1132,13 @@ function ModelingLabInner({ ageLevel = 'tweens' }: Props) {
                 title="点击恢复此参数集"
               >
                 <span>{entry.label}</span>
-                <span>{new Date(entry.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                <span>
+                  {new Date(entry.timestamp).toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })}
+                </span>
               </div>
             ))}
           </div>
