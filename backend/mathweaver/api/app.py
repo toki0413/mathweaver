@@ -534,7 +534,7 @@ async def nl_to_z3_translate(req: NLToZ3Request) -> dict[str, Any]:
 
     verdict = result.verdict
     if verdict == "confirmed":
-        headline = f"Z3 验证通过：猜想成立"
+        headline = "Z3 验证通过：猜想成立"
     elif verdict == "refuted":
         headline = f"Z3 找到反例：{result.counter_example}"
     else:
@@ -610,15 +610,16 @@ async def get_animation(anim_id: str) -> dict[str, Any]:
 @app.get("/api/animations/{anim_id}/video")
 async def get_animation_video(anim_id: str):
     """Stream a pre-rendered animation video file."""
-    from ..animation.pipeline import get_animation_catalog
     from fastapi.responses import FileResponse
+
+    from ..animation.pipeline import get_animation_catalog
 
     catalog = get_animation_catalog()
     anim = catalog.get(anim_id)
     if anim is None or anim.video_path is None:
         return structured_error(
             status=404,
-            headline=f"视频不可用",
+            headline="视频不可用",
             detail="该动画尚未渲染为视频。请使用 SVG 帧播放，或在安装 Manim 后重新渲染。",
         )
 

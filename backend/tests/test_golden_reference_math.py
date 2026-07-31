@@ -19,10 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from mathweaver.conjecture.known_groups import KNOWN_GROUPS, GROUP_META
 from mathweaver.conjecture.handler import _TEST_GROUPS
+from mathweaver.conjecture.known_groups import GROUP_META, KNOWN_GROUPS
 from mathweaver.conjecture.nl_translator import _KNOWN_GROUPS
-
 
 # ---------------------------------------------------------------------------
 # Independent group axiom verifier (does NOT use forge.py)

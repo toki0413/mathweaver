@@ -13,15 +13,14 @@ discrete_math, number_theory, group_theory, physics, chemistry.
 
 import json
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mathweaver.dag.concept_dag import CURRICULUM_LEVELS, DATA_DIR
-
 
 # ---------------------------------------------------------------------------
 # Curriculum loader

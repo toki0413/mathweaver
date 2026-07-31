@@ -12,6 +12,7 @@ from typing import Any
 
 from ..conjecture.handler import ConjectureHandler
 from ..counterexample.forge import CounterExampleForge
+from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from .base import AgentContext, BaseAgent
 
@@ -87,7 +88,7 @@ class CounterExampleAgent(BaseAgent):
                 # Parse LLM decision
                 selected_tools = set()
                 for tool_def in tool_defs:
-                    if tool_def["name"] in tool_resp.content:
+                    if tool_def["name"] in extract_content(tool_resp):
                         selected_tools.add(tool_def["name"])
                 if not selected_tools:
                     # LLM chose no tools — just report the table

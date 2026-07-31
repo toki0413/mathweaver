@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from .base import AgentContext, BaseAgent
 
@@ -54,7 +55,7 @@ class AbstractionAgent(BaseAgent):
             )
             return AgentMessage(
                 role=self.role,
-                content=resp.content,
+                content=extract_content(resp),
                 field_updates={},
                 tool_calls=resp.tool_calls or [],
                 confidence=0.7,

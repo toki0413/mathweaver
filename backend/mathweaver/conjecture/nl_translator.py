@@ -27,6 +27,7 @@ from ..counterexample.forge import (
     verify_group_axioms_cayley,
     z3_find_non_associative_binary_op,
 )
+from ..llm.client import extract_content
 from .known_groups import KNOWN_GROUPS
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ class NLToZ3Translator:
             temperature=0.1,
         )
 
-        content = resp.content if hasattr(resp, "content") else str(resp)
+        content = extract_content(resp)
         # Extract JSON from the response
         json_match = re.search(r"\{[^{}]*\}", content, re.DOTALL)
         if not json_match:
@@ -189,8 +190,6 @@ class NLToZ3Translator:
         Uses keyword matching to identify the conjecture's structure.
         This ensures the pipeline works offline (no API key needed).
         """
-        text_lower = text.lower()
-
         # Detect domain
         domain = "group_theory"
         if any(kw in text for kw in ["矩阵", "线性", "向量"]):
@@ -488,8 +487,8 @@ class NLToZ3Translator:
                 verdict="refuted",
                 counter_example="S₃ (3次对称群，6阶)",
                 explanation=(
-                    f"Z3 验证 S₃ 是一个群，但 S₃ 不是循环群："
-                    f"没有阶为 6 的元素（最大元素阶为 3）。"
+                    "Z3 验证 S₃ 是一个群，但 S₃ 不是循环群："
+                    "没有阶为 6 的元素（最大元素阶为 3）。"
                 ),
                 z3_level=FallbackLevel.L1_Z3.value,
                 smt_summary="Z3 Cayley 表验证: S₃ 满足群公理, 但 ∀g ∈ S₃. ord(g) < 6",

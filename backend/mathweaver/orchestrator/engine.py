@@ -13,25 +13,23 @@ State machine phases:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from ..agents.base import AgentContext
 from ..audit.exporter import AuditExporter
 from ..communication.bus import MessageBus
 from ..context import ContextMessage, TaskDecomposition
-from ..counterexample.forge import CounterExampleForge, CounterExampleResult
+from ..counterexample.forge import CounterExampleForge
 from ..dag.concept_dag import ConceptDAG, get_dag
 from ..evidence.chain import EvidenceChain
 from ..grill.adaptive import AdaptiveDifficulty
 from ..grill.encouragement import EncouragementEngine
+from ..llm.client import extract_content
 from ..models.state import (
     AgentMessage,
-    AgentRole,
-    CognitiveState,
-    EmotionalState,
     FourFieldState,
     StudentProfile,
 )
@@ -935,7 +933,6 @@ class Orchestrator:
                         )
                         next_agent_name = self.topology.exit_agent
 
-            agent = self.agents[next_agent_name]
             called_agents.add(next_agent_name)
             last_agent = next_agent_name  # 5.3: update for next iteration
             phase_name = self._agent_to_phase(next_agent_name)
@@ -1493,7 +1490,7 @@ class Orchestrator:
 
         # Parse LLM response to build decomposition
         import re
-        calls = re.findall(r"\[CALL:(\w+)\]", resp.content)
+        calls = re.findall(r"\[CALL:(\w+)\]", extract_content(resp))
         if not calls:
             # Fallback: infer from input type
             if "[[" in student_input:

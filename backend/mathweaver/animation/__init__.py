@@ -12,8 +12,8 @@ Pipeline:
 """
 
 from .pipeline import (
-    AnimationPipeline,
     AnimationCatalog,
+    AnimationPipeline,
     get_animation_catalog,
     render_all_animations,
 )

@@ -15,9 +15,7 @@ by running: ``python -m mathweaver.animation.pipeline --render``
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import subprocess
 import sys
 import tempfile
@@ -468,7 +466,7 @@ def _gen_commutativity_frames() -> list[AnimationFrame]:
             if ab != ba:
                 svg += _text(W / 2, H - 15, f"✗ {ab} ≠ {ba}  S₃ 不交换!", 16, _COLORS["err"], bold=True)
             else:
-                svg += _text(W / 2, H - 15, f"✓ 这对交换，但其他对不交换", 14, _COLORS["warn"])
+                svg += _text(W / 2, H - 15, "✓ 这对交换，但其他对不交换", 14, _COLORS["warn"])
 
         svg += _svg_footer()
         return svg
@@ -538,13 +536,13 @@ class AssociativityScene(Scene):
         self.play(Write(title))
 
         # Left side
-        left = MathTex(r"(1 \cdot 2) \cdot 0", font_size=48)
+        left = MathTex(r"(1 \\cdot 2) \\cdot 0", font_size=48)
         left.shift(LEFT * 3)
         self.play(Write(left))
         self.wait(0.5)
 
         # Compute step by step
-        left2 = MathTex(r"= 0 \cdot 0", font_size=48, color=YELLOW)
+        left2 = MathTex(r"= 0 \\cdot 0", font_size=48, color=YELLOW)
         left2.next_to(left, DOWN)
         self.play(Transform(left, left2))
         self.wait(0.5)
@@ -555,12 +553,12 @@ class AssociativityScene(Scene):
         self.wait(1)
 
         # Right side
-        right = MathTex(r"1 \cdot (2 \cdot 0)", font_size=48)
+        right = MathTex(r"1 \\cdot (2 \\cdot 0)", font_size=48)
         right.shift(RIGHT * 3)
         self.play(Write(right))
         self.wait(0.5)
 
-        right2 = MathTex(r"= 1 \cdot 0", font_size=48, color=YELLOW)
+        right2 = MathTex(r"= 1 \\cdot 0", font_size=48, color=YELLOW)
         right2.next_to(right, DOWN)
         self.play(Transform(right, right2))
         self.wait(0.5)

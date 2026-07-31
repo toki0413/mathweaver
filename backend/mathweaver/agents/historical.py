@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from ..rag.retriever import KnowledgeBase, build_default_kb
 from .base import AgentContext, BaseAgent
@@ -73,7 +74,7 @@ class HistoricalAgent(BaseAgent):
                 ),
                 user_message="\n".join(context_parts) + f"\n学生输入: {ctx.student_input}",
             )
-            history_text = resp.content
+            history_text = extract_content(resp)
 
         return AgentMessage(
             role=self.role,

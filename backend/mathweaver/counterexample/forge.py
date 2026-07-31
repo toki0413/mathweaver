@@ -12,8 +12,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from ..llm.client import extract_content
-
 from z3 import (
     If,
     Int,
@@ -21,6 +19,8 @@ from z3 import (
     Solver,
     sat,
 )
+
+from ..llm.client import extract_content
 
 
 class FallbackLevel(Enum):
@@ -475,7 +475,7 @@ class CounterExampleForge:
         return CounterExampleResult(
             success=False,
             level=FallbackLevel.L2_LLM_Z3,
-            explanation=f"L2: LLM 生成的 Cayley 表未违反猜想，需要尝试启发式验证",
+            explanation="L2: LLM 生成的 Cayley 表未违反猜想，需要尝试启发式验证",
             metadata={"llm_generated": True, "z3_verified": False},
         )
 

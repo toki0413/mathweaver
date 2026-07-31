@@ -600,9 +600,9 @@ def test_agent_exception_does_not_crash_orchestrator():
     Tests the _safe_agent_run exception isolation.
     """
     import asyncio
-    from mathweaver.orchestrator.engine import Orchestrator
-    from mathweaver.agents.base import AgentMessage, AgentContext
+
     from mathweaver.models.state import AgentRole
+    from mathweaver.orchestrator.engine import Orchestrator
 
     # Create a crashing agent
     class CrashingAgent:

@@ -31,6 +31,7 @@ import logging
 from typing import Any
 
 from ..grill.narrative import weave_for_conjecture_metadata
+from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from .base import AgentContext, BaseAgent
 
@@ -199,7 +200,7 @@ class CollaborationAgent(BaseAgent):
                 system_prompt=socratic_prompt,
                 user_message=context_summary,
             )
-            content = resp.content.replace("[DELIVER]", "").strip()
+            content = extract_content(resp).replace("[DELIVER]", "").strip()
             return AgentMessage(
                 role=self.role,
                 content=content,

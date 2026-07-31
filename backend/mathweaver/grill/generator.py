@@ -23,8 +23,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from ..models.state import ConceptNode
 from ..llm.client import extract_content
+from ..models.state import ConceptNode
 
 logger = logging.getLogger(__name__)
 

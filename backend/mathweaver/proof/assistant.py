@@ -25,7 +25,7 @@ from typing import Any
 # Z3 is an optional dependency for formal verification of group-theory theorems.
 # When unavailable, the assistant gracefully degrades to keyword-only matching.
 try:
-    from z3 import And, Function, ForAll, Int, IntSort, Solver, unsat
+    from z3 import And, ForAll, Function, Int, IntSort, Solver, unsat
     _Z3_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _Z3_AVAILABLE = False
