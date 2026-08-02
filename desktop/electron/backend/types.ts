@@ -328,6 +328,8 @@ export interface CounterExampleResult {
 export interface LLMConfig {
   /** Provider type: 'mock' | 'openai_compatible' | 'ollama' */
   provider: 'mock' | 'openai_compatible' | 'ollama'
+  /** Frontend provider type for adapter routing (web mode) */
+  providerType?: string
   /** API key for cloud providers */
   apiKey: string
   /** Base URL for API calls (e.g. https://api.deepseek.com/v1) */

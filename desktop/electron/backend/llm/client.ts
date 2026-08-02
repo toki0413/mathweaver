@@ -802,64 +802,128 @@ export interface LLMPreset {
   id: string
   label: string
   provider: LLMConfig['provider']
+  providerType: string
   baseUrl: string
   defaultModel: string
   requiresApiKey: boolean
   helpUrl: string
   description: string
+  local: boolean
 }
 
 export const LLM_PRESETS: LLMPreset[] = [
+  // --- 云端：OpenAI 兼容 ---
   {
     id: 'deepseek',
-    label: 'DeepSeek 云端 API',
+    label: 'DeepSeek',
     provider: 'openai_compatible',
+    providerType: 'openai-compatible',
     baseUrl: 'https://api.deepseek.com/v1',
     defaultModel: 'deepseek-chat',
     requiresApiKey: true,
     helpUrl: 'https://platform.deepseek.com/api_keys',
-    description: '国产高性价比大模型，推荐首选。支持中英文数学推理。',
+    description: '深度求索 · 高性价比 · 中文优秀',
+    local: false,
   },
   {
     id: 'openai',
-    label: 'OpenAI API (GPT-4o)',
+    label: 'OpenAI',
     provider: 'openai_compatible',
+    providerType: 'openai-compatible',
     baseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4o',
     requiresApiKey: true,
     helpUrl: 'https://platform.openai.com/api-keys',
-    description: 'OpenAI 官方 API，推理能力强，但需要海外网络访问。',
+    description: 'GPT-4o / GPT-4o-mini · 全面能力',
+    local: false,
   },
   {
+    id: 'moonshot',
+    label: 'Kimi (月之暗面)',
+    provider: 'openai_compatible',
+    providerType: 'openai-compatible',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    defaultModel: 'moonshot-v1-8k',
+    requiresApiKey: true,
+    helpUrl: 'https://platform.moonshot.cn/console/api-keys',
+    description: '长上下文窗口 · 中文友好',
+    local: false,
+  },
+  {
+    id: 'zhipu',
+    label: '智谱 GLM',
+    provider: 'openai_compatible',
+    providerType: 'openai-compatible',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    defaultModel: 'glm-4-flash',
+    requiresApiKey: true,
+    helpUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
+    description: 'GLM-4 系列 · 国产自研',
+    local: false,
+  },
+  {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    provider: 'openai_compatible',
+    providerType: 'openai-compatible',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    requiresApiKey: true,
+    helpUrl: 'https://openrouter.ai/keys',
+    description: '聚合 100+ 模型 · 统一接口',
+    local: false,
+  },
+  {
+    id: 'groq',
+    label: 'Groq',
+    provider: 'openai_compatible',
+    providerType: 'openai-compatible',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    defaultModel: 'llama-3.3-70b-versatile',
+    requiresApiKey: true,
+    helpUrl: 'https://console.groq.com/keys',
+    description: '超快推理 · Llama 系列',
+    local: false,
+  },
+
+  // --- 本地 ---
+  {
     id: 'ollama',
-    label: '本地 Ollama 模型',
+    label: 'Ollama (本地)',
     provider: 'ollama',
+    providerType: 'ollama',
     baseUrl: 'http://localhost:11434/v1',
     defaultModel: 'qwen2.5:7b',
     requiresApiKey: false,
     helpUrl: 'https://ollama.com/download',
-    description: '完全离线运行，无需 API Key。需要先安装 Ollama 并拉取模型。',
+    description: '本地运行 · 隐私优先 · 免费',
+    local: true,
   },
   {
     id: 'lmstudio',
-    label: 'LM Studio 本地模型',
+    label: 'LM Studio (本地)',
     provider: 'ollama',
+    providerType: 'openai-compatible',
     baseUrl: 'http://localhost:1234/v1',
     defaultModel: 'local-model',
     requiresApiKey: false,
     helpUrl: 'https://lmstudio.ai/',
-    description: 'LM Studio 本地推理服务，兼容 OpenAI API 格式。',
+    description: '本地 GGUF 模型 · OpenAI 兼容',
+    local: true,
   },
+
+  // --- 演示 ---
   {
-    id: 'custom',
-    label: '自定义 OpenAI 兼容端点',
-    provider: 'openai_compatible',
+    id: 'mock',
+    label: '演示模式',
+    provider: 'mock',
+    providerType: 'openai-compatible',
     baseUrl: '',
-    defaultModel: '',
-    requiresApiKey: true,
+    defaultModel: 'demo',
+    requiresApiKey: false,
     helpUrl: '',
-    description:
-      '任何兼容 OpenAI Chat Completions API 格式的服务端点（vLLM、LiteLLM、Azure OpenAI 等）。',
+    description: '无需配置 · 离线演示',
+    local: false,
   },
 ]
 

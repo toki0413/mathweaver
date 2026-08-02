@@ -62,6 +62,7 @@ interface MathWeaverAPI {
     config: Record<string, unknown>,
   ): Promise<{ success: boolean; config: Record<string, unknown> } | null>
   getLLMPresets(): Promise<Record<string, unknown>[] | null>
+  testLLMConnection(): Promise<{ ok: boolean; message: string; latencyMs?: number } | null>
   getSetting(key: string): Promise<unknown>
   setSetting(key: string, value: unknown): Promise<boolean | null>
   isOnboardingComplete(): Promise<boolean | null>

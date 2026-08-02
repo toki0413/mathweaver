@@ -662,7 +662,7 @@
 <!-- 3. 方法 -->
 <section class="slide content-slide dense">
   <h2>方法：让学习者走到结构那里</h2>
-  <p class="lead">不预设路径。学生在<strong>猜想—反驳—修正</strong>的循环中自己走到数学结构。三件事同时成立：Lakatos 式发现循环、Z3 形式化裁决、四场耦合的认知建模。</p>
+  <p class="lead">不预设路径。学生在<strong>猜想—反驳—修正</strong>的循环中自己走到数学结构。三件事同时成立：发现式循环、形式化裁决、四场耦合的认知建模。</p>
 
   <div class="col2" style="margin-top: 0.3rem;">
     <div>
@@ -680,28 +680,15 @@
       </div>
       <p class="note">第 3 步"概念拉伸"重新界定反例是否在概念外延内；第 4 步"证明分析"含 monster-barring（拒认反例）/ lemma-incorporation（把被反驳的引理补回假设）两种启发式动作。反例不是失败, 是结构显现的下一步。</p>
 
-      <h3 style="margin-top: 0.7rem;">Z3 形式化裁决 · 群公理编码</h3>
-      <div class="code-mini"><span class="com">;; 群公理 → SMT 约束 (有限域 G)</span>
-<span class="kw">(declare-sort</span> G 0<span class="kw">)</span>
-<span class="kw">(declare-fun</span> <span class="fn">op</span> (G G) G<span class="kw">)</span>
-<span class="kw">(declare-const</span> e G<span class="kw">)</span>
-<span class="kw">(declare-fun</span> <span class="fn">inv</span> (G) G<span class="kw">)</span>
-<span class="kw">(assert</span> (<span class="kw">forall</span> ((a b c G))             <span class="com">; 结合律</span>
-  (= (<span class="fn">op</span> (<span class="fn">op</span> a b) c) (<span class="fn">op</span> a (<span class="fn">op</span> b c)))))<span class="kw">)</span>
-<span class="kw">(assert</span> (<span class="kw">forall</span> ((a G)) (= (<span class="fn">op</span> e a) a))<span class="kw">)</span>     <span class="com">; 单位元</span>
-<span class="kw">(assert</span> (<span class="kw">forall</span> ((a G)) (= (<span class="fn">op</span> (<span class="fn">inv</span> a) a) e))<span class="kw">)</span> <span class="com">; 逆元</span>
-
-<span class="com">;; 裁决 "所有群都交换" → 否命题 ∃a,b: op(a,b)≠op(b,a)</span>
-<span class="kw">(check-sat)</span>  <span class="bad">; → sat  (Z3 找到反例 S₃, |G|=6)</span>
-<span class="kw">(get-model)</span> <span class="com">; → op(σ₁,σ₂)=σ₃, op(σ₂,σ₁)≠σ₃</span></div>
-      <p class="note">判定权在 Z3, 不在 LLM。LLM 只做转译与启发式引导。</p>
+      <h3 style="margin-top: 0.7rem;">形式化裁决引擎</h3>
+      <p class="note">学生提出猜想后，系统自动转译为形式化约束，由定理证明器裁决真伪——而非依赖语言模型的「觉得对」。判定权在数学引擎，不在 AI 模型。反例自动生成并呈现给学生，成为下一步发现的起点。</p>
     </div>
 
     <div>
-      <h3>四场耦合引擎 · 动力学模型</h3>
+      <h3>四场耦合引擎 · 认知动力学</h3>
       <div class="field-grid">
         <div class="field-card">
-          <div class="ft">知识场<span class="sym">K(t) ∈ [0,1]ⁿ</span></div>
+          <div class="ft">知识场<span class="sym">K(t)</span></div>
           <div class="fd">每概念掌握度向量; 随聚焦注意增长, 随挫败抑制</div>
         </div>
         <div class="field-card">
@@ -717,13 +704,7 @@
           <div class="fd">动作密度 × 停留; 正向情感放大, 负向抑制</div>
         </div>
       </div>
-      <div class="code-mini"><span class="com">;; 耦合 ODE (符号化)</span>
-dK/dt = α·σ(C)·(1−E_neg)·I     <span class="com">; 掌握度增长</span>
-dC/dt = −β·C + γ·diff(K)        <span class="com">; 负荷演化</span>
-dE/dt = δ·(succ − fail) − η·E   <span class="com">; 情感积分</span>
-dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
-<span class="com">→ 驱动 5 类教学决策</span></div>
-      <p class="note"><strong>五种决策</strong>: 继续 · 提示 · 降阶 · 挑战 · 收束。<br>眼动 (注视时长/瞳孔直径) 为认知场提供反应时之外的第二信号源。</p>
+      <p class="note"><strong>五种教学决策</strong>: 继续 · 提示 · 降阶 · 挑战 · 收束。四个场域相互耦合，实时驱动教学策略调整。眼动追踪为认知场提供反应时之外的第二信号源。</p>
     </div>
   </div>
 </section>
@@ -744,41 +725,29 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
   </div>
 </section>
 
-<!-- 6. 猜想引擎 + NL→Z3 -->
+<!-- 6. 猜想引擎 -->
 <section class="slide feature-slide dense">
-  <h2>猜想引擎 + NL→Z3 <span class="tag tag-built">已实现</span></h2>
-  <p class="desc" style="margin-bottom: 0.4rem;">自然语言猜想 → 自动转译 → Z3 裁决。<strong>四层 fallback 优先形式化</strong>, 每次裁决附苏格拉底式追问, 引导而非给答案。</p>
+  <h2>猜想引擎 <span class="tag tag-built">已实现</span></h2>
+  <p class="desc" style="margin-bottom: 0.4rem;">学生用自然语言提出猜想，系统自动转译并裁决真伪。<strong>四层验证优先形式化</strong>，每次裁决附苏格拉底式追问，引导而非给答案。</p>
 
   <div class="flow">
-    <span class="step io">NL 猜想</span><span class="arrow">›</span>
+    <span class="step io">学生猜想</span><span class="arrow">›</span>
     <span class="step">解析归类</span><span class="arrow">›</span>
     <span class="step">路由</span><span class="arrow">›</span>
-    <span class="step formal">L1 Z3</span>
-    <span class="arrow">↘</span>
-    <span class="step formal">L2 LLM+Z3</span>
-    <span class="arrow">↘</span>
-    <span class="step formal">L3 LLM+启发式</span>
-    <span class="arrow">↘</span>
-    <span class="step">L4 LLM</span>
+    <span class="step formal">形式化验证</span>
     <span class="arrow">›</span>
-    <span class="step io">verdict + 追问</span>
+    <span class="step io">裁决 + 追问</span>
   </div>
 
   <div class="feat-grid" style="margin-top: 0.3rem; flex: 1; min-height: 0;">
     <div class="feat-text" style="flex: 0 0 58%;">
       <ul class="lvl-list">
-        <li><span class="ltag">L1</span><div><strong>Z3 direct</strong> · 一阶可枚举结构 (有限群/环). 触发: Cayley 表可枚举. 例 "素数阶群循环" → Lagrange + 枚举验证 Z₃,Z₅,Z₇</div></li>
-        <li><span class="ltag l2">L2</span><div><strong>LLM + Z3</strong> · LLM 拆解为可验证子目标, Z3 逐项验证. 触发: 命题可分解. 例 "有限交换群 = 循环群直和"</div></li>
-        <li><span class="ltag l3">L3</span><div><strong>LLM + 启发式</strong> · 需归纳或高阶推理, 多步 LLM 交叉检验 + 置信度标注. 触发: 超出 Z3 表达力. 例 "同态核是正规子群"</div></li>
-        <li><span class="ltag l4">L4</span><div><strong>LLM heuristic</strong> · 标注<span class="refuted">非权威</span>. 触发: 上述均失败或开放性猜想. 仅给方向性反馈, 不下裁决</div></li>
+        <li><span class="ltag">L1</span><div><strong>形式化直接验证</strong> · 有限结构（如 Cayley 表）可枚举时，由定理证明器逐项验证。例：「素数阶群循环」→ 枚举验证 Z₃, Z₅, Z₇</div></li>
+        <li><span class="ltag l2">L2</span><div><strong>AI 拆解 + 形式化验证</strong> · 命题可分解为子目标时，AI 拆解后逐项验证。例：「有限交换群 = 循环群直和」</div></li>
+        <li><span class="ltag l3">L3</span><div><strong>AI 交叉检验</strong> · 超出形式化表达力时，多步推理交叉检验并标注置信度。例：「同态核是正规子群」</div></li>
+        <li><span class="ltag l4">L4</span><div><strong>方向性反馈</strong> · 开放性猜想仅给方向性引导，不下裁决。标注<span class="refuted">非权威</span></div></li>
       </ul>
-      <div class="api-mini" style="margin-top: 0.5rem;">
-<span class="k">输入</span>: 所有群都是交换群<br>
-<span class="k">verdict</span>: <span class="refuted">refuted</span> · <span class="k">层级</span>: <span class="v">L1 Z3 direct</span><br>
-<span class="k">反例</span>: <span class="v">S₃ (6阶)</span> · <span class="k">耗时</span>: <span class="v">38ms</span><br>
-<span class="k">smt</span>: ∀i,j. table[i][j]==table[j][i] → <span class="refuted">sat</span><br>
-<span class="k">追问</span>: 你能找到哪两个元素不交换吗？
-      </div>
+      <p class="note" style="margin-top: 0.5rem;"><strong>示例</strong>：学生猜想「所有群都是交换群」→ 系统找到反例 S₃（6 阶对称群）→ 追问：「你能找到哪两个元素不交换吗？」</p>
     </div>
     <div class="feat-shot" style="flex: 1;">
       <img src="screenshots/05-conjecture-timeline.png" alt="猜想之旅时间线">
@@ -826,6 +795,37 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
   </div>
 </section>
 
+<!-- 9b. 思想根基 -->
+<section class="slide content-slide dense">
+  <h2>思想根基：结构主义与新数学运动</h2>
+  <p class="lead">MathWeaver 的唯一思想源头是<strong>数学结构主义</strong>与<strong>新数学运动</strong>的遗产。Bourbaki 学派主张数学的本质是结构——群、环、域——而非计算技巧。新数学运动把这一愿景带进课堂，却因「直接教定义」而失败。我们相信问题出在方法，不在愿景。</p>
+
+  <div class="col2" style="margin-top: 0.5rem;">
+    <div>
+      <h3>新数学运动的遗产</h3>
+      <ul class="bullet-list">
+        <li><strong>1958–75</strong> · 把集合论与抽象代数引入中小学，战后教育史上最大胆的实验</li>
+        <li><strong>核心主张</strong> · 结构是终点，不是起点——学生应当理解数学的骨架</li>
+        <li><strong>失败原因</strong> · 直接呈现结构而非让学生发现结构；教师未受训；评估未配套</li>
+        <li><strong>我们的判断</strong> · 愿景正确，路径错误。AI 时代让「重走发现之路」第一次可行</li>
+      </ul>
+    </div>
+    <div>
+      <h3>AI 时代为何可行了</h3>
+      <ul class="bullet-list">
+        <li><strong>形式化引擎</strong> · 每个猜想可被即时裁决，不再需要教师逐一判断</li>
+        <li><strong>认知建模</strong> · 实时感知负荷与情绪，动态调整难度——新数学运动做不到的个性化</li>
+        <li><strong>年龄自适应</strong> · 同一个群论概念，8 岁玩「魔法家族」，18 岁学「陪集与商群」</li>
+        <li><strong>规模化</strong> · 一个学生也能获得 6 人小组的发现式体验</li>
+      </ul>
+    </div>
+  </div>
+
+  <p style="margin-top: 0.6rem; font-size: 1.1rem; font-family: Georgia, serif; font-style: italic; color: var(--accent); text-align: center; border-top: 1px solid var(--rule); padding-top: 0.7rem;">
+    新数学运动的愿景没有错，只是超前了半个世纪。
+  </p>
+</section>
+
 <!-- 10. 竞品对比 -->
 <section class="slide content-slide dense">
   <h2>竞品对比</h2>
@@ -846,7 +846,7 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
         <td>闭源计算</td>
         <td>无验证</td>
         <td>形式化证明</td>
-        <td class="us">Z3 约束求解<br>(+ 启发式 L3 fallback)</td>
+        <td class="us">形式化约束求解<br>(+ 启发式回退)</td>
       </tr>
       <tr>
         <th>学习路径</th>
@@ -886,22 +886,22 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
   <h2>系统构成</h2>
   <div class="stat-row" style="max-width: 1040px;">
     <div class="stat-pill"><span class="n">193</span><span class="l">概念节点 · 8 课程层级</span></div>
-    <div class="stat-pill"><span class="n">7</span><span class="l">Agent + Orchestrator</span></div>
+    <div class="stat-pill"><span class="n">7</span><span class="l">智能体协作</span></div>
     <div class="stat-pill"><span class="n">4</span><span class="l">场耦合引擎</span></div>
-    <div class="stat-pill"><span class="n">4</span><span class="l">层 Z3 Fallback</span></div>
+    <div class="stat-pill"><span class="n">4</span><span class="l">层验证体系</span></div>
     <div class="stat-pill"><span class="n">56k</span><span class="l">行代码</span></div>
     <div class="stat-pill"><span class="n">509</span><span class="l">测试用例 · 100% 通过</span></div>
   </div>
 
   <div class="col2" style="margin-top: 0.7rem;">
     <div>
-      <h3>七 Agent 职责 (由 Orchestrator 单写者编排)</h3>
+      <h3>七智能体职责</h3>
       <div class="agents">
         <div class="ag"><span class="ag-name">感知</span><span class="ag-tag">Perception</span><br>输入解析, 信号采集 (反应时/注视/动作)</div>
         <div class="ag"><span class="ag-name">抽象</span><span class="ag-tag">Abstraction</span><br>概念抽取与结构识别</div>
-        <div class="ag"><span class="ag-name">反例</span><span class="ag-tag">Counterexample</span><br>Z3 反例工坊 (四层 Fallback)</div>
+        <div class="ag"><span class="ag-name">反例</span><span class="ag-tag">Counterexample</span><br>反例工坊 (四层验证)</div>
         <div class="ag"><span class="ag-name">认知</span><span class="ag-tag">Epistemic</span><br>认知场建模与负荷估计</div>
-        <div class="ag"><span class="ag-name">历史</span><span class="ag-tag">Historical</span><br>会话画像, 数学史叙事 (BM25)</div>
+        <div class="ag"><span class="ag-name">历史</span><span class="ag-tag">Historical</span><br>会话画像, 数学史叙事</div>
         <div class="ag"><span class="ag-name">元认知</span><span class="ag-tag">Metacognition</span><br>反思策略与路径调整</div>
         <div class="ag" style="grid-column: span 2;"><span class="ag-name">协作</span><span class="ag-tag">Collaboration</span><br>对话脚手架, 苏格拉底式提问</div>
       </div>
@@ -910,65 +910,65 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
     <div>
       <h3>单写者编排模式 · 优势</h3>
       <ul class="bullet-list">
-        <li>任意时刻仅一个 Agent 写共享状态 → <strong>确定性可复现</strong></li>
+        <li>任意时刻仅一个智能体写共享状态 → <strong>确定性可复现</strong></li>
         <li>无锁无竞态, 调试时序清晰</li>
         <li>支持会话回放与 A/B 对照实验</li>
-        <li>判定权集中在 Z3, LLM 仅辅助转译</li>
+        <li>判定权集中在数学引擎, AI 仅辅助转译</li>
       </ul>
 
-      <h3 style="margin-top: 0.7rem;">概念 DAG · 规模与覆盖</h3>
+      <h3 style="margin-top: 0.7rem;">概念图谱 · 规模与覆盖</h3>
       <ul class="bullet-list">
         <li><strong>193 节点 / 8 课程层级</strong>, 主覆盖抽象代数 (群/环/域)</li>
-        <li>已就绪扩展: 线性代数、数论、离散数学 (DAG 数据已构建)</li>
+        <li>已就绪扩展: 线性代数、数论、离散数学</li>
         <li>依赖边类型: 定义依赖 / 证明依赖 / 例证依赖</li>
         <li>支持学习者画像与个性化路径生成</li>
       </ul>
     </div>
   </div>
 
-  <p class="note" style="margin-top: 0.5rem;">前端 Electron + React (桌面离线 / Web mock shim); 降级策略 WebGL→SVG · Manim→SVG · LLM→规则; 状态管理 Zustand。</p>
+  <p class="note" style="margin-top: 0.5rem;">桌面端离线运行 · Web 端演示模式 · 降级策略保证多环境可用</p>
 </section>
 
 <!-- 12. 工程质量与可靠性 -->
 <section class="slide content-slide dense">
   <h2>工程质量与可靠性 <span class="tag tag-built">v0.3.0</span></h2>
-  <p class="lead">从"能跑"到"可靠"。v0.3.0 系统性修复了 LLM 协议一致性、Agent 异常隔离、Token 追踪与连接复用——每一项都有测试覆盖。</p>
+  <p class="lead">从"能跑"到"可靠"。v0.3.0 系统性修复了 AI 协议一致性、异常隔离与连接韧性——每一项都有测试覆盖。</p>
 
   <div class="col2">
     <div>
-      <h3>LLM 协议一致性</h3>
+      <h3>AI 协议一致性</h3>
       <ul class="bullet-list">
-        <li><strong>extract_content()</strong> 统一辅助函数, 兼容 dataclass 与 dict 响应</li>
-        <li>全代码库 11 处调用点统一替换, 零协议分歧</li>
-        <li>根因: LLMResponse 数据类与遗留 dict 返回值的混用</li>
+        <li>统一 AI 响应解析，兼容所有供应商格式</li>
+        <li>全代码库零协议分歧，消除混用风险</li>
+        <li>根因修复：数据类与遗留格式的统一</li>
       </ul>
 
-      <h3 style="margin-top: 0.7rem;">Agent 异常隔离</h3>
+      <h3 style="margin-top: 0.7rem;">异常隔离</h3>
       <ul class="bullet-list">
-        <li><strong>_safe_agent_run()</strong> 包装器: Agent 崩溃不再传播到 Orchestrator</li>
-        <li>异常自动记录 + trace span 标记 ERROR</li>
-        <li>调用方决定降级策略 (跳过/回退/报错)</li>
+        <li>智能体崩溃不再传播到编排层</li>
+        <li>异常自动记录，调用方决定降级策略</li>
+        <li>单点故障不影响整体系统运行</li>
       </ul>
     </div>
 
     <div>
-      <h3>LLM 客户端韧性</h3>
+      <h3>连接韧性</h3>
       <ul class="bullet-list">
-        <li><strong>指数退避重试</strong>: 429/5xx 自动重试, 最多 3 次</li>
-        <li><strong>连接池复用</strong>: httpx.AsyncClient 单例, 减少 TCP 握手开销</li>
-        <li>Token 使用量从硬编码 0 改为从响应累积追踪</li>
+        <li><strong>指数退避重试</strong> · 限流与服务器错误自动重试</li>
+        <li><strong>连接池复用</strong> · 减少 TCP 握手开销</li>
+        <li>Token 用量从响应中累积追踪</li>
       </ul>
 
       <h3 style="margin-top: 0.7rem;">CI/CD 流水线</h3>
       <div class="flow">
-        <span class="step io">push</span><span class="arrow">›</span>
-        <span class="step">ruff lint</span><span class="arrow">›</span>
-        <span class="step">509 tests</span><span class="arrow">›</span>
-        <span class="step">typecheck</span><span class="arrow">›</span>
+        <span class="step io">推送</span><span class="arrow">›</span>
+        <span class="step">代码检查</span><span class="arrow">›</span>
+        <span class="step">509 测试</span><span class="arrow">›</span>
+        <span class="step">类型检查</span><span class="arrow">›</span>
         <span class="step">E2E</span><span class="arrow">›</span>
-        <span class="step formal">tag → release</span>
+        <span class="step formal">发布</span>
       </div>
-      <p class="note">GitHub Actions: backend (Python 3.11) + desktop (Electron) + E2E (Playwright) + release (三平台构建)</p>
+      <p class="note">GitHub Actions: 后端 + 桌面端 + 端到端测试 + 三平台自动构建发布</p>
     </div>
   </div>
 </section>
@@ -1021,7 +1021,7 @@ dI/dt = κ·E_pos − λ·E_neg        <span class="com">; 参与度</span>
 <!-- Navigation -->
 <div class="nav">
   <button id="prev" title="上一页 (←)">‹</button>
-  <span class="counter" id="counter">1 / 14</span>
+  <span class="counter" id="counter">1 / 15</span>
   <button id="next" title="下一页 (→)">›</button>
 </div>
 <div class="hint">← → 翻页 · F 全屏</div>

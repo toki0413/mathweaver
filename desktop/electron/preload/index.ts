@@ -33,6 +33,7 @@ const INVOKE_CHANNELS = [
   'settings:get-llm-config',
   'settings:set-llm-config',
   'settings:get-llm-presets',
+  'settings:test-llm-connection',
   'settings:is-onboarding-complete',
   'settings:set-onboarding-complete',
   // File
@@ -128,6 +129,7 @@ const api = {
   getLLMConfig: () => safeInvoke('settings:get-llm-config'),
   setLLMConfig: (config: Record<string, unknown>) => safeInvoke('settings:set-llm-config', config),
   getLLMPresets: () => safeInvoke('settings:get-llm-presets'),
+  testLLMConnection: () => safeInvoke('settings:test-llm-connection'),
   getSetting: (key: string) => safeInvoke('settings:get', key),
   setSetting: (key: string, value: unknown) => safeInvoke('settings:set', key, value),
   isOnboardingComplete: () => safeInvoke('settings:is-onboarding-complete'),

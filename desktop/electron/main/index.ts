@@ -552,6 +552,10 @@ safeIpcHandleSync('settings:get-llm-presets', () => {
   return LLM_PRESETS
 })
 
+safeIpcHandle('settings:test-llm-connection', async () => {
+  return backend.testLLMConnection()
+})
+
 safeIpcHandleSync('settings:is-onboarding-complete', () => {
   return store.get('settings.onboardingCompleted')
 })

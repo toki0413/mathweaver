@@ -89,6 +89,45 @@ class Backend {
     return { ...this.llmConfig }
   }
 
+  /**
+   * Test the current LLM connection by sending a simple ping message.
+   * Returns latency and status info.
+   */
+  async testLLMConnection(): Promise<{ ok: boolean; message: string; latencyMs?: number }> {
+    const start = Date.now()
+    try {
+      if (!this.llmClient) {
+        return { ok: false, message: 'LLM 客户端未初始化' }
+      }
+      if (!this.llmClient.isConfigured) {
+        return { ok: true, message: '演示模式正常运行中（Mock）' }
+      }
+      const resp = await this.llmClient.chat(
+        'You are a test endpoint. Respond with exactly: ok',
+        'Say "ok" in one word.',
+        undefined,
+        0.1,
+      )
+      const latency = Date.now() - start
+      if (resp.content && resp.content.length > 0) {
+        return {
+          ok: true,
+          message: `连接成功 · ${latency}ms · ${this.llmConfig.model}`,
+          latencyMs: latency,
+        }
+      }
+      return { ok: false, message: '返回内容为空' }
+    } catch (e) {
+      const latency = Date.now() - start
+      const errMsg = e instanceof Error ? e.message : String(e)
+      return {
+        ok: false,
+        message: `连接失败 (${latency}ms): ${errMsg.substring(0, 120)}`,
+        latencyMs: latency,
+      }
+    }
+  }
+
   get isReady(): boolean {
     return this.initialized && this.orchestrator !== null
   }

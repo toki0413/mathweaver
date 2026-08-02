@@ -67,15 +67,18 @@ interface LLMPreset {
   id: string
   label: string
   provider: string
+  providerType: string
   baseUrl: string
   defaultModel: string
   requiresApiKey: boolean
   helpUrl: string
   description: string
+  local: boolean
 }
 
 interface LLMConfig {
   provider: string
+  providerType: string
   apiKey: string
   baseUrl: string
   model: string
@@ -294,6 +297,7 @@ interface SessionState {
   fetchLLMConfig: () => Promise<void>
   saveLLMConfig: (config: Partial<LLMConfig>) => Promise<void>
   fetchLLMPresets: () => Promise<void>
+  testLLMConnection: () => Promise<{ ok: boolean; message: string; latencyMs?: number }>
 
   // Onboarding
   checkOnboarding: () => Promise<void>
@@ -889,6 +893,19 @@ export const useStore = create<SessionState>()(
               timestamp: Date.now(),
             },
           })
+        }
+      },
+
+      testLLMConnection: async () => {
+        try {
+          const api = getAPI()
+          if (!api) return { ok: false, message: 'API 不可用' }
+          const result = await api.testLLMConnection()
+          if (!result) return { ok: false, message: '无响应' }
+          return result as { ok: boolean; message: string; latencyMs?: number }
+        } catch (e) {
+          console.error('LLM connection test failed:', e)
+          return { ok: false, message: String(e).substring(0, 150) }
         }
       },
 

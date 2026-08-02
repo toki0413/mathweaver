@@ -90,6 +90,17 @@ const ModelingLab = lazy(() =>
   import('./components/ModelingLab').then(m => ({ default: m.ModelingLab })),
 )
 
+// --- Structuralism & New Math inspired components (code-split for lazy loading) ---
+const WarmupPuzzles = lazy(() =>
+  import('./components/WarmupPuzzles').then(m => ({ default: m.WarmupPuzzles })),
+)
+const RubiksCubeGroup = lazy(() =>
+  import('./components/RubiksCubeGroup').then(m => ({ default: m.RubiksCubeGroup })),
+)
+const ProblemInvention = lazy(() =>
+  import('./components/ProblemInvention').then(m => ({ default: m.ProblemInvention })),
+)
+
 // Type-only import for the Step type (erased at compile time, no runtime cost)
 import type { Step as SolverStep } from './components/VisualStepSolver'
 
@@ -857,6 +868,23 @@ export default function App() {
         {mode === 'chat' && (
           <div className="main-grid mode-enter" key="chat-mode">
             <div className="main-col">
+              {/* --- Daily Warm-up Puzzle --- */}
+              <div className="section-group">
+                <div className="section-group-label">今日热身</div>
+                <CollapsibleSection
+                  title={isKidsMode ? '🧩 每日脑力热身' : '每日热身谜题'}
+                  hint="逻辑 · 物理 · 数学 · 语言"
+                  defaultOpen={true}
+                >
+                  <p className="desc">
+                    {isKidsMode
+                      ? '每天一道有趣的脑筋急转弯！先自己想想，再看提示和答案。'
+                      : '承结构主义传统：每堂课以热身谜题开场，训练代数思维所需的底层能力。'}
+                  </p>
+                  <WarmupPuzzles ageLevel={ageLevel} />
+                </CollapsibleSection>
+              </div>
+
               {/* --- Primary: Conversation --- */}
               <div className="section-group">
                 <div className="section-group-label">对话</div>
@@ -1099,6 +1127,20 @@ export default function App() {
                     <ManimPlayer />
                   </CollapsibleSection>
                 )}
+
+                {/* 魔方群论实验室 — 交换子与非交换性 */}
+                <CollapsibleSection
+                  title={isKidsMode ? '🧊 魔方魔法实验室' : '魔方群论实验室'}
+                  hint={isKidsMode ? '转一转魔方' : '交换子 · 非交换性 · 置换群'}
+                  defaultOpen={false}
+                >
+                  <p className="desc">
+                    {isKidsMode
+                      ? '魔方不只是玩具！转一下看看两个动作交换顺序后结果一样不一样。'
+                      : '用魔方直观演示置换群的交换子 [A,B] = A·B·A⁻¹·B⁻¹，理解非交换性。'}
+                  </p>
+                  <RubiksCubeGroup ageLevel={ageLevel} />
+                </CollapsibleSection>
               </div>
 
               {/* --- Secondary: Auxiliary Tools --- */}
@@ -1174,6 +1216,23 @@ export default function App() {
                     <WhiteboardPad height={240} />
                   </CollapsibleSection>
                 )}
+              </div>
+
+              {/* --- 问题发明 --- */}
+              <div className="section-group">
+                <div className="section-group-label">{isKidsMode ? '我的发现' : '问题发明'}</div>
+                <CollapsibleSection
+                  title={isKidsMode ? '✨ 发明你自己的数学问题！' : '发明新问题并首次解决'}
+                  hint={isKidsMode ? '当一个小数学家' : '良构检查 · 新颖性检验 · 保存'}
+                  defaultOpen={false}
+                >
+                  <p className="desc">
+                    {isKidsMode
+                      ? '你也能发明数学问题！写下你的发现，系统会帮你检查它是不是一个新的好问题。'
+                      : '承结构主义理念：不再只是解题，而是发明新问题并成为第一个解决它的人。'}
+                  </p>
+                  <ProblemInvention ageLevel={ageLevel} />
+                </CollapsibleSection>
               </div>
             </div>
 

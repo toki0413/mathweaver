@@ -11,8 +11,8 @@ type TestState = 'idle' | 'testing' | 'success' | 'error'
 /**
  * LLM 模型配置面板 —— 从右侧滑入的抽屉。
  *
- * 数据来源：store.llmConfig / store.llmPresets。
- * 打开时自动拉取配置与预设，选中预设会自动填充表单字段。
+ * 支持云端模型 (DeepSeek, OpenAI, Claude, Gemini, Kimi, GLM, Groq, OpenRouter)
+ * 和本地模型 (Ollama, LM Studio) 的统一配置。
  */
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const llmConfig = useStore(s => s.llmConfig)
@@ -20,8 +20,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const fetchLLMConfig = useStore(s => s.fetchLLMConfig)
   const fetchLLMPresets = useStore(s => s.fetchLLMPresets)
   const saveLLMConfig = useStore(s => s.saveLLMConfig)
+  const testLLMConnection = useStore(s => s.testLLMConnection)
 
   const [provider, setProvider] = useState('')
+  const [providerType, setProviderType] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
@@ -45,50 +47,78 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     setSaveMessage('')
   }, [open, fetchLLMConfig, fetchLLMPresets])
 
-  // 当配置加载后填充表单
+  // 当配置加载后填充表单（仅在 llmConfig 变化时触发，不依赖 llmPresets）
   useEffect(() => {
     if (!llmConfig) return
     setProvider(llmConfig.provider || '')
+    setProviderType(
+      ('providerType' in llmConfig
+        ? String((llmConfig as unknown as Record<string, unknown>).providerType)
+        : '') || 'openai-compatible',
+    )
     setApiKey(llmConfig.apiKey || '')
     setBaseUrl(llmConfig.baseUrl || '')
     setModel(llmConfig.model || '')
     setTemperature(typeof llmConfig.temperature === 'number' ? llmConfig.temperature : 0.7)
     setMaxTokens(typeof llmConfig.maxTokens === 'number' ? llmConfig.maxTokens : 2048)
-    setSelectedPresetId('')
   }, [llmConfig])
+
+  // 当预设列表加载后，尝试匹配当前配置到预设
+  useEffect(() => {
+    if (!llmConfig || llmPresets.length === 0) return
+    const matchedPreset = llmPresets.find(
+      p => p.provider === llmConfig.provider && p.baseUrl === llmConfig.baseUrl,
+    )
+    if (matchedPreset) {
+      setSelectedPresetId(matchedPreset.id)
+    }
+  }, [llmConfig, llmPresets])
 
   const selectedPreset = useMemo(
     () => llmPresets.find(p => p.id === selectedPresetId) || null,
     [llmPresets, selectedPresetId],
   )
 
+  // Group presets by local/cloud
+  const cloudPresets = useMemo(() => llmPresets.filter(p => !p.local), [llmPresets])
+  const localPresets = useMemo(() => llmPresets.filter(p => p.local), [llmPresets])
+
   const handlePresetSelect = (presetId: string) => {
     const preset = llmPresets.find(p => p.id === presetId)
     if (!preset) return
     setSelectedPresetId(preset.id)
     setProvider(preset.provider)
+    setProviderType(preset.providerType)
     setBaseUrl(preset.baseUrl)
     if (preset.defaultModel) setModel(preset.defaultModel)
+    // Clear test state when switching presets
+    setTestState('idle')
+    setTestMessage('')
   }
 
-  // 调用 api.health() 检查后端状态
+  // 调用真实的 LLM 连接测试
   const handleTestConnection = async () => {
     setTestState('testing')
     setTestMessage('正在测试连接...')
     try {
-      const api = window.api
-      if (!api) {
-        setTestState('error')
-        setTestMessage('IPC 桥接不可用')
-        return
-      }
-      const result = await api.health()
-      if (result) {
+      // First save the current config so the backend uses it
+      await saveLLMConfig({
+        provider,
+        providerType,
+        apiKey,
+        baseUrl,
+        model,
+        temperature,
+        maxTokens,
+      })
+      // Then test the connection
+      const result = await testLLMConnection()
+      if (result.ok) {
         setTestState('success')
-        setTestMessage('连接成功，引擎响应正常')
+        setTestMessage(result.message)
       } else {
         setTestState('error')
-        setTestMessage('引擎未响应')
+        setTestMessage(result.message)
       }
     } catch (e) {
       setTestState('error')
@@ -101,7 +131,15 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     setSaving(true)
     setSaveMessage('')
     try {
-      await saveLLMConfig({ provider, apiKey, baseUrl, model, temperature, maxTokens })
+      await saveLLMConfig({
+        provider,
+        providerType,
+        apiKey,
+        baseUrl,
+        model,
+        temperature,
+        maxTokens,
+      })
       setSaveMessage('配置已保存')
       window.setTimeout(() => setSaveMessage(''), 3000)
     } catch (e) {
@@ -115,8 +153,9 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const statusInfo = (() => {
     if (!llmConfig) return { label: '未配置', cls: 'status-pill warn' }
     const prov = (llmConfig.provider || '').toLowerCase()
-    if (prov === 'mock') return { label: 'mock 模式', cls: 'status-pill warn' }
-    return { label: '已配置', cls: 'status-pill ok' }
+    if (prov === 'mock' || prov === '') return { label: '演示模式', cls: 'status-pill warn' }
+    const model = llmConfig.model || 'unknown'
+    return { label: `${prov} · ${model}`, cls: 'status-pill ok' }
   })()
 
   // 底部统一的状态消息（成功为绿，错误为红）
@@ -141,38 +180,83 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
         </div>
 
         <div className="drawer-body">
-          <div className="section-label">预设模型</div>
-          <div className="preset-grid">
-            {llmPresets.length === 0 && (
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  color: 'var(--muted)',
-                  fontFamily: 'var(--mono)',
-                  fontSize: '11px',
-                }}
-              >
-                暂无可用预设
+          {/* --- 云端模型 --- */}
+          {cloudPresets.length > 0 && (
+            <>
+              <div className="preset-group-label">
+                <span className="preset-group-icon">☁</span>
+                云端模型
               </div>
-            )}
-            {llmPresets.map(p => (
-              <div
-                key={p.id}
-                className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
-                onClick={() => handlePresetSelect(p.id)}
-              >
-                <div className="preset-label">{p.label}</div>
-                <div className="preset-desc">{p.description}</div>
+              <div className="preset-grid">
+                {cloudPresets.map(p => (
+                  <div
+                    key={p.id}
+                    className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
+                    onClick={() => handlePresetSelect(p.id)}
+                  >
+                    <div className="preset-label">{p.label}</div>
+                    <div className="preset-desc">{p.description}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </>
+          )}
+
+          {/* --- 本地模型 --- */}
+          {localPresets.length > 0 && (
+            <>
+              <div className="preset-group-label" style={{ marginTop: '16px' }}>
+                <span className="preset-group-icon">⚙</span>
+                本地模型
+              </div>
+              <div className="preset-grid">
+                {localPresets.map(p => (
+                  <div
+                    key={p.id}
+                    className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
+                    onClick={() => handlePresetSelect(p.id)}
+                  >
+                    <div className="preset-label">{p.label}</div>
+                    <div className="preset-desc">{p.description}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {llmPresets.length === 0 && (
+            <div
+              style={{
+                color: 'var(--muted)',
+                fontFamily: 'var(--mono)',
+                fontSize: '11px',
+                padding: '12px 0',
+              }}
+            >
+              暂无可用预设，请检查应用是否正常启动
+            </div>
+          )}
+
+          <div className="section-label" style={{ marginTop: '20px' }}>
+            连接配置
           </div>
 
-          <div className="section-label">连接配置</div>
-
           <div className="form-group">
-            <label className="form-label">Provider 类型</label>
+            <label className="form-label">Provider</label>
             <div className="form-value-readonly">
-              {selectedPreset ? selectedPreset.label : provider || '—'}
+              {selectedPreset ? (
+                <>
+                  {selectedPreset.label}
+                  <span className="provider-type-badge">
+                    {providerType === 'openai-compatible' && 'OpenAI 兼容'}
+                    {providerType === 'anthropic' && 'Anthropic'}
+                    {providerType === 'gemini' && 'Gemini'}
+                    {providerType === 'ollama' && 'Ollama'}
+                  </span>
+                </>
+              ) : (
+                provider || '—'
+              )}
             </div>
           </div>
 
@@ -188,7 +272,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">API Key</label>
+            <label className="form-label">
+              API Key
+              {selectedPreset && !selectedPreset.requiresApiKey && (
+                <span className="form-hint"> (本地模型无需 Key)</span>
+              )}
+            </label>
             <div className="api-key-row">
               <input
                 className="text-input"

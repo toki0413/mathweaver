@@ -1317,6 +1317,49 @@ textarea.text-input {
   line-height: 1.4;
 }
 
+/* Preset group labels (cloud/local) */
+
+.preset-group-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preset-group-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Provider type badge in form */
+
+.provider-type-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--muted);
+  background: var(--bg3);
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* Form hint (inline) */
+
+.form-hint {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: normal;
+}
+
 /* Form fields */
 
 .form-group {
