@@ -339,8 +339,13 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
                           className={
                             'cmd-palette-item' + (selected ? ' cmd-palette-item-selected' : '')
                           }
+                          role="button"
+                          tabIndex={selected ? 0 : -1}
                           onMouseEnter={() => setSelectedIndex(idx)}
                           onClick={() => runCommand(cmd)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') runCommand(cmd)
+                          }}
                         >
                           {cmd.icon !== undefined && (
                             <span className="cmd-palette-item-icon">

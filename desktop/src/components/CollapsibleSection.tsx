@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { ChevronDownIcon } from './Icons'
 
 interface CollapsibleSectionProps {
@@ -21,6 +21,10 @@ export function CollapsibleSection({
   badge,
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen)
+  // useState 只在挂载时读一次 defaultOpen，需用 useEffect 同步外部更新
+  useEffect(() => {
+    setOpen(defaultOpen)
+  }, [defaultOpen])
   const headerRef = useRef<HTMLButtonElement>(null)
 
   const toggle = useCallback(() => {
@@ -29,7 +33,8 @@ export function CollapsibleSection({
       // When opening, scroll the header into view so the expanded content is visible
       if (next && headerRef.current) {
         requestAnimationFrame(() => {
-          headerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // block: 'nearest' 避免标题被 sticky header 遮挡
+          headerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
         })
       }
       return next
@@ -44,7 +49,16 @@ export function CollapsibleSection({
         {hint && <span className="collapsible-hint">{hint}</span>}
         {badge && <span className="collapsible-badge">{badge}</span>}
       </button>
-      {open && <div className="collapsible-body">{children}</div>}
+      <div
+        className="collapsible-content"
+        style={{
+          maxHeight: open ? '9999px' : '0px',
+          overflow: 'hidden',
+          transition: 'max-height 0.3s ease',
+        }}
+      >
+        <div className="collapsible-body">{children}</div>
+      </div>
     </div>
   )
 }

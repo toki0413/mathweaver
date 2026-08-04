@@ -22,6 +22,19 @@ interface CellPos {
   col: number
 }
 
+/**
+ * Pick a readable text color (dark ink or white) based on the luminance of the
+ * given hex background. Prevents white-on-light-color legibility issues when
+ * colorMode paints cells with light element colors.
+ */
+function getContrastColor(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.6 ? '#1a1a2e' : '#ffffff'
+}
+
 function CayleyTableBase({
   table,
   size,
@@ -34,6 +47,10 @@ function CayleyTableBase({
 }: CayleyTableProps) {
   const [focusedCell, setFocusedCell] = useState<CellPos | null>(null)
   const [hoveredCell, setHoveredCell] = useState<CellPos | null>(null)
+  // Local editing buffer so a cell's number input can be temporarily cleared
+  // (empty string) without parseInt coercing it back to 0 on every keystroke.
+  // `null` means "not editing"; the displayed value falls back to `val`.
+  const [editingCell, setEditingCell] = useState<string | null>(null)
   // Animated verification: cells being checked light up sequentially
   const [verifyAnim, setVerifyAnim] = useState<{ row: number; col: number; type: string } | null>(
     null,
@@ -49,20 +66,6 @@ function CayleyTableBase({
     hasInverses: false,
     isCommutative: false,
   })
-
-  const handleChange = useCallback(
-    (row: number, col: number, rawValue: string) => {
-      const v = parseInt(rawValue, 10)
-      onChange(row, col, Number.isNaN(v) ? 0 : v)
-    },
-    [onChange],
-  )
-
-  const handleFocus = useCallback((row: number, col: number) => {
-    setFocusedCell({ row, col })
-  }, [])
-
-  const handleBlur = useCallback(() => setFocusedCell(null), [])
 
   const handleMouseEnter = useCallback((row: number, col: number) => {
     setHoveredCell({ row, col })
@@ -258,6 +261,9 @@ function CayleyTableBase({
 
   const activeCell = focusedCell ?? hoveredCell
   const externalHighlight = highlightCell
+  // Hoist the first identity row out of the per-cell render loop — otherwise
+  // `[...identityRows][0]` is re-spread on every single cell.
+  const firstIdentityRow = identityRows.size > 0 ? [...identityRows][0] : null
 
   return (
     <>
@@ -338,7 +344,7 @@ function CayleyTableBase({
                 // inverse pair highlight — when activeProperty is 'inverses'
                 if (activeProperty === 'inverses') {
                   const inv = inverseMap.get(i)
-                  if (inv !== undefined && j === inv && table[i]?.[j] === [...identityRows][0]) {
+                  if (inv !== undefined && j === inv && table[i]?.[j] === firstIdentityRow) {
                     classes.push('cell-inverse-pair')
                   }
                   // Highlight elements without inverses
@@ -365,15 +371,27 @@ function CayleyTableBase({
                       type="number"
                       min={0}
                       max={size - 1}
-                      value={val}
-                      onChange={e => handleChange(i, j, e.target.value)}
-                      onFocus={() => handleFocus(i, j)}
-                      onBlur={handleBlur}
+                      value={
+                        editingCell !== null && focusedCell?.row === i && focusedCell?.col === j
+                          ? editingCell
+                          : String(val)
+                      }
+                      onChange={e => setEditingCell(e.target.value)}
+                      onFocus={() => {
+                        setFocusedCell({ row: i, col: j })
+                        setEditingCell(String(val))
+                      }}
+                      onBlur={() => {
+                        const n = parseInt(editingCell ?? '', 10)
+                        if (!Number.isNaN(n) && n >= 0 && n < size) onChange(i, j, n)
+                        setEditingCell(null)
+                        setFocusedCell(null)
+                      }}
                       aria-label={`元素 ${i} 与元素 ${j} 的运算结果`}
                       style={
                         colorMode
                           ? {
-                              color: '#fff',
+                              color: getContrastColor(getElementColor(val)),
                               fontWeight: 700,
                               textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                             }
@@ -474,7 +492,13 @@ function CayleyTableBase({
             cursor: 'pointer',
             opacity: activeProperty && activeProperty !== 'closure' ? 0.5 : 1,
           }}
+          role="button"
+          tabIndex={0}
           onClick={() => setActiveProperty(activeProperty === 'closure' ? null : 'closure')}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ')
+              setActiveProperty(activeProperty === 'closure' ? null : 'closure')
+          }}
           title="点击高亮无效单元格"
         >
           {isClosed ? '✓ 闭合' : '✗ 未闭合'}
@@ -485,9 +509,15 @@ function CayleyTableBase({
             cursor: 'pointer',
             opacity: activeProperty && activeProperty !== 'associativity' ? 0.5 : 1,
           }}
+          role="button"
+          tabIndex={0}
           onClick={() =>
             setActiveProperty(activeProperty === 'associativity' ? null : 'associativity')
           }
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ')
+              setActiveProperty(activeProperty === 'associativity' ? null : 'associativity')
+          }}
           title="点击高亮违反结合律的单元格"
         >
           {isAssociative ? '✓ 结合律' : '✗ 非结合律'}
@@ -498,7 +528,13 @@ function CayleyTableBase({
             cursor: 'pointer',
             opacity: activeProperty && activeProperty !== 'identity' ? 0.5 : 1,
           }}
+          role="button"
+          tabIndex={0}
           onClick={() => setActiveProperty(activeProperty === 'identity' ? null : 'identity')}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ')
+              setActiveProperty(activeProperty === 'identity' ? null : 'identity')
+          }}
           title="点击高亮单位元"
         >
           {identityRows.size > 0 ? `✓ 单位元=${[...identityRows][0]}` : '✗ 无单位元'}
@@ -509,7 +545,13 @@ function CayleyTableBase({
             cursor: 'pointer',
             opacity: activeProperty && activeProperty !== 'inverses' ? 0.5 : 1,
           }}
+          role="button"
+          tabIndex={0}
           onClick={() => setActiveProperty(activeProperty === 'inverses' ? null : 'inverses')}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ')
+              setActiveProperty(activeProperty === 'inverses' ? null : 'inverses')
+          }}
           title="点击高亮逆元对"
         >
           {hasInverses
@@ -522,9 +564,15 @@ function CayleyTableBase({
             cursor: 'pointer',
             opacity: activeProperty && activeProperty !== 'commutativity' ? 0.5 : 1,
           }}
+          role="button"
+          tabIndex={0}
           onClick={() =>
             setActiveProperty(activeProperty === 'commutativity' ? null : 'commutativity')
           }
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ')
+              setActiveProperty(activeProperty === 'commutativity' ? null : 'commutativity')
+          }}
           title="点击高亮不交换的对称对"
         >
           {isCommutative ? '✓ 交换律' : '✗ 非交换'}

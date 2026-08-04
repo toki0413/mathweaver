@@ -363,7 +363,19 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
   if (layout.nodes.length === 0) {
     return (
       <nav aria-label="概念依赖图" className="dag-graph-wrap">
-        <p style={{ color: 'var(--muted)', fontSize: '12px', padding: '8px' }}>加载中</p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            color: 'var(--muted)',
+            fontSize: '12px',
+          }}
+        >
+          <div className="spinner" />
+          <span>加载概念图谱…</span>
+        </div>
       </nav>
     )
   }

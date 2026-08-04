@@ -53,6 +53,7 @@ function GaugeTooltip({ visible, x, y, title, lines, accentColor }: TooltipProps
       style={{
         left: x,
         top: y,
+        transform: 'translate(-50%, -100%)',
         borderColor: accentColor || 'var(--accent)',
       }}
     >
@@ -665,7 +666,6 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
           <tspan
             fill={trendColor}
             style={{
-              display: 'inline-block',
               animation:
                 trend === 'rising'
                   ? 'trendBounceUp 1s ease infinite'

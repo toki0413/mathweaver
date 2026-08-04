@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../stores/sessionStore'
 
 interface SettingsPanelProps {
@@ -37,6 +37,9 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
+  // 自动聚焦：面板打开时聚焦到 API Key 输入框，省去用户手动点击
+  const apiKeyInputRef = useRef<HTMLInputElement>(null)
+
   // 打开时刷新后端配置与预设列表
   useEffect(() => {
     if (!open) return
@@ -46,6 +49,15 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     setTestMessage('')
     setSaveMessage('')
   }, [open, fetchLLMConfig, fetchLLMPresets])
+
+  // 面板打开后自动聚焦到第一个可编辑输入框（API Key）
+  useEffect(() => {
+    if (!open) return
+    const raf = requestAnimationFrame(() => {
+      apiKeyInputRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [open])
 
   // 当配置加载后填充表单（仅在 llmConfig 变化时触发，不依赖 llmPresets）
   useEffect(() => {
@@ -167,7 +179,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
   return (
     <>
-      <div className="overlay-backdrop" onClick={onClose} />
+      <div className="overlay-backdrop" onClick={onClose} aria-hidden="true" />
       <aside className="settings-drawer" role="dialog" aria-modal="true" aria-label="LLM 模型配置">
         <div className="drawer-header">
           <div className="drawer-header-left">
@@ -192,7 +204,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   <div
                     key={p.id}
                     className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handlePresetSelect(p.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') handlePresetSelect(p.id)
+                    }}
                   >
                     <div className="preset-label">{p.label}</div>
                     <div className="preset-desc">{p.description}</div>
@@ -214,7 +231,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   <div
                     key={p.id}
                     className={`preset-card ${selectedPresetId === p.id ? 'active' : ''}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handlePresetSelect(p.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') handlePresetSelect(p.id)
+                    }}
                   >
                     <div className="preset-label">{p.label}</div>
                     <div className="preset-desc">{p.description}</div>
@@ -280,6 +302,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             </label>
             <div className="api-key-row">
               <input
+                ref={apiKeyInputRef}
                 className="text-input"
                 type={showApiKey ? 'text' : 'password'}
                 value={apiKey}

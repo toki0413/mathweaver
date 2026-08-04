@@ -449,6 +449,7 @@ export default function App() {
       { keys: ['2'], description: '切换到面试模式', category: '导航' },
       { keys: ['3'], description: '切换到证明模式', category: '导航' },
       { keys: ['4'], description: '切换到图谱模式', category: '导航' },
+      { keys: ['5'], description: '切换到建模模式', category: '导航' },
       { keys: ['Enter'], description: '发送消息', category: '输入' },
       { keys: ['Shift', 'Enter'], description: '换行', category: '输入' },
       { keys: ['⌘', '/'], description: '打开数学符号面板', category: '输入' },
@@ -466,7 +467,13 @@ export default function App() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
         return
       if (e.metaKey || e.ctrlKey || e.altKey) return
-      const map: Record<string, Mode> = { '1': 'chat', '2': 'grill', '3': 'proof', '4': 'dag' }
+      const map: Record<string, Mode> = {
+        '1': 'chat',
+        '2': 'grill',
+        '3': 'proof',
+        '4': 'dag',
+        '5': 'modeling',
+      }
       const m = map[e.key]
       if (m) {
         e.preventDefault()
@@ -514,7 +521,7 @@ export default function App() {
     if (backendReady && !sessionId) {
       startSession(studentId, selectedNode)
     }
-  }, [backendReady])
+  }, [backendReady, startSession])
 
   useEffect(() => {
     if (!window.api) return
@@ -764,13 +771,12 @@ export default function App() {
         <div className="header-right">
           <StreakBadge compact />
           <AgeSelector level={ageLevel} onChange={setAgeLevel} compact />
-          <span style={{ width: 6 }} />
+          <span style={{ display: 'inline-block', width: 6 }} />
           <button
             className="icon-btn"
             onClick={() => setShortcutsOpen(true)}
             aria-label="快捷键"
             title="键盘快捷键 (?)"
-            style={{ marginRight: '6px' }}
           >
             <KeyboardIcon size={14} />
           </button>
@@ -779,7 +785,6 @@ export default function App() {
             onClick={() => setSettingsOpen(true)}
             aria-label="设置"
             title="设置 (⌘,)"
-            style={{ marginRight: '6px' }}
           >
             <SettingsIcon size={14} />
           </button>
@@ -797,7 +802,6 @@ export default function App() {
             onClick={() => setSoundEnabled(!soundEnabled)}
             aria-label="音效开关"
             title={soundEnabled ? '关闭音效' : '开启音效'}
-            style={{ marginRight: '6px' }}
           >
             <span style={{ fontSize: '14px' }}>{soundEnabled ? '🔊' : '🔇'}</span>
           </button>
@@ -805,6 +809,7 @@ export default function App() {
             <span className="status-dot" />
             {backendReady ? '就绪' : '正在初始化'}
           </div>
+          {isMockMode && backendReady && <span className="demo-badge">演示数据</span>}
         </div>
       </header>
 
@@ -874,7 +879,7 @@ export default function App() {
                 <CollapsibleSection
                   title={isKidsMode ? '🧩 每日脑力热身' : '每日热身谜题'}
                   hint="逻辑 · 物理 · 数学 · 语言"
-                  defaultOpen={true}
+                  defaultOpen={false}
                 >
                   <p className="desc">
                     {isKidsMode
@@ -991,13 +996,13 @@ export default function App() {
                   <h3>预设</h3>
                   <div className="btn-row">
                     <button className="btn btn-sm" onClick={() => loadPreset('z3')}>
-                      Z3
+                      Z₃
                     </button>
                     <button className="btn btn-sm" onClick={() => loadPreset('klein')}>
                       Klein
                     </button>
                     <button className="btn btn-sm" onClick={() => loadPreset('s3')}>
-                      S3
+                      S₃
                     </button>
                     <button className="btn btn-sm" onClick={() => loadPreset('non-group')}>
                       非群
@@ -1027,7 +1032,7 @@ export default function App() {
                 <CollapsibleSection
                   title={isKidsMode ? '🎮 游戏场' : '学生互动游戏场'}
                   hint={isKidsMode ? '碰一碰 · 找搭档 · 彩色表' : '拖拽 · 翻牌 · 颜色可视化'}
-                  defaultOpen={isKidsMode}
+                  defaultOpen={false}
                 >
                   <p className="desc">
                     {isKidsMode

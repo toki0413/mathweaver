@@ -1128,7 +1128,12 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
               <div
                 key={i}
                 className="ml-ledger-item"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleRestore(entry)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') handleRestore(entry)
+                }}
                 title="点击恢复此参数集"
               >
                 <span>{entry.label}</span>

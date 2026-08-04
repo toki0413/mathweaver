@@ -1047,16 +1047,9 @@ export const useStore = create<SessionState>()(
         proofState: state.proofState,
         conjectureState: state.conjectureState,
       }),
-      onRehydrateStorage: () => (state, error) => {
+      onRehydrateStorage: () => (_state, error) => {
         if (error) {
           console.error('[sessionStore] Failed to rehydrate persisted state:', error)
-        } else if (state) {
-          console.log('[sessionStore] Rehydrated session from localStorage:', {
-            sessionId: state.sessionId,
-            targetNode: state.targetNode,
-            phase: state.phase,
-            chatLength: state.chat.length,
-          })
         }
       },
     },

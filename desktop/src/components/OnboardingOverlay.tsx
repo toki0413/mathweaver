@@ -317,8 +317,15 @@ const OVERLAY_CSS = `
  * Mac 用 ⌘，Windows/Linux 用 Ctrl。
  */
 function detectModKey(): string {
-  if (typeof navigator !== 'undefined' && navigator.platform) {
-    if (/Mac|iPhone|iPad|iPod/i.test(navigator.platform)) return '⌘'
+  // navigator.platform 已废弃，优先使用 userAgentData.platform，回退到 navigator.platform
+  const platform =
+    (typeof navigator !== 'undefined' &&
+      ((navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
+        ?.platform ??
+        navigator.platform)) ||
+    ''
+  if (platform) {
+    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return '⌘'
   }
   if (typeof process !== 'undefined' && process.platform) {
     if (process.platform === 'darwin') return '⌘'
@@ -366,6 +373,16 @@ export function OnboardingOverlay({
   useEffect(() => {
     setStep(s => Math.min(s, totalSteps - 1))
   }, [totalSteps])
+
+  // Esc 键关闭引导（组件无 allowSkip prop，因此 open 时统一允许跳过）
+  useEffect(() => {
+    if (!open) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [open, onClose])
 
   if (!open) return null
 

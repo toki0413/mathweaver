@@ -280,6 +280,21 @@ export function ProofPanel() {
             </option>
           ))}
         </select>
+        {theorems.length === 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '8px',
+              color: 'var(--muted)',
+              fontSize: '12px',
+            }}
+          >
+            <div className="spinner" />
+            <span>加载定理列表…</span>
+          </div>
+        )}
       </div>
 
       {selectedTheorem && (
@@ -357,8 +372,13 @@ export function ProofPanel() {
                         key={step.step_number}
                         className={`step-result step-result-clickable ${step.is_valid ? 'valid' : 'invalid'}`}
                         data-step-idx={targetIdx}
+                        role="button"
+                        tabIndex={0}
                         title="点击跳转到该步骤编辑器"
                         onClick={() => scrollToStep(targetIdx)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') scrollToStep(targetIdx)
+                        }}
                       >
                         <div className="step-result-header">
                           <span className="step-result-icon">

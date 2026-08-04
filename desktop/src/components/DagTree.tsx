@@ -33,7 +33,12 @@ function DagTreeBase({ nodes, activeNode, onSelect }: Props) {
         <div
           key={node.id}
           className={`dag-node ${node.id === activeNode ? 'active' : ''} ${node.is_milestone ? 'milestone' : ''}`}
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect(node.id)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') onSelect(node.id)
+          }}
           style={{ paddingLeft: `${12 + node.abstraction_level * 12}px` }}
         >
           <span>{node.name}</span>

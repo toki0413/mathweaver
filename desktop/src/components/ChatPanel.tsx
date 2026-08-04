@@ -222,12 +222,12 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
   // Handlers
   // -------------------------------------------------------------------------
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     const el = chatBoxRef.current
     if (!el) return
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
     nearBottomRef.current = distanceFromBottom < NEAR_BOTTOM_PX
-  }
+  }, [])
 
   // -------------------------------------------------------------------------
   // Guided choices: parse suggestions from system messages (I3 interaction)
@@ -290,21 +290,36 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
   )
 
   const handleCopy = (i: number, content: string) => {
-    if (!navigator.clipboard) return
-    navigator.clipboard
-      .writeText(content)
-      .then(() => {
-        setCopiedIndex(i)
-        if (copyTimerRef.current !== null) {
-          window.clearTimeout(copyTimerRef.current)
-        }
-        copyTimerRef.current = window.setTimeout(() => {
-          setCopiedIndex(prev => (prev === i ? null : prev))
-        }, COPY_FEEDBACK_MS)
-      })
-      .catch(() => {
-        /* silently ignore clipboard errors */
-      })
+    const markCopied = () => {
+      setCopiedIndex(i)
+      if (copyTimerRef.current !== null) {
+        window.clearTimeout(copyTimerRef.current)
+      }
+      copyTimerRef.current = window.setTimeout(() => {
+        setCopiedIndex(prev => (prev === i ? null : prev))
+      }, COPY_FEEDBACK_MS)
+    }
+
+    if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(content)
+        .then(markCopied)
+        .catch(() => {
+          /* silently ignore clipboard errors */
+        })
+    } else {
+      // Fallback for environments without the async Clipboard API (e.g. older
+      // Electron / non-secure contexts): use a hidden textarea + execCommand.
+      const ta = document.createElement('textarea')
+      ta.value = content
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      markCopied()
+    }
   }
 
   const handleQuote = (content: string) => {
@@ -340,7 +355,11 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
       </div>
 
       <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
-        {chat.length === 0 && <p className="desc">提交运算表或输入问题开始</p>}
+        {chat.length === 0 && (
+          <div className="empty-state">
+            <span className="empty-state-text">提交运算表或输入问题开始</span>
+          </div>
+        )}
         {chat.length > 0 && filtered.length === 0 && <p className="desc">没有匹配的消息</p>}
 
         {filtered.map(({ msg, i }) => {

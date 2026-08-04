@@ -239,7 +239,7 @@ const mockApi = {
             verdict: 'plausible',
             counter_example: null,
             claim,
-            message: 'Mock: 该猜想看起来是合理的，但需要严格证明。',
+            message: '[演示数据] 该猜想看起来是合理的，但需要严格证明。',
           }
         }
         if (
@@ -249,16 +249,16 @@ const mockApi = {
         ) {
           return {
             verdict: 'refuted',
-            counter_example: 'Mock: 存在反例（模拟数据）',
+            counter_example: '[演示数据] 存在反例',
             claim,
-            message: 'Mock: 该猜想存在反例。',
+            message: '[演示数据] 该猜想存在反例。',
           }
         }
         return {
           verdict: 'undecidable',
           counter_example: null,
           claim,
-          message: 'Mock: 无法确定此猜想的正确性，请尝试更具体的表述。',
+          message: '[演示数据] 无法确定此猜想的正确性，请尝试更具体的表述。',
         }
       }
 
@@ -378,12 +378,81 @@ const mockApi = {
           },
         }
       } catch (e) {
-        // Fall through to mock on error
+        // LLM 调用失败 — 返回明确标注的回退回复，而非静默 mock
         console.error('[MathWeaver] LLM call failed, falling back to mock:', e)
+        responseIndex++
+        return {
+          response: {
+            content:
+              '[LLM 调用失败，以下为演示回复]\n\n' +
+              MOCK_RESPONSES[responseIndex % MOCK_RESPONSES.length],
+            action: 'EXPLAIN',
+          },
+          phase: 'REFLECT',
+          four_fields: {
+            knowledge: {
+              current_node_id: 'group_definition',
+              mastery_estimate: 0.45,
+              zpd_lower: 0.3,
+              zpd_upper: 0.6,
+              prerequisite_gaps: [],
+              in_zpd: true,
+              ready_to_advance: false,
+            },
+            cognitive: {
+              response_time_ms: req.response_time_ms || 5000,
+              rt_zscore: 0.1,
+              cognitive_load: 0.4,
+              state: 'engaged',
+              is_overloaded: false,
+            },
+            emotional: {
+              anxiety_index: 0.2,
+              flow_score: 0.7,
+              state: 'flow',
+              is_anxious: false,
+              in_flow: true,
+            },
+            interaction: {
+              current_hint_level: 1,
+              consecutive_correct: 1,
+              scaffold_fade_threshold: 3,
+              should_fade_scaffold: false,
+              is_struggling: false,
+            },
+          },
+          phase_trace: [
+            'PERCEIVE',
+            'ABSTRACT',
+            'VERIFY',
+            'DIAGNOSE',
+            'REFLECT',
+            'COLLABORATE',
+            'DELIVER',
+          ],
+          decision: { action: 'continue', reason: '学生表现良好，继续推进' },
+          visual_data: {
+            four_field_gauges: {
+              cognitive_load: 0.4,
+              cognitive_state: '专注',
+              anxiety_index: 0.2,
+              flow_score: 0.7,
+              hint_dependency: 0.3,
+            },
+            mastery_radar: {
+              accuracy: 0.7,
+              conjecture: 0.5,
+              independence: 0.6,
+              fluency: 0.65,
+              abstraction: 0.4,
+              overall: 0.57,
+            },
+          },
+        }
       }
     }
 
-    // --- Mock mode (fallback) ---
+    // --- Mock mode (no API key configured) ---
     const response = MOCK_RESPONSES[responseIndex % MOCK_RESPONSES.length]
     responseIndex++
     return {
@@ -660,7 +729,12 @@ const mockApi = {
       }
     }
 
-    return { type, topic, content: 'Mock content', difficulty }
+    return {
+      type,
+      topic,
+      content: '[演示数据] AI 生成内容不可用，请在设置中配置 API Key',
+      difficulty,
+    }
   },
 
   // Settings — LLM config persisted in localStorage
@@ -762,7 +836,7 @@ function injectWebApi() {
   const w = window as unknown as { api?: typeof mockApi }
   if (!w.api) {
     w.api = mockApi
-    console.log('[MathWeaver Web] Mock API injected — running in web demo mode')
+    console.warn('[MathWeaver Web] Mock API injected — running in web demo mode')
   }
 }
 

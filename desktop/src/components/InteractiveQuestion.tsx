@@ -607,7 +607,13 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
               <div
                 key={opt.label}
                 className={`iq-choice-option ${selectedChoice === opt.label ? 'selected' : ''}`}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
                 onClick={() => !disabled && setSelectedChoice(opt.label)}
+                onKeyDown={e => {
+                  if (!disabled && (e.key === 'Enter' || e.key === ' '))
+                    setSelectedChoice(opt.label)
+                }}
               >
                 <span className="iq-choice-label">{opt.label}</span>
                 <span className="iq-choice-text">
@@ -641,14 +647,24 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
           <div className="iq-tf-container">
             <div
               className={`iq-tf-btn true-btn ${selectedTF === true ? 'selected' : ''}`}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
               onClick={() => !disabled && setSelectedTF(true)}
+              onKeyDown={e => {
+                if (!disabled && (e.key === 'Enter' || e.key === ' ')) setSelectedTF(true)
+              }}
             >
               <span className="iq-tf-icon">✓</span>
               <span className="iq-tf-label">正确</span>
             </div>
             <div
               className={`iq-tf-btn false-btn ${selectedTF === false ? 'selected' : ''}`}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
               onClick={() => !disabled && setSelectedTF(false)}
+              onKeyDown={e => {
+                if (!disabled && (e.key === 'Enter' || e.key === ' ')) setSelectedTF(false)
+              }}
             >
               <span className="iq-tf-icon">✗</span>
               <span className="iq-tf-label">错误</span>
@@ -679,9 +695,15 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
                   <div
                     key={pair.id}
                     className={`iq-match-item ${isSelected ? 'selected-left' : ''} ${isMatched ? 'matched' : ''}`}
+                    role="button"
+                    tabIndex={disabled || isMatched ? -1 : 0}
                     onClick={() =>
                       !disabled && !isMatched && handleMatchClick('left', pair.id, pair.left)
                     }
+                    onKeyDown={e => {
+                      if (!disabled && !isMatched && (e.key === 'Enter' || e.key === ' '))
+                        handleMatchClick('left', pair.id, pair.left)
+                    }}
                   >
                     {pairNum && <span className="iq-match-pair-num">{pairNum}</span>}
                     <MathText>{pair.left}</MathText>
@@ -697,9 +719,15 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
                   <div
                     key={i}
                     className={`iq-match-item ${isUsed ? 'matched' : ''}`}
+                    role="button"
+                    tabIndex={disabled || isUsed ? -1 : 0}
                     onClick={() =>
                       !disabled && !isUsed && handleMatchClick('right', opt.id, opt.text)
                     }
+                    onKeyDown={e => {
+                      if (!disabled && !isUsed && (e.key === 'Enter' || e.key === ' '))
+                        handleMatchClick('right', opt.id, opt.text)
+                    }}
                   >
                     <MathText>{opt.text}</MathText>
                   </div>

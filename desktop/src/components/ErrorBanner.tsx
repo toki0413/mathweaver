@@ -21,9 +21,11 @@ export function ErrorBanner() {
   const error = useStore(s => s.error)
   const clearError = useStore(s => s.clearError)
 
-  // 自动消失：每次出现新错误时启动 5 秒倒计时
+  // 自动消失：info/warn 5 秒后消失，error 持续显示需手动关闭
   useEffect(() => {
     if (!error) return
+    const level = inferErrorLevel(error.message || '', error.headline || '')
+    if (level === 'error') return // error 不自动消失
     const timer = window.setTimeout(() => clearError(), 5000)
     return () => window.clearTimeout(timer)
   }, [error, clearError])
@@ -33,7 +35,7 @@ export function ErrorBanner() {
   const level = inferErrorLevel(error.message || '', error.headline || '')
 
   return (
-    <div className={`error-banner level-${level}`} role="alert">
+    <div className={`error-banner level-${level}`} role={level === 'error' ? 'alert' : 'status'}>
       <div className="error-banner-content">
         <div className="error-banner-headline">{error.headline}</div>
         {error.detail && <div className="error-banner-detail">{error.detail}</div>}

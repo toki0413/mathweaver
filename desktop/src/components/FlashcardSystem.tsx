@@ -778,6 +778,9 @@ function FlashcardSystemBase({ cards, onProgress }: FlashcardSystemProps) {
           role="button"
           tabIndex={0}
           aria-label={isFlipped ? '点击翻回正面' : '点击翻转查看答案'}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') handleFlip()
+          }}
         >
           {/* 正面：概念名称 / 问题 */}
           <div className="fs-card-face fs-card-front">

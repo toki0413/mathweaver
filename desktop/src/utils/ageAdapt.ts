@@ -295,10 +295,10 @@ const TERM_MAP: Record<string, TermMapping> = {
     teens: 'LLM',
   },
   mock_mode: {
-    academic: 'Mock mode',
+    academic: '演示模式',
     kids: '试用模式',
-    tweens: '模拟模式',
-    teens: 'Mock mode',
+    tweens: '演示模式',
+    teens: '演示模式',
   },
 }
 

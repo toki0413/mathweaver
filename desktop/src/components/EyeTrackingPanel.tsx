@@ -614,7 +614,13 @@ export function EyeTrackingPanel() {
                   key={i}
                   className="eye-tracking-calib-dot"
                   style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`校准点 ${i + 1}`}
                   onClick={advanceCalibration}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') advanceCalibration()
+                  }}
                 />
               ) : null,
             )}

@@ -17,6 +17,12 @@
   --muted: #3d3d3d; /* 重墨 — Secondary text */
   --faint: #6b6b6b; /* 淡墨 — Tertiary / disabled (WCAG AA 4.5:1 on宣纸) */
 
+  /* 对比度安全别名：部分组件使用 var(--text-2, #aaa) / var(--text-3, #888)，
+     若不在此定义会回退到过浅的 #aaa / #888，在浅色宣纸底上看不清。
+     统一定义为至少 #525252 / #6b7280 以满足 WCAG AA 对比度要求。 */
+  --text-2: #525252; /* 次级文本 — 替代过浅的 #aaa */
+  --text-3: #6b7280; /* 三级/提示文本 — 替代过浅的 #888 */
+
   /* Layer 2: 强调色 — 朱砂红 · 竹绿 */
   --accent: #c4392f; /* 朱砂红 — Primary accent (印章/选中/重点) */
   --accent-hover: #a52d25; /* Hover state */
@@ -36,8 +42,11 @@
 
   /* Fonts — 宋体为主 */
   --mono:
-    'JetBrains Mono', 'Source Han Mono SC', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, 'Iowan Old Style', serif;
+    'JetBrains Mono', 'Source Han Mono SC', ui-monospace, 'SF Mono', Menlo, Consolas,
+    'STIX Two Math', 'Noto Sans Math', monospace;
+  --serif:
+    'Noto Serif SC', 'Songti SC', 'STSong', Georgia, 'Iowan Old Style', 'STIX Two Math',
+    'Noto Sans Math', serif;
   --sans:
     'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
     sans-serif;
@@ -111,6 +120,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Subscript / superscript fallback — ensures <sub>/<sup> render correctly
+   even when KaTeX/MathJax styles are absent (e.g. plain HTML subscripts). */
+sub {
+  vertical-align: sub;
+  font-size: 0.75em;
+}
+sup {
+  vertical-align: super;
+  font-size: 0.75em;
 }
 
 .app {
@@ -933,6 +953,19 @@ textarea.text-input {
   box-shadow: 0 0 6px var(--err);
 }
 
+/* Persistent demo-data badge — shown in header when running in mock/demo mode */
+.demo-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--warn);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Mock mode banner — warns user when no API key is configured */
 
 .mock-banner {
@@ -1696,7 +1729,7 @@ input[type='range'].slider::-moz-range-thumb {
   border-left-color: var(--warn);
 }
 .error-banner.level-info {
-  border-left-color: var(--accent);
+  border-left-color: var(--info);
 }
 
 .error-banner-content {
@@ -3155,39 +3188,6 @@ input[type='range'].slider::-moz-range-thumb {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
-}
-
-/* =========================================================================
-   Loading Skeleton
-   ========================================================================= */
-
-.skeleton {
-  background: linear-gradient(90deg, var(--bg2) 0%, var(--bg3) 50%, var(--bg2) 100%);
-  background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s ease infinite;
-  border-radius: 2px;
-}
-
-@keyframes skeletonShimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.skeleton-line {
-  height: 12px;
-  margin-bottom: 6px;
-}
-
-.skeleton-card {
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  margin-bottom: 14px;
-  background: var(--bg2);
 }
 
 /* =========================================================================

@@ -178,7 +178,7 @@ class PerformanceMonitor {
 
     if (actualDuration > 16) {
       // Slower than one frame (60fps)
-      console.debug(`[perf] Render ${id} took ${actualDuration.toFixed(1)}ms`)
+      console.warn(`[perf] Render ${id} took ${actualDuration.toFixed(1)}ms`)
     }
   }
 
@@ -283,8 +283,8 @@ class PerformanceMonitor {
     }
 
     // Debug output only when explicitly enabled (avoids console noise in production)
-    if (typeof console !== 'undefined' && console.debug && ENABLED) {
-      console.debug(
+    if (typeof console !== 'undefined' && console.warn && ENABLED) {
+      console.warn(
         '[perf] Report flushed:',
         report.entryCount,
         'entries,',

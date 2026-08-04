@@ -94,6 +94,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     const { error, errorInfo, showDetails, retryCount } = this.state
 
+    const bg = '#f5f0e6'
+    const surface = '#faf6ed'
+    const border = 'rgba(26, 26, 26, 0.1)'
+    const text = '#1a1a1a'
+    const muted = '#525252'
+    const accent = '#c4392f'
+    const errColor = '#9e2b22'
+    const fontStack = '"Noto Serif SC", "Songti SC", Georgia, "Iowan Old Style", serif'
+
     return (
       <div
         style={{
@@ -103,31 +112,31 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           justifyContent: 'center',
           minHeight: '100vh',
           padding: '2rem',
-          background: '#0d1117',
-          color: '#e6edf3',
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", system-ui, sans-serif',
+          background: bg,
+          color: text,
+          fontFamily: fontStack,
         }}
       >
         <div
           style={{
-            maxWidth: '600px',
+            maxWidth: '560px',
             width: '100%',
-            background: '#161b22',
-            border: '1px solid #30363d',
+            background: surface,
+            border: `1px solid ${border}`,
             borderRadius: '12px',
             padding: '2rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}
         >
           {/* Error icon */}
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <svg
-              width="64"
-              height="64"
+              width="56"
+              height="56"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#f87171"
-              strokeWidth="2"
+              stroke={errColor}
+              strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -139,10 +148,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
           <h1
             style={{
-              fontSize: '1.5rem',
+              fontSize: '1.4rem',
               fontWeight: 600,
               textAlign: 'center',
               marginBottom: '0.5rem',
+              color: text,
             }}
           >
             应用遇到了问题
@@ -150,7 +160,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p
             style={{
               textAlign: 'center',
-              color: '#8b949e',
+              color: muted,
               fontSize: '0.9rem',
               marginBottom: '1.5rem',
             }}
@@ -162,12 +172,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <p
               style={{
                 textAlign: 'center',
-                color: '#fbbf24',
+                color: accent,
                 fontSize: '0.85rem',
                 marginBottom: '1rem',
               }}
             >
-              已重试 {retryCount} 次，如果问题持续出现，请联系支持团队。
+              已重试 {retryCount} 次，如果问题持续出现，请重启应用。
             </p>
           )}
 
@@ -184,17 +194,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={this.handleRetry}
               style={{
                 padding: '0.6rem 1.5rem',
-                background: '#a78bfa',
+                background: accent,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '0.9rem',
                 fontWeight: 500,
                 cursor: 'pointer',
-                transition: 'background 0.2s',
+                transition: 'opacity 0.2s',
               }}
-              onMouseEnter={e => ((e.target as HTMLButtonElement).style.background = '#9171f8')}
-              onMouseLeave={e => ((e.target as HTMLButtonElement).style.background = '#a78bfa')}
+              onMouseEnter={e => ((e.target as HTMLButtonElement).style.opacity = '0.85')}
+              onMouseLeave={e => ((e.target as HTMLButtonElement).style.opacity = '1')}
             >
               重试
             </button>
@@ -202,30 +212,32 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={this.handleReload}
               style={{
                 padding: '0.6rem 1.5rem',
-                background: '#21262d',
-                color: '#e6edf3',
-                border: '1px solid #30363d',
+                background: 'transparent',
+                color: text,
+                border: `1px solid ${border}`,
                 borderRadius: '8px',
                 fontSize: '0.9rem',
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
-              onMouseEnter={e => ((e.target as HTMLButtonElement).style.background = '#30363d')}
-              onMouseLeave={e => ((e.target as HTMLButtonElement).style.background = '#21262d')}
+              onMouseEnter={e =>
+                ((e.target as HTMLButtonElement).style.background = 'rgba(0,0,0,0.04)')
+              }
+              onMouseLeave={e => ((e.target as HTMLButtonElement).style.background = 'transparent')}
             >
               重新加载
             </button>
           </div>
 
           {/* Error details toggle */}
-          <div style={{ borderTop: '1px solid #30363d', paddingTop: '1rem' }}>
+          <div style={{ borderTop: `1px solid ${border}`, paddingTop: '1rem' }}>
             <button
               onClick={this.toggleDetails}
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#8b949e',
+                color: muted,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
                 padding: 0,
@@ -239,12 +251,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 style={{
                   marginTop: '0.75rem',
                   padding: '1rem',
-                  background: '#0d1117',
-                  border: '1px solid #30363d',
+                  background: bg,
+                  border: `1px solid ${border}`,
                   borderRadius: '6px',
                   fontSize: '0.8rem',
-                  fontFamily: "'SF Mono', 'Cascadia Code', Consolas, monospace",
-                  color: '#f87171',
+                  fontFamily: "'JetBrains Mono', 'SF Mono', Consolas, monospace",
+                  color: errColor,
                   overflow: 'auto',
                   maxHeight: '300px',
                   whiteSpace: 'pre-wrap',

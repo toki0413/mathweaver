@@ -610,6 +610,9 @@ function PatternBuilderBase({ elements, size, table, onPatternComplete }: Patter
             onDragLeave={() => handleSlotDragLeave('a')}
             onDrop={e => handleSlotDrop(e, 'a')}
             onClick={() => handleSlotClick('a')}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') handleSlotClick('a')
+            }}
           >
             <span className="pb-slot-label">a</span>
             <span className="pb-slot-value">{droppedA !== null ? droppedA : '—'}</span>
@@ -633,6 +636,9 @@ function PatternBuilderBase({ elements, size, table, onPatternComplete }: Patter
             onDragLeave={() => handleSlotDragLeave('b')}
             onDrop={e => handleSlotDrop(e, 'b')}
             onClick={() => handleSlotClick('b')}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') handleSlotClick('b')
+            }}
           >
             <span className="pb-slot-label">b</span>
             <span className="pb-slot-value">{droppedB !== null ? droppedB : '—'}</span>
