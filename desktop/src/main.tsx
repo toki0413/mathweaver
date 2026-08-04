@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react'
+/* eslint-disable react-refresh/only-export-components */
 import ReactDOM from 'react-dom/client'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'

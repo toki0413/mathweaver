@@ -370,7 +370,7 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
         mount.removeChild(renderer.domElement)
       }
     }
-  }, [groupType, vertices, permSize, createLabel, autoRotate])
+  }, [groupType, vertices, permSize, createLabel, autoRotate, buildIcosahedron])
 
   // -- Handle permutation selection --
   const handleSelectPermutation = useCallback(
@@ -483,6 +483,7 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
   }
 
   // -- Build icosahedron --
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   function buildIcosahedron(group: THREE.Group) {
     const scale = 1.5
 

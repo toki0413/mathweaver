@@ -45,6 +45,7 @@ const ELEMENT_COLORS = [
   '#BA68C8', // 11 - 品红
 ]
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getElementColor(n: number): string {
   return ELEMENT_COLORS[n % ELEMENT_COLORS.length]
 }

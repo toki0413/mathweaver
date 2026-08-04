@@ -222,6 +222,7 @@ function CayleyTableBase({
       discoveries.forEach(d => onDiscovery(d))
     }
     prevAxiomsRef.current = { ...currentAxioms }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClosed, isAssociative, identityRows.size, hasInverses, isCommutative, onDiscovery])
 
   // Active property filter — when user clicks a badge, highlight relevant cells

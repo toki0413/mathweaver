@@ -835,7 +835,7 @@ function CurriculumMapperBase() {
     }
   }, [view])
 
-  const entries = CURRICULUM_DATA[framework] ?? []
+  const entries = useMemo(() => CURRICULUM_DATA[framework] ?? [], [framework])
 
   // 过滤 + 排序
   const filtered = useMemo(() => {

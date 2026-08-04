@@ -185,6 +185,7 @@ export default function App() {
   const checkBackend = useStore(s => s.checkBackend)
   const fetchDagNodes = useStore(s => s.fetchDagNodes)
   const dagNodes = useStore(s => s.dagNodes)
+  const storeError = useStore(s => s.error)
   const saveSession = useStore(s => s.saveSession)
   const loadSession = useStore(s => s.loadSession)
   const checkOnboarding = useStore(s => s.checkOnboarding)
@@ -506,6 +507,7 @@ export default function App() {
       setOnboardingChecked(true)
     }
     init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const isMockMode = !llmConfig || (llmConfig.provider || '').toLowerCase() === 'mock'
@@ -521,6 +523,7 @@ export default function App() {
     if (backendReady && !sessionId) {
       startSession(studentId, selectedNode)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendReady, startSession])
 
   useEffect(() => {
@@ -562,11 +565,24 @@ export default function App() {
       cleanupOpenSettings()
       cleanupOpenOnboarding()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     const interval = setInterval(() => checkBackend(), 15000)
     return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // --- Retry listener (triggered by ErrorBanner retry button) ---
+  useEffect(() => {
+    const handleRetry = () => {
+      checkBackend()
+      fetchDagNodes()
+    }
+    window.addEventListener('mathweaver:retry', handleRetry)
+    return () => window.removeEventListener('mathweaver:retry', handleRetry)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // --- Toast triggers: proof completion ---
@@ -854,18 +870,22 @@ export default function App() {
 
       {!backendReady && (
         <div className="backend-warning">
-          <div className="spinner" style={{ width: '12px', height: '12px' }} />
-          正在初始化...
+          <div className="spinner" style={{ width: '14px', height: '14px' }} />
+          <span>正在初始化后端…</span>
+          <button className="backend-retry-btn" onClick={() => checkBackend()}>
+            重试
+          </button>
         </div>
       )}
 
       <Suspense
         fallback={
-          <div
-            className="lazy-loading-fallback"
-            style={{ padding: '24px', textAlign: 'center', color: 'var(--muted)' }}
-          >
-            加载中…
+          <div className="lazy-loading-fallback" role="status" aria-live="polite">
+            <div className="skeleton-card">
+              <div className="skeleton-line medium" />
+              <div className="skeleton-line" />
+              <div className="skeleton-line short" />
+            </div>
           </div>
         }
       >
@@ -1381,6 +1401,8 @@ export default function App() {
                   nodes={dagNodes}
                   currentNodeId={selectedNode}
                   onSelect={handleNodeSelect}
+                  hasError={!!storeError && dagNodes.length === 0}
+                  onRetry={() => fetchDagNodes()}
                 />
               </div>
 
@@ -1528,6 +1550,8 @@ export default function App() {
                   nodes={dagNodes}
                   currentNodeId={selectedNode}
                   onSelect={handleNodeSelect}
+                  hasError={!!storeError && dagNodes.length === 0}
+                  onRetry={() => fetchDagNodes()}
                 />
               </div>
               <CollapsibleSection

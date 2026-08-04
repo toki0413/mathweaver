@@ -722,6 +722,7 @@ export function OperationStepVisualizer({
     setPlaying(false)
     setCurrentStepIdx(-1)
     if (onHighlightCell) onHighlightCell(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, elemA, elemB, elemC])
 
   const handleStepForward = useCallback(() => {

@@ -59,6 +59,8 @@ interface Props {
   currentNodeId?: string | null
   activeNode?: string
   onSelect: (nodeId: string) => void
+  hasError?: boolean
+  onRetry?: () => void
 }
 
 const NODE_R = 22
@@ -221,7 +223,15 @@ const MIN_ZOOM = 0.4
 const MAX_ZOOM = 2.5
 const ZOOM_STEP = 0.2
 
-export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSelect }: Props) {
+export function DagGraph({
+  nodes,
+  edges,
+  currentNodeId = null,
+  activeNode,
+  onSelect,
+  hasError,
+  onRetry,
+}: Props) {
   const selectedId = currentNodeId ?? activeNode ?? null
 
   const layout = useMemo(() => {
@@ -366,15 +376,29 @@ export function DagGraph({ nodes, edges, currentNodeId = null, activeNode, onSel
         <div
           style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             gap: '8px',
-            padding: '16px',
+            padding: '24px 16px',
             color: 'var(--muted)',
             fontSize: '12px',
           }}
         >
-          <div className="spinner" />
-          <span>加载概念图谱…</span>
+          {hasError ? (
+            <>
+              <span>概念图谱加载失败</span>
+              {onRetry && (
+                <button className="backend-retry-btn" onClick={onRetry}>
+                  重试
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="spinner" />
+              <span>加载概念图谱…</span>
+            </>
+          )}
         </div>
       </nav>
     )

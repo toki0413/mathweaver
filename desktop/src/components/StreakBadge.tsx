@@ -175,6 +175,7 @@ export interface UseStreakResult {
   daysUntilMilestone: number
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStreak(): UseStreakResult {
   const [snapshot, setSnapshot] = useState<StreakData>(() => ({ ...store }))
 

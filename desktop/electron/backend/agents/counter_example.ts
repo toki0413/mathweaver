@@ -13,6 +13,7 @@ import type { LLMClient } from '../llm/client'
 import { BaseAgent } from './base'
 import { AgentRole, createAgentMessage } from '../types'
 import { CounterExampleForge, ConjectureHandler, type ForgeResult } from '../forge/forge'
+import type { ConjectureResult } from '../forge/forge'
 
 export class CounterExampleAgent extends BaseAgent {
   forge: CounterExampleForge
@@ -203,10 +204,7 @@ export class CounterExampleAgent extends BaseAgent {
     const rawText = (percMeta['raw_text'] as string) ?? ctx.student_input
 
     // Use callTool for whitelist enforcement (3.3)
-    const result = this.callTool(
-      'test_conjecture',
-      rawText,
-    ) as import('../forge/forge').ConjectureResult
+    const result = this.callTool('test_conjecture', rawText) as ConjectureResult
 
     const verdictMap: Record<string, string> = {
       confirmed: '猜想成立',

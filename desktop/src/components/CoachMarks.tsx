@@ -22,6 +22,7 @@ export interface CoachMarksProps {
  * 因此第 3 步同时匹配 .age-selector 与 .age-selector-compact —— 既指向真实元素，
  * 又兼容未来可能改用的 .age-selector 类名。
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const MATHWEAVER_COACH_STEPS: CoachMarkStep[] = [
   {
     selector: '.mode-nav',

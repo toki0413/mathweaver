@@ -254,6 +254,7 @@ export function CommandIcon(p: IconProps) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getCommandIcon(iconName: string): React.FC<IconProps> | null {
   const map: Record<string, React.FC<IconProps>> = {
     ChatIcon,

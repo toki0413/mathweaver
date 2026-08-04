@@ -30,9 +30,9 @@ test('debug proof mode', async ({ page }) => {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
 
   for (const v of results.violations) {
-    console.log(`\nPROOF RULE: ${v.id} (impact: ${v.impact}) - ${v.nodes.length} nodes`)
+    console.warn(`\nPROOF RULE: ${v.id} (impact: ${v.impact}) - ${v.nodes.length} nodes`)
     for (const n of v.nodes.slice(0, 3)) {
-      console.log(`  TARGET: ${JSON.stringify(n.target)} HTML: ${n.html.slice(0, 200)}`)
+      console.warn(`  TARGET: ${JSON.stringify(n.target)} HTML: ${n.html.slice(0, 200)}`)
     }
   }
 })
@@ -45,10 +45,10 @@ test('debug math katex', async ({ page }) => {
   await page.waitForTimeout(2000)
 
   const katexCount = await page.locator('.katex').count()
-  console.log('KATEX COUNT:', katexCount)
+  console.warn('KATEX COUNT:', katexCount)
 
   if (katexCount === 0) {
     const contentHtml = await page.locator('.chat-msg .content').first().innerHTML()
-    console.log('CONTENT HTML:', contentHtml.slice(0, 500))
+    console.warn('CONTENT HTML:', contentHtml.slice(0, 500))
   }
 })

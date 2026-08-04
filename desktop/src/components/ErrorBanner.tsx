@@ -34,6 +34,11 @@ export function ErrorBanner() {
 
   const level = inferErrorLevel(error.message || '', error.headline || '')
 
+  const handleRetry = () => {
+    clearError()
+    window.dispatchEvent(new CustomEvent('mathweaver:retry'))
+  }
+
   return (
     <div className={`error-banner level-${level}`} role={level === 'error' ? 'alert' : 'status'}>
       <div className="error-banner-content">
@@ -41,6 +46,11 @@ export function ErrorBanner() {
         {error.detail && <div className="error-banner-detail">{error.detail}</div>}
         {error.recovery && <div className="error-banner-recovery">{error.recovery}</div>}
       </div>
+      {error.recovery && (
+        <button className="error-banner-retry" onClick={handleRetry}>
+          重试
+        </button>
+      )}
       <button className="icon-btn" onClick={clearError} aria-label="关闭错误提示">
         <CloseIcon />
       </button>

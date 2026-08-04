@@ -21,6 +21,7 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null
   showDetails: boolean
   retryCount: number
+  remountKey: number
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -32,6 +33,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo: null,
       showDetails: false,
       retryCount: 0,
+      remountKey: 0,
     }
   }
 
@@ -76,6 +78,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo: null,
       showDetails: false,
       retryCount: prev.retryCount + 1,
+      remountKey: prev.remountKey + 1,
     }))
   }
 
@@ -89,18 +92,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render(): ReactNode {
     if (!this.state.hasError) {
-      return this.props.children
+      return <div key={this.state.remountKey}>{this.props.children}</div>
     }
 
     const { error, errorInfo, showDetails, retryCount } = this.state
 
-    const bg = '#f5f0e6'
-    const surface = '#faf6ed'
-    const border = 'rgba(26, 26, 26, 0.1)'
+    const bg = 'var(--bg, #f5f0e6)'
+    const surface = 'var(--bg2, #faf6ed)'
+    const border = 'var(--border, rgba(26, 26, 26, 0.1))'
     const text = '#1a1a1a'
-    const muted = '#525252'
-    const accent = '#c4392f'
-    const errColor = '#9e2b22'
+    const muted = 'var(--muted, #525252)'
+    const accent = 'var(--accent, #c4392f)'
+    const errColor = 'var(--danger, #9e2b22)'
     const fontStack = '"Noto Serif SC", "Songti SC", Georgia, "Iowan Old Style", serif'
 
     return (
@@ -229,6 +232,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               重新加载
             </button>
           </div>
+
+          {this.state.retryCount >= 3 && (
+            <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
+              多次重试后仍然出错。请尝试刷新页面，或检查应用日志。
+            </p>
+          )}
 
           {/* Error details toggle */}
           <div style={{ borderTop: `1px solid ${border}`, paddingTop: '1rem' }}>

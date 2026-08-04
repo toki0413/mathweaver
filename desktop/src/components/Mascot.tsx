@@ -80,6 +80,7 @@ const DEFAULT_MESSAGES: Record<MascotState, Record<AgeLevel, string>> = {
  * 父组件可调用此函数生成消息后再传入 message prop，也可不传 message
  * 让组件自动使用默认值。
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getMascotMessage(state: MascotState, ageLevel: AgeLevel): string {
   return DEFAULT_MESSAGES[state][ageLevel]
 }

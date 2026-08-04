@@ -23,6 +23,7 @@ import dotenv from 'dotenv'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { app } from 'electron'
+import type { LLMConfig } from '../types'
 
 // ---------------------------------------------------------------------------
 // dotenv loader
@@ -194,7 +195,7 @@ export function hasEnvLLMConfig(): boolean {
  * Build a complete LLMConfig from environment variables.
  * Returns null when no env config is present.
  */
-export function getLLMConfigFromEnv(): import('../types').LLMConfig | null {
+export function getLLMConfigFromEnv(): LLMConfig | null {
   if (!hasEnvLLMConfig()) return null
   return {
     provider: getLLMProvider(),
