@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-08-08
+
 ### Added — 数学建模实验室 + GeoChat 设计理念集成
 - 新增「建模」模式（`ModelingLab.tsx`）：第五个主模式标签页，画板优先布局
   - 5 个数学模型预设：Lotka-Volterra 捕食-被捕食、SIR 传染病、阻尼谐振子、Logistic 增长、Cayley 图可视化
@@ -44,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 合并重复的 `electron.d.ts` 类型声明为单一 `types/electron.d.ts`，消除 `window.api` 与 `window.electronAPI` 的类型冲突
 - 修复 `performance.ts` 中 React 导入位置（从文件中部移至顶部）
 - 将 `performance.ts` 中 `console.log` 调试输出降级为 `console.debug`，减少生产环境控制台噪音
+- 将 `electron-store` 从 devDependencies 移至 dependencies（生产代码依赖该包）
+- 修复 CI/CD `release.yml` 中 `electron-builder` 与 `softprops/action-gh-release` 双重发布冲突（添加 `--publish never`）
+- 运行 `npm audit fix` 修复自动可修复的安全漏洞
+
+### Added — 安全与配置测试覆盖
+- 新增 `crypto.test.ts`：加密模块单元测试（encrypt/decrypt 往返、向后兼容、错误处理、机器 ID 持久化）
+- 新增 `config.test.ts`：配置模块单元测试（环境变量访问器、LLM 配置、双前缀支持）
 
 ### Fixed
 - 清理 `App.tsx` 中 8 个未使用的图标导入（TrophyIcon、SparkleIcon、GraduationIcon、CrownIcon、BookIcon、CheckIcon、TrashIcon、InfoIcon）
@@ -54,6 +63,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - 添加 `LICENSE` 文件（Apache-2.0）
 - 添加 `CHANGELOG.md` 变更日志
+
+## [0.4.3] - 2026-08-08
+
+### Added
+- 核心模块单元测试覆盖（crypto / config 等）
+- E2E 测试修复与完善
+
+### Changed
+- CI Gate 流水线强化：typecheck / lint / format:check / unit / build 全量门禁
+
+## [0.4.2] - 2026-08-04
+
+### Fixed
+- 错误恢复机制全面优化
+- 加载状态（loading states）完善
+- 空状态（empty states）UI 改进
+
+## [0.4.1] - 2026-08-04
+
+### Changed
+- UI/UX 全面打磨
+- 无障碍 (a11y) 改进
+- 内容真实性修复
+
+## [0.4.0] - 2026-08-02
+
+### Added — 多模型 LLM 接入
+- 支持 DeepSeek / OpenAI / Claude / Gemini / Kimi / GLM / Ollama 等多家 LLM 提供商
+- OpenAI 兼容协议统一接入
+- 环境变量双前缀支持（`LLM_*` / `MATHWEAVER_LLM_*`）
+
+## [0.3.1] - 2026-07-31
+
+### Fixed
+- 修复桌面端 CI 失败：TypeScript 类型检查 + ESLint + 格式化
+- 提交遗漏的 E2E 测试修复，E2E 设为非阻塞
+
+### Changed
+- 重构 pitch 文件：新增质量与可靠性专页，更新统计数据
 
 ## [0.3.0] - 2026-07-25
 
@@ -86,6 +134,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI 流水线（`.github/workflows/ci.yml`）：lint / test / build
 - Release 流水线（`.github/workflows/release.yml`）：跨平台构建 + GitHub Release
 - E2E 测试套件：无障碍 / 视觉回归 / 性能 / 错误韧性 / API 契约 / 响应式
+
+## [0.2.1] - 2026-07-24
+
+### Infrastructure
+- 为所有平台添加 zip 打包目标
+- 启用 asar 打包 + npmRebuild
 
 ## [0.2.0] - 2026-07-10
 
