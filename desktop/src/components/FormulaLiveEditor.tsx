@@ -154,7 +154,7 @@ const STYLES = `
 /* 提高特异性以覆盖全局 .btn 的 padding/font-size，使模板按钮更紧凑 */
 .fle-tpl-group .fle-tpl-btn {
   padding: 3px 8px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .fle-actions {
   margin-left: auto;

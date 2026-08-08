@@ -15,9 +15,51 @@ permissions:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Gate: ensure CI passes before building release artifacts
+  # ---------------------------------------------------------------------------
+  ci-gate:
+    name: CI Gate (ensure quality checks pass)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Type check
+        working-directory: desktop
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: desktop
+        run: npm run lint
+
+      - name: Format check
+        working-directory: desktop
+        run: npm run format:check
+
+      - name: Unit tests
+        working-directory: desktop
+        run: npm run test
+
+      - name: Build (electron-vite)
+        working-directory: desktop
+        run: npx electron-vite build
+
+  # ---------------------------------------------------------------------------
   # Build desktop installers on each platform
   # ---------------------------------------------------------------------------
   build:
+    needs: ci-gate
     strategy:
       fail-fast: false
       matrix:

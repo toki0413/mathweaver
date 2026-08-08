@@ -569,23 +569,39 @@ const mockApi = {
     theorems: ['Lagrange 定理', '群的幺元唯一性', '逆元唯一性', '循环群的子群结构'],
   }),
 
-  submitProof: async (theoremId: string, steps: string[]) => ({
-    theorem_name: theoremId,
-    steps: steps.map((s, i) => ({
-      step_number: i + 1,
-      claim: s,
-      justification: '验证通过',
-      is_valid: true,
-      feedback: '正确',
-      matched_expected: '',
-      implicit_steps: [],
-    })),
-    is_complete: true,
-    missing_steps: [],
-    socratic_hint: '',
-    overall_feedback: '证明完整，逻辑清晰。',
-    progress: '100%',
-  }),
+  submitProof: async (theoremId: string, steps: string[]) => {
+    // Evaluate each step: non-empty steps with mathematical content are valid
+    const validSteps = steps.map((s, i) => {
+      const trimmed = s.trim()
+      const hasMathContent =
+        trimmed.length > 0 &&
+        (/[=∈·∑∏∀∃]/.test(trimmed) ||
+          /[\u4e00-\u9fff]{2,}/.test(trimmed) || // Chinese math terms
+          /[a-zA-Z]{2,}/.test(trimmed)) // Latin terms
+      return {
+        step_number: i + 1,
+        claim: s,
+        justification: hasMathContent ? '步骤已验证' : '步骤缺乏数学内容',
+        is_valid: hasMathContent,
+        feedback: hasMathContent ? '✓ 步骤有效' : '✗ 步骤无效，请补充数学论断',
+        matched_expected: '',
+        implicit_steps: [] as string[],
+      }
+    })
+    const validCount = validSteps.filter(s => s.is_valid).length
+    const isComplete = validCount > 0 && validCount === steps.length
+    return {
+      theorem_name: theoremId,
+      steps: validSteps,
+      is_complete: isComplete,
+      missing_steps: isComplete ? [] : ['补充更完整的证明步骤'],
+      socratic_hint: '',
+      overall_feedback: isComplete
+        ? `证明完整，${validCount}/${steps.length} 步全部有效。`
+        : `已提交 ${steps.length} 步，其中 ${validCount} 步有效。`,
+      progress: `${validCount}/${steps.length}`,
+    }
+  },
 
   // Grill
   startGrill: async () => ({

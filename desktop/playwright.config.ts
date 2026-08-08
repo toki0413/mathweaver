@@ -31,6 +31,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chrome',
         launchOptions: {
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         },

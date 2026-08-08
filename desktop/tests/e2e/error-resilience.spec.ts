@@ -389,6 +389,23 @@ test.describe('Error Handling & Resilience', () => {
   // -------------------------------------------------------------------------
 
   test('concurrent rapid clicks do not cause race conditions', async ({ page }) => {
+    // Add a delay to the session-input API call so the loading state
+    // ("验证中") is visible long enough for the test to assert it.
+    // The mock API resolves synchronously, which makes the loading state
+    // disappear before Playwright can observe it.
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        api: { invoke: (...args: unknown[]) => Promise<unknown> }
+      }
+      const original = w.api.invoke
+      w.api.invoke = async (channel: string, ...args: unknown[]) => {
+        if (channel === 'api:session-input') {
+          await new Promise(r => setTimeout(r, 1000))
+        }
+        return original(channel, ...args)
+      }
+    })
+
     // The table submit button is a good candidate: it doesn't clear its
     // input (the Cayley table persists), so rapid clicks are possible.
     const submitBtn = page.getByRole('button', { name: '提交' })

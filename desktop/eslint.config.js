@@ -17,10 +17,12 @@ export default tseslint.config(
     ignores: [
       'dist/',
       'dist-web/',
+      'src/dist/',
       'out/',
       'node_modules/',
       'coverage/',
       'test-results/',
+      'release/',
       '**/*.config.{ts,js}',
       'electron/preload/index.d.ts',
       'src/types/electron.d.ts',

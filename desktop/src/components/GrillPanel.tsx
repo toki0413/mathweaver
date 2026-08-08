@@ -434,6 +434,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 placeholder="输入你的答案..."
                 onKeyDown={handleKeyDown}
                 rows={3}
+                aria-label="输入你的答案"
               />
               <div className="btn-row">
                 <button

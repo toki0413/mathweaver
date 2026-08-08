@@ -513,6 +513,7 @@ export function ProofPanel() {
                           onChange={e => updateBackwardStep(i, e.target.value)}
                           placeholder="输入充分条件…"
                           rows={2}
+                          aria-label={`第 ${i + 1} 步倒推充分条件`}
                         />
                         <button
                           type="button"

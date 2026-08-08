@@ -186,6 +186,139 @@ export class SimpleConceptDAG {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Proof Step Validation (replaces the old "non-empty = valid" check)
+// ---------------------------------------------------------------------------
+
+/** @internal Exported for unit testing. */
+export interface ProofStepValidation {
+  isValid: boolean
+  feedback: string
+  implicitSteps: string[]
+}
+
+/**
+ * Validate a single proof step against the expected step.
+ *
+ * Strategy:
+ * 1. Empty claim → invalid
+ * 2. If we have an expected step, check key-term overlap (≥40% match = valid)
+ * 3. If no expected step (extra step), check for mathematical reasoning content
+ * 4. Check justification contains logical connectors
+ */
+/** @internal Exported for unit testing. */
+export function validateProofStep(
+  claim: string,
+  justification: string,
+  expectedStep: string,
+  _stepIndex: number,
+  _allExpected: string[],
+): ProofStepValidation {
+  // Rule 1: empty claim is never valid
+  if (!claim.trim()) {
+    return {
+      isValid: false,
+      feedback: '步骤内容为空，请写出你的论断。',
+      implicitSteps: [],
+    }
+  }
+
+  // Rule 2: if we have an expected step, use key-term matching
+  if (expectedStep) {
+    const expectedTerms = extractKeyTerms(expectedStep)
+    const claimTerms = extractKeyTerms(claim)
+    const claimLower = claim.toLowerCase()
+    const justLower = justification.toLowerCase()
+    const combined = `${claimLower} ${justLower}`
+
+    let matched = 0
+    for (const term of expectedTerms) {
+      if (combined.includes(term.toLowerCase())) {
+        matched += 1
+      }
+    }
+
+    const matchRatio = expectedTerms.length > 0 ? matched / expectedTerms.length : 0
+
+    if (matchRatio >= 0.4) {
+      // Check for justification quality — at least some logical reasoning
+      const hasJustification =
+        justification.length > 0 ||
+        claimLower.includes('因为') ||
+        claimLower.includes('since') ||
+        claimLower.includes('由') ||
+        claimLower.includes('根据') ||
+        claimLower.includes('定义') ||
+        claimLower.includes('结合律') ||
+        claimLower.includes('逆元') ||
+        claimLower.includes('单位元') ||
+        claimLower.includes('传递')
+      return {
+        isValid: true,
+        feedback: hasJustification ? '✓ 步骤有效，逻辑清晰。' : '✓ 步骤有效，建议补充理由说明。',
+        implicitSteps: [],
+      }
+    } else if (matchRatio >= 0.2) {
+      // Partial match — check if the claim direction is right
+      const hasCorrectDirection = expectedTerms.some(
+        t => claimLower.includes(t.toLowerCase()) || justLower.includes(t.toLowerCase()),
+      )
+      if (hasCorrectDirection) {
+        return {
+          isValid: true,
+          feedback: '△ 步骤方向正确，但表述不够完整。参考期望步骤。',
+          implicitSteps: [],
+        }
+      }
+      return {
+        isValid: false,
+        feedback: `✗ 步骤与期望不符。期望涉及：${expectedStep.slice(0, 40)}…`,
+        implicitSteps: [],
+      }
+    } else {
+      // Check if this could be an implicit/rearranged step
+      const claimTermsSet = new Set(claimTerms.map(t => t.toLowerCase()))
+      const expectedTermsSet = new Set(expectedTerms.map(t => t.toLowerCase()))
+      const overlap = [...claimTermsSet].filter(t => expectedTermsSet.has(t))
+      if (overlap.length >= 2) {
+        return {
+          isValid: true,
+          feedback: '△ 步骤内容与期望部分重叠，可能需要调整顺序。',
+          implicitSteps: [],
+        }
+      }
+      return {
+        isValid: false,
+        feedback: `✗ 步骤无效。期望涉及：${expectedStep.slice(0, 40)}…`,
+        implicitSteps: [],
+      }
+    }
+  }
+
+  // Rule 3: extra step (no expected step at this index)
+  // Check if the step contains mathematical reasoning
+  const claimLower = claim.toLowerCase()
+  const hasMathContent =
+    extractKeyTerms(claim).length > 0 ||
+    claimLower.includes('=') ||
+    claimLower.includes('∈') ||
+    claimLower.includes('·') ||
+    /\d/.test(claim)
+  if (hasMathContent) {
+    return {
+      isValid: true,
+      feedback: '△ 额外步骤，内容有效但不在标准证明路径中。',
+      implicitSteps: [],
+    }
+  }
+
+  return {
+    isValid: false,
+    feedback: '✗ 步骤缺乏数学内容，请写出具体的数学论断。',
+    implicitSteps: [],
+  }
+}
+
 const CURRICULUM_LABELS: Record<string, string> = {
   elementary: '小学数学',
   middle_school: '初中数学',
@@ -285,11 +418,16 @@ interface GrillConjectureRecord {
   counter_example: string | null
 }
 
-class SimpleGrillSession {
+/** @internal Exported for unit testing. */
+export class SimpleGrillSession {
   active = false
   currentIndex = 0
   cayleyTablesSeen = 0
   conjectureHistory: GrillConjectureRecord[] = []
+  answerHistory: Array<{ qid: string; answer: string; isCorrect: boolean }> = []
+  private streakCorrect = 0
+  private streakWrong = 0
+  private currentDifficulty = 0.4
 
   activate(): void {
     this.active = true
@@ -298,6 +436,10 @@ class SimpleGrillSession {
   reactivate(): void {
     this.active = true
     this.currentIndex = 0
+    this.answerHistory = []
+    this.streakCorrect = 0
+    this.streakWrong = 0
+    this.currentDifficulty = 0.4
   }
 
   nextQuestion(): GrillQuestion | null {
@@ -319,30 +461,84 @@ class SimpleGrillSession {
     this.conjectureHistory.push({ text, verdict, counter_example: counterExample })
   }
 
+  /**
+   * Evaluate a student's free-text answer against the recommended answer.
+   *
+   * Uses keyword overlap + key-term detection to determine correctness.
+   * When an LLM is available, the caller may pre-evaluate and pass isCorrect
+   * directly; otherwise we fall back to the keyword heuristic.
+   */
+  recordAnswer(qid: string, answer: string, isCorrect?: boolean): boolean {
+    const question = GRILL_QUESTIONS.find(q => q.qid === qid)
+    let correct: boolean
+    if (isCorrect !== undefined) {
+      correct = isCorrect
+    } else if (question) {
+      correct = evaluateAnswer(answer, question.recommended_answer)
+    } else {
+      correct = false
+    }
+
+    this.answerHistory.push({ qid, answer, isCorrect: correct })
+    if (correct) {
+      this.streakCorrect += 1
+      this.streakWrong = 0
+      // Increase difficulty after 2 consecutive correct
+      if (this.streakCorrect >= 2) {
+        this.currentDifficulty = Math.min(0.9, this.currentDifficulty + 0.15)
+      }
+    } else {
+      this.streakWrong += 1
+      this.streakCorrect = 0
+      // Decrease difficulty after 2 consecutive wrong
+      if (this.streakWrong >= 2) {
+        this.currentDifficulty = Math.max(0.2, this.currentDifficulty - 0.1)
+      }
+    }
+    return correct
+  }
+
   getSummary(): Record<string, unknown> {
     const total = GRILL_QUESTIONS.length
     const resolved = Math.min(this.currentIndex, total)
+    const correctCount = this.answerHistory.filter(a => a.isCorrect).length
+    const totalAnswered = this.answerHistory.length
+    const accuracy = totalAnswered > 0 ? correctCount / totalAnswered : 0
     const conjSuccess =
       this.conjectureHistory.length > 0
         ? this.conjectureHistory.filter(c => c.verdict === 'confirmed').length /
           this.conjectureHistory.length
         : 0
+
+    // Determine trend from recent answers
+    let trend = 'stable'
+    if (totalAnswered >= 3) {
+      const recent = this.answerHistory.slice(-3)
+      const recentCorrect = recent.filter(a => a.isCorrect).length
+      if (recentCorrect >= 2) trend = 'rising'
+      else if (recentCorrect === 0) trend = 'falling'
+    }
+
+    const diffBand =
+      this.currentDifficulty < 0.4 ? '基础' : this.currentDifficulty < 0.7 ? '进阶' : '挑战'
+
     return {
       resolved_branches: resolved,
       total_branches: total,
-      correct_answers: 0, // free-text correctness evaluation not implemented
+      correct_answers: correctCount,
       conjecture_count: this.conjectureHistory.length,
       cayley_tables_seen: this.cayleyTablesSeen,
       adaptive: {
-        streak_correct: 0,
-        streak_wrong: 0,
-        total_questions: resolved,
-        difficulty_band: resolved > total / 2 ? 'advanced' : 'standard',
-        trend: 'stable',
-        // neutral placeholder: correctness of free-text answers is not evaluated
-        accuracy_rate: 0.5,
+        streak_correct: this.streakCorrect,
+        streak_wrong: this.streakWrong,
+        total_questions: totalAnswered,
+        difficulty_band: diffBand,
+        trend,
+        accuracy_rate: accuracy,
         conjecture_success_rate: conjSuccess,
-        current_difficulty: 0.4,
+        current_difficulty: this.currentDifficulty,
+        should_increase: this.streakCorrect >= 2,
+        should_decrease: this.streakWrong >= 2,
       },
     }
   }
@@ -350,6 +546,79 @@ class SimpleGrillSession {
   getConjectureHistory(): GrillConjectureRecord[] {
     return this.conjectureHistory
   }
+}
+
+/**
+ * Evaluate a free-text answer against a reference answer using keyword overlap.
+ *
+ * Strategy: extract key mathematical terms from the recommended answer, then
+ * check what fraction appear in the student's answer. If ≥60% of key terms are
+ * present, the answer is considered correct.
+ */
+/** @internal Exported for unit testing. */
+export function evaluateAnswer(studentAnswer: string, recommendedAnswer: string): boolean {
+  const student = studentAnswer.toLowerCase().trim()
+  const recommended = recommendedAnswer.toLowerCase().trim()
+
+  // Empty answer is never correct
+  if (!student) return false
+
+  // Extract key terms: Chinese math terms, numbers, Latin math symbols
+  const keyTerms = extractKeyTerms(recommended)
+  if (keyTerms.length === 0) {
+    // No extractable key terms — fall back to length + overlap check
+    return student.length >= recommended.length * 0.3
+  }
+
+  let matched = 0
+  for (const term of keyTerms) {
+    if (student.includes(term.toLowerCase())) {
+      matched += 1
+    }
+  }
+
+  const matchRatio = matched / keyTerms.length
+  return matchRatio >= 0.6
+}
+
+/** @internal Exported for unit testing. Extract mathematically significant terms from a reference answer string. */
+export function extractKeyTerms(text: string): string[] {
+  const terms: string[] = []
+
+  // Chinese math terms (2+ chars, common group theory vocabulary)
+  const cnTerms = text.match(/[\u4e00-\u9fff]{2,6}/g) ?? []
+  // Filter out common stop words
+  const cnStopWords = new Set([
+    '一个',
+    '群的',
+    '就是',
+    '如果',
+    '那么',
+    '因为',
+    '所以',
+    '这是',
+    '满足',
+  ])
+  for (const t of cnTerms) {
+    if (!cnStopWords.has(t)) {
+      terms.push(t)
+    }
+  }
+
+  // Latin math terms and symbols (e.g., "S₃", "a·b", "Lagrange")
+  const latinTerms = text.match(/[A-Za-z][A-Za-z₃₄₅₆⁻¹²³₍₎]*/g) ?? []
+  for (const t of latinTerms) {
+    if (t.length >= 2) {
+      terms.push(t)
+    }
+  }
+
+  // Numbers (e.g., "3", "4" in group theory context)
+  const numbers = text.match(/\d+/g) ?? []
+  terms.push(...numbers)
+
+  // Deduplicate
+  return [...new Set(terms)]
 }
 
 // ---------------------------------------------------------------------------
@@ -814,6 +1083,34 @@ export class Orchestrator {
       }
     }
 
+    // --- Evaluate grill answer (non-trigger input during active grill) ---
+    if (this.grillSession !== null && this.grillSession.active && !isGrillTrigger && !isProof) {
+      const currentQ = this.grillSession.nextQuestion()
+      if (currentQ && !studentInput.trim().startsWith('[')) {
+        // Evaluate the answer using LLM if available, otherwise keyword heuristic
+        let isCorrect: boolean | undefined
+        if (this.llmClient && this.llmClient.isConfigured && this.llmClient.provider !== 'mock') {
+          try {
+            isCorrect = await this.evaluateGrillAnswerLLM(
+              currentQ.question,
+              currentQ.recommended_answer,
+              studentInput,
+            )
+          } catch {
+            // LLM evaluation failed — fall back to keyword heuristic
+            isCorrect = undefined
+          }
+        }
+        const wasCorrect = this.grillSession.recordAnswer(currentQ.qid, studentInput, isCorrect)
+        // Store result for collaboration agent to use
+        this.grillSession.recordConjecture(
+          studentInput,
+          wasCorrect ? 'confirmed' : 'refuted',
+          wasCorrect ? null : `参考答案：${currentQ.recommended_answer}`,
+        )
+      }
+    }
+
     // LLM-driven agent loop (1.2: LLM controls flow, not hardcoded pipeline)
     const llm = this.llmClient ?? new MockLLMClient()
 
@@ -1142,9 +1439,36 @@ export class Orchestrator {
     }
   }
 
-  // -- Proof Assistant Integration (simplified) --
+  // -- Grill Answer Evaluation --
 
-  /** Handle a proof attempt: parse, verify (simplified), and return results. */
+  /** Use LLM to evaluate whether a student's free-text answer is correct. */
+  private async evaluateGrillAnswerLLM(
+    question: string,
+    recommendedAnswer: string,
+    studentAnswer: string,
+  ): Promise<boolean> {
+    if (!this.llmClient || !this.llmClient.isConfigured) return false
+
+    const prompt =
+      `你是一位数学教师，正在评估学生对群论问题的回答。\n\n` +
+      `问题：${question}\n` +
+      `参考答案：${recommendedAnswer}\n` +
+      `学生答案：${studentAnswer}\n\n` +
+      `请判断学生答案是否在数学上正确（允许不同表述方式，但核心数学内容必须正确）。\n` +
+      `只回答 "correct" 或 "incorrect"，不要其他解释。`
+
+    try {
+      const resp = await this.llmClient.chat('你是一位数学教师。', prompt, undefined, 0.1)
+      const content = resp.content.toLowerCase().trim()
+      return content.includes('correct') && !content.includes('incorrect')
+    } catch {
+      return false
+    }
+  }
+
+  // -- Proof Assistant Integration --
+
+  /** Handle a proof attempt: parse, verify, and return results. */
   private handleProof(studentInput: string): Record<string, unknown> {
     const theoremName = this.detectTheorem(studentInput)
     const steps = this.parseProofSteps(studentInput)
@@ -1152,24 +1476,32 @@ export class Orchestrator {
     if (theoremName && steps.length > 0) {
       const template = PROOF_TEMPLATES[theoremName]
       const expected = template.expectedSteps
-      const verifiedSteps = steps.map((s, idx) => ({
-        step_number: idx + 1,
-        claim: s.claim,
-        justification: s.justification,
-        is_valid: s.claim.length > 0, // simplified: non-empty claim is accepted
-        feedback: s.claim.length > 0 ? '步骤已记录。' : '步骤内容为空。',
-        matched_expected: idx < expected.length ? expected[idx] : '',
-        implicit_steps: [] as string[],
-      }))
-      const isComplete = steps.length >= expected.length
+      const verifiedSteps = steps.map((s, idx) => {
+        const expectedStep = idx < expected.length ? expected[idx] : ''
+        const validation = validateProofStep(s.claim, s.justification, expectedStep, idx, expected)
+        return {
+          step_number: idx + 1,
+          claim: s.claim,
+          justification: s.justification,
+          is_valid: validation.isValid,
+          feedback: validation.feedback,
+          matched_expected: expectedStep,
+          implicit_steps: validation.implicitSteps,
+        }
+      })
+      const validCount = verifiedSteps.filter(s => s.is_valid).length
+      const isComplete = validCount >= expected.length
       const missing = expected.slice(steps.length)
+      const allValid = validCount === steps.length
       return {
         theorem_name: theoremName,
         is_complete: isComplete,
-        progress: `${steps.length}/${expected.length}`,
+        progress: `${validCount}/${expected.length}`,
         overall_feedback: isComplete
-          ? '证明步骤已完整记录。'
-          : `已记录 ${steps.length} 步，还需要 ${missing.length} 步。`,
+          ? `证明完成！${validCount}/${expected.length} 步全部有效。`
+          : allValid
+            ? `已记录 ${validCount} 步有效步骤，还需要 ${missing.length} 步。`
+            : `已记录 ${steps.length} 步，其中 ${validCount} 步有效。${missing.length} 步待完成。`,
         socratic_hint: template.socraticHints[0] ?? '',
         steps: verifiedSteps,
         missing_steps: missing,

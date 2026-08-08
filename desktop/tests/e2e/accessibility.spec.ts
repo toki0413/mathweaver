@@ -74,7 +74,10 @@ function filterCriticalViolations(
  * Switch to a specific mode tab by clicking it. Uses exact matching because
  * the proof mode adds sub-tabs whose names contain '证明' as a substring.
  */
-async function switchMode(page: Page, mode: '对话' | '挑战' | '证明' | '知识地图'): Promise<void> {
+async function switchMode(
+  page: Page,
+  mode: '对话' | '挑战' | '证明' | '知识地图' | '建模',
+): Promise<void> {
   await page.getByRole('tab', { name: mode, exact: true }).click()
 }
 
@@ -113,8 +116,9 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
 
   test('proof mode has no critical axe violations', async ({ page }) => {
     await switchMode(page, '证明')
-    // Wait for proof panel to render
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    // Wait for proof panel to render — use a heading locator to avoid
+    // matching the same text in collapsed sections or other elements.
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
 
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
 
@@ -124,8 +128,9 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
 
   test('dag mode has no critical axe violations', async ({ page }) => {
     await switchMode(page, '知识地图')
-    // Wait for the DAG graph to render
-    await expect(page.getByText('概念依赖图')).toBeVisible({ timeout: 5000 })
+    // Wait for the DAG graph to render — use a heading locator to avoid
+    // matching the nav aria-label text as well.
+    await expect(page.getByRole('heading', { name: /概念依赖图/ })).toBeVisible({ timeout: 5000 })
 
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
 
@@ -142,8 +147,8 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
     // first, then press Tab repeatedly and collect focus targets.
     await page.focus('body')
 
+    const focusedKeys: string[] = []
     const focusedTags: string[] = []
-    const focusedRoles: string[] = []
 
     for (let i = 0; i < 15; i++) {
       await page.keyboard.press('Tab')
@@ -159,33 +164,38 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
           type: (el as HTMLInputElement).type || '',
           ariaLabel: el.getAttribute('aria-label') || '',
           text: (el.textContent || '').trim().slice(0, 30),
+          id: el.id || '',
+          className: el.className || '',
         }
       })
 
       if (info) {
         focusedTags.push(info.tag)
-        focusedRoles.push(info.role || info.type || 'text')
+        // Build a unique key to detect whether focus is stuck on the same
+        // element. Using tag + id + className + text distinguishes different
+        // buttons even when they share the same role/type.
+        focusedKeys.push(`${info.tag}:${info.id}:${info.className}:${info.text}`)
       }
     }
 
     // Verify that Tab moves focus to interactive elements (not just text nodes).
-    // We should have found at least a few focusable elements.
     expect(focusedTags.length).toBeGreaterThan(0)
 
     // All focused elements should be interactive (button, input, textarea,
-    // a, or elements with tabindex/role).
+    // a, or elements with tabindex/role — including SVG <g> nodes which
+    // act as buttons in the DAG graph).
     for (const tag of focusedTags) {
-      expect(['button', 'input', 'textarea', 'a', 'div', 'span', 'th', 'td']).toContain(tag)
+      expect(['button', 'input', 'textarea', 'a', 'div', 'span', 'th', 'td', 'g']).toContain(tag)
     }
 
+    // Verify that focus moves to at least 2 different elements (not stuck
+    // on a single element).
+    const uniqueElements = new Set(focusedKeys)
+    expect(uniqueElements.size).toBeGreaterThan(1)
+
     // Verify no element receives focus twice in a row (stuck focus).
-    for (let i = 1; i < focusedRoles.length; i++) {
-      // It's OK for the same type to appear consecutively, but we want to
-      // ensure focus is actually moving. Check that at least some variety exists.
-      const uniqueCount = new Set(focusedRoles.slice(0, i + 1)).size
-      if (i >= 5) {
-        expect(uniqueCount).toBeGreaterThan(1)
-      }
+    for (let i = 1; i < focusedKeys.length; i++) {
+      expect(focusedKeys[i], `Focus appears stuck at step ${i}`).not.toBe(focusedKeys[i - 1])
     }
   })
 
@@ -371,20 +381,23 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
 
     const tabs = tablist.getByRole('tab')
     const tabCount = await tabs.count()
-    expect(tabCount).toBe(4)
+    expect(tabCount).toBe(5)
 
     // Initially, the chat (对话) tab should be selected.
     const chatTab = page.getByRole('tab', { name: '对话', exact: true })
     await expect(chatTab).toHaveAttribute('aria-selected', 'true')
 
+    // All mode tab names in the application.
+    const allModes = ['对话', '挑战', '证明', '知识地图', '建模'] as const
+
     // Switch to each mode and verify aria-selected updates.
-    for (const mode of ['挑战', '证明', '知识地图', '对话'] as const) {
+    for (const mode of ['挑战', '证明', '知识地图', '建模', '对话'] as const) {
       const tab = page.getByRole('tab', { name: mode, exact: true })
       await tab.click()
       await expect(tab).toHaveAttribute('aria-selected', 'true')
 
       // All other tabs should have aria-selected="false".
-      for (const other of ['对话', '挑战', '证明', '知识地图'] as const) {
+      for (const other of allModes) {
         if (other === mode) continue
         const otherTab = page.getByRole('tab', { name: other, exact: true })
         await expect(otherTab).toHaveAttribute('aria-selected', 'false')
@@ -449,7 +462,7 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
 
   test('proof mode form inputs have accessible labels', async ({ page }) => {
     await switchMode(page, '证明')
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
     await page.waitForTimeout(300)
 
     // Check proof step textareas for accessible labels.
@@ -502,7 +515,7 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
     expect(chatCritical).toEqual([])
 
     // Switch to each other mode and scan.
-    for (const mode of ['挑战', '证明', '知识地图'] as const) {
+    for (const mode of ['挑战', '证明', '知识地图', '建模'] as const) {
       await switchMode(page, mode)
       // Give the mode panel time to render.
       await page.waitForTimeout(500)

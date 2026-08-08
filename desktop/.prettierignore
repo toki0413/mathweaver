@@ -1,0 +1,19 @@
+# Build artifacts
+dist/
+dist-web/
+src/dist/
+out/
+release/
+coverage/
+test-results/
+
+# Dependencies
+node_modules/
+
+# Generated files
+electron/preload/index.d.ts
+src/types/electron.d.ts
+test/mock-api.js
+
+# Lock files
+package-lock.json

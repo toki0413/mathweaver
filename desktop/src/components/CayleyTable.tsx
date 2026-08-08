@@ -66,6 +66,13 @@ function CayleyTableBase({
     hasInverses: false,
     isCommutative: false,
   })
+  // Whether the discovery effect has run at least once. The first run is
+  // skipped so that a pre-filled valid table (e.g. the default Z₃ table)
+  // does not spuriously fire every discovery toast on mount — discoveries
+  // should only fire when the user's edits or a preset load transition an
+  // axiom from unsatisfied to satisfied. This also keeps mount-time toasts
+  // from overlapping and blocking the onboarding dialog in E2E tests.
+  const hasMountedRef = useRef(false)
 
   const handleMouseEnter = useCallback((row: number, col: number) => {
     setHoveredCell({ row, col })
@@ -212,16 +219,22 @@ function CayleyTableBase({
   useEffect(() => {
     if (!onDiscovery) return
     const prev = prevAxiomsRef.current
-    const discoveries: string[] = []
-    if (!prev.isClosed && currentAxioms.isClosed) discoveries.push('closure')
-    if (!prev.isAssociative && currentAxioms.isAssociative) discoveries.push('associativity')
-    if (!prev.hasIdentity && currentAxioms.hasIdentity) discoveries.push('identity')
-    if (!prev.hasInverses && currentAxioms.hasInverses) discoveries.push('inverses')
-    if (!prev.isCommutative && currentAxioms.isCommutative) discoveries.push('commutativity')
-    if (discoveries.length > 0) {
-      discoveries.forEach(d => onDiscovery(d))
+    // Skip the initial mount: a pre-filled valid table is not a "discovery".
+    // Discoveries should only fire when the user's edits (or a preset load)
+    // transition an axiom from unsatisfied to satisfied.
+    if (hasMountedRef.current) {
+      const discoveries: string[] = []
+      if (!prev.isClosed && currentAxioms.isClosed) discoveries.push('closure')
+      if (!prev.isAssociative && currentAxioms.isAssociative) discoveries.push('associativity')
+      if (!prev.hasIdentity && currentAxioms.hasIdentity) discoveries.push('identity')
+      if (!prev.hasInverses && currentAxioms.hasInverses) discoveries.push('inverses')
+      if (!prev.isCommutative && currentAxioms.isCommutative) discoveries.push('commutativity')
+      if (discoveries.length > 0) {
+        discoveries.forEach(d => onDiscovery(d))
+      }
     }
     prevAxiomsRef.current = { ...currentAxioms }
+    hasMountedRef.current = true
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClosed, isAssociative, identityRows.size, hasInverses, isCommutative, onDiscovery])
 
@@ -377,14 +390,24 @@ function CayleyTableBase({
                           ? editingCell
                           : String(val)
                       }
-                      onChange={e => setEditingCell(e.target.value)}
+                      onChange={e => {
+                        const raw = e.target.value
+                        setEditingCell(raw)
+                        // Commit valid integers immediately — including
+                        // out-of-range values, which the real-time closure
+                        // check flags as invalid (red cell + "✗ 未闭合"
+                        // badge). The editing buffer still lets the cell be
+                        // temporarily cleared (empty string → NaN → no commit)
+                        // so the user can retype freely without parseInt
+                        // coercing the value back to 0 on every keystroke.
+                        const n = parseInt(raw, 10)
+                        if (!Number.isNaN(n)) onChange(i, j, n)
+                      }}
                       onFocus={() => {
                         setFocusedCell({ row: i, col: j })
                         setEditingCell(String(val))
                       }}
                       onBlur={() => {
-                        const n = parseInt(editingCell ?? '', 10)
-                        if (!Number.isNaN(n) && n >= 0 && n < size) onChange(i, j, n)
                         setEditingCell(null)
                         setFocusedCell(null)
                       }}

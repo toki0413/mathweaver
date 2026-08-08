@@ -361,6 +361,7 @@ function AIContentPanel({ ageLevel, tableSize, table }: AIContentPanelProps) {
             placeholder={L.topicPlaceholder[ageLevel]}
             onChange={e => setSelectedTopic(e.target.value)}
             disabled={isLoading}
+            aria-label={L.topicLabel[ageLevel]}
           />
           <div className="aic-topic-presets">
             {topicPresets.map(topic => (
@@ -393,6 +394,7 @@ function AIContentPanel({ ageLevel, tableSize, table }: AIContentPanelProps) {
             value={difficulty}
             onChange={e => setDifficulty(parseFloat(e.target.value))}
             disabled={isLoading}
+            aria-label={L.difficultyLabel[ageLevel]}
           />
         </div>
 

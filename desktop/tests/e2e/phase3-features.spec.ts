@@ -150,6 +150,23 @@ test.describe('FR-10: Conjecture input', () => {
   })
 
   test('conjecture submission shows loading then clears input', async ({ page }) => {
+    // Add a delay to the conjecture:test API call so the loading state
+    // ("验证中…") is visible long enough for the test to assert it.
+    // The mock API resolves synchronously, which makes the loading state
+    // disappear before Playwright can observe it.
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        api: { invoke: (...args: unknown[]) => Promise<unknown> }
+      }
+      const original = w.api.invoke
+      w.api.invoke = async (channel: string, ...args: unknown[]) => {
+        if (channel === 'conjecture:test') {
+          await new Promise(r => setTimeout(r, 500))
+        }
+        return original(channel, ...args)
+      }
+    })
+
     await page.locator('.conjecture-input').fill('所有群都是交换群')
     await page.getByRole('button', { name: '提交猜想' }).click()
 
@@ -182,7 +199,9 @@ test.describe('FR-11: Proof verification', () => {
   test('proof panel has theorem selector and step editor', async ({ page }) => {
     await expect(page.getByText('课程级别')).toBeVisible()
     await expect(page.getByText('选择定理', { exact: true })).toBeVisible()
-    await expect(page.getByText('证明步骤')).toBeVisible()
+    // Use a heading locator to avoid matching the same text in the
+    // collapsed "公式编辑器" CollapsibleSection paragraph.
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible()
     // At least one step textarea should exist
     await expect(page.locator('.ddps-step-textarea').first()).toBeVisible()
   })
@@ -230,6 +249,52 @@ test.describe('FR-12: Historical narrative cards', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/')
     await completeOnboarding(page)
+
+    // The mock API returns an empty conjecture_journey.timeline. Override
+    // api:session-input to inject timeline entries so the ConjectureTimeline
+    // renders entries for the historical narrative tests.
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        api: { invoke: (...args: unknown[]) => Promise<unknown> }
+      }
+      const original = w.api.invoke
+      w.api.invoke = async (channel: string, ...args: unknown[]) => {
+        const result = await original(channel, ...args)
+        if (channel === 'api:session-input' && result && typeof result === 'object') {
+          const r = result as Record<string, unknown>
+          const vd = r.visual_data as Record<string, unknown>
+          if (vd) {
+            const cj = vd.conjecture_journey as Record<string, unknown>
+            if (cj) {
+              cj.timeline = [
+                {
+                  step: 1,
+                  claim: '所有群都是交换群',
+                  verdict: 'refuted',
+                  counter_example: 'S₃（三阶对称群）是非交换群： (12)(13) ≠ (13)(12)',
+                },
+                {
+                  step: 2,
+                  claim: '群的幺元是唯一的',
+                  verdict: 'confirmed',
+                  counter_example: null,
+                },
+                {
+                  step: 3,
+                  claim: '群的阶一定是偶数',
+                  verdict: 'undecidable',
+                  counter_example: null,
+                },
+              ]
+              cj.total_conjectures = 3
+              cj.confirmed = 1
+              cj.refuted = 1
+            }
+          }
+        }
+        return result
+      }
+    })
 
     // Populate visualData with conjecture journey timeline
     await page.locator('textarea.text-input').fill('什么是群？')

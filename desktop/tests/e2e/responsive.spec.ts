@@ -8,12 +8,12 @@ import { test, expect, type Page } from '@playwright/test'
  * mobile landscape (667x375), and very small screens (320x568).
  *
  * Checks performed:
- *  - All four mode tabs are visible and clickable at every viewport
+ *  - All five mode tabs are visible and clickable at every viewport
  *  - The main grid layout adapts (two-column → single-column) correctly
  *  - No horizontal scroll occurs on tablet / mobile
  *  - The Cayley (operation) table remains usable on small screens
  *  - The chat panel textarea is properly sized within the viewport
- *  - Mode switching works on mobile (all four modes render)
+ *  - Mode switching works on mobile (all five modes render)
  *  - Touch interactions (tap) work in addition to mouse clicks
  *  - Font sizes on mobile are readable (no primary content below 12px)
  *
@@ -124,7 +124,7 @@ const VIEWPORTS = [
   { name: 'very-small', width: 320, height: 568 },
 ] as const
 
-const MODE_TABS = ['对话', '挑战', '证明', '知识地图'] as const
+const MODE_TABS = ['对话', '挑战', '证明', '知识地图', '建模'] as const
 
 // ---------------------------------------------------------------------------
 // Tests: Cross-viewport rendering
@@ -143,7 +143,7 @@ test.describe('Responsive Layout', () => {
       // The mode-switcher tablist is rendered.
       await expect(page.getByRole('tablist', { name: '模式切换' })).toBeVisible()
 
-      // All four mode tabs exist.
+      // All five mode tabs exist.
       for (const name of MODE_TABS) {
         await expect(page.getByRole('tab', { name, exact: true })).toBeVisible()
       }
@@ -165,7 +165,7 @@ test.describe('Desktop Layout (1920x1080)', () => {
     await completeOnboarding(page)
   })
 
-  test('all four mode tabs are visible', async ({ page }) => {
+  test('all five mode tabs are visible', async ({ page }) => {
     for (const name of MODE_TABS) {
       const tab = page.getByRole('tab', { name, exact: true })
       await expect(tab).toBeVisible()
@@ -344,7 +344,7 @@ test.describe('Mobile Landscape (667x375)', () => {
   })
 
   test('mode switching works in landscape', async ({ page }) => {
-    for (const name of ['挑战', '证明', '知识地图', '对话'] as const) {
+    for (const name of ['挑战', '证明', '知识地图', '建模', '对话'] as const) {
       const tab = page.getByRole('tab', { name, exact: true })
       await tab.click()
       await expect(tab).toHaveAttribute('aria-selected', 'true')
@@ -400,7 +400,7 @@ test.describe('Mobile Mode Switching', () => {
     await completeOnboarding(page)
   })
 
-  test('all four modes render correctly on mobile', async ({ page }) => {
+  test('all five modes render correctly on mobile', async ({ page }) => {
     // Chat mode (default) — Cayley table visible.
     await expect(page.getByRole('tab', { name: '对话', exact: true })).toHaveAttribute(
       'aria-selected',
@@ -422,7 +422,7 @@ test.describe('Mobile Mode Switching', () => {
       'aria-selected',
       'true',
     )
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
 
     // DAG mode — concept graph visible.
     await page.getByRole('tab', { name: '知识地图', exact: true }).click()
@@ -430,7 +430,15 @@ test.describe('Mobile Mode Switching', () => {
       'aria-selected',
       'true',
     )
-    await expect(page.getByText('概念依赖图')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /概念依赖图/ })).toBeVisible({ timeout: 5000 })
+
+    // Modeling mode — modeling lab visible.
+    await page.getByRole('tab', { name: '建模', exact: true }).click()
+    await expect(page.getByRole('tab', { name: '建模', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await expect(page.getByText('模型预设')).toBeVisible({ timeout: 5000 })
 
     // No horizontal scroll in any mode.
     await assertNoHorizontalScroll(page)
@@ -572,7 +580,7 @@ test.describe('Font Size Readability on Mobile', () => {
       }))
     })
 
-    expect(tabFontSizes.length).toBe(4)
+    expect(tabFontSizes.length).toBe(5)
     for (const tab of tabFontSizes) {
       expect(
         tab.fontSize,

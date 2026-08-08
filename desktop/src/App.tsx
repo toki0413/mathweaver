@@ -919,6 +919,7 @@ export default function App() {
                     value={textInput}
                     onChange={e => setTextInput(e.target.value)}
                     placeholder="问我任何数学问题，或者拖入一个公式..."
+                    aria-label="输入数学问题"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()

@@ -5619,6 +5619,14 @@ button,
     margin-bottom: var(--sp-4);
   }
 
+  /* Allow header-right to shrink and wrap so it never overflows the viewport
+     on small screens (prevents body-level horizontal scroll). */
+  .header-right {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+  }
+
   .header h1 {
     font-size: 17px;
   }

@@ -718,7 +718,9 @@ test.describe('Proof Lifecycle', () => {
     await page.getByRole('tab', { name: '证明', exact: true }).click()
 
     // The proof panel should render and auto-fetch theorems.
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    // Use a heading locator to avoid matching the same text in the
+    // collapsed "公式编辑器" CollapsibleSection paragraph.
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
 
     // Wait for theorems to load (the theorem selector should be populated).
     await page.waitForTimeout(1000)
@@ -793,6 +795,23 @@ test.describe('Conjecture Lifecycle', () => {
     const conjectureStateBefore = (stateBefore as Record<string, unknown>)
       ?.conjectureState as Record<string, unknown>
     const entriesBefore = (conjectureStateBefore?.entries as unknown[]) ?? []
+
+    // Add a delay to the conjecture:test API call so the loading state
+    // ("验证中…") is visible long enough for the test to assert it.
+    // The mock API resolves synchronously, which makes the loading state
+    // disappear before Playwright can observe it.
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        api: { invoke: (...args: unknown[]) => Promise<unknown> }
+      }
+      const original = w.api.invoke
+      w.api.invoke = async (channel: string, ...args: unknown[]) => {
+        if (channel === 'conjecture:test') {
+          await new Promise(r => setTimeout(r, 500))
+        }
+        return original(channel, ...args)
+      }
+    })
 
     // Submit a conjecture that will be refuted (contains "交换").
     await conjectureInput.fill('所有群都是交换群')

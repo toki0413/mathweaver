@@ -1064,7 +1064,13 @@ function CurriculumMapperBase() {
                       key={e.conceptId}
                       className={`cw-cm-row${isOpen ? ' cw-cm-row-open' : ''}`}
                       onClick={() => handleRowToggle(e.conceptId)}
-                      aria-expanded={isOpen}
+                      tabIndex={0}
+                      onKeyDown={ev => {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault()
+                          handleRowToggle(e.conceptId)
+                        }
+                      }}
                     >
                       <td>
                         <div className="cw-cm-concept">

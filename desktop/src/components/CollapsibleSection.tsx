@@ -12,6 +12,11 @@ interface CollapsibleSectionProps {
 /**
  * A progressively-disclosed section.
  * Used to group secondary tools without overwhelming the main column.
+ *
+ * Accessibility: when collapsed, the content container receives the `inert`
+ * attribute so that its descendants are removed from the accessibility tree
+ * and the focus (tab) order. This prevents axe violations inside collapsed
+ * sections and ensures Tab navigation skips hidden content.
  */
 export function CollapsibleSection({
   title,
@@ -26,6 +31,18 @@ export function CollapsibleSection({
     setOpen(defaultOpen)
   }, [defaultOpen])
   const headerRef = useRef<HTMLButtonElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  // Sync the `inert` property on the content container.
+  // Using a ref + useEffect because @types/react does not include `inert`
+  // as a known JSX prop in older versions.
+  useEffect(() => {
+    if (contentRef.current) {
+      // The DOM `inert` property is a boolean; setting it removes the
+      // element and its descendants from the accessibility tree and tab order.
+      contentRef.current.inert = !open
+    }
+  }, [open])
 
   const toggle = useCallback(() => {
     setOpen(p => {
@@ -50,6 +67,7 @@ export function CollapsibleSection({
         {badge && <span className="collapsible-badge">{badge}</span>}
       </button>
       <div
+        ref={contentRef}
         className="collapsible-content"
         style={{
           maxHeight: open ? '9999px' : '0px',

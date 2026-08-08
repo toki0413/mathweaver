@@ -127,7 +127,7 @@ test.describe('MathWeaver', () => {
 
     // Model preset buttons should be present.
     await expect(page.getByText('模型预设')).toBeVisible()
-    await expect(page.getByText('捕食-被捕食模型')).toBeVisible()
+    await expect(page.getByRole('button', { name: '捕食-被捕食模型' })).toBeVisible()
 
     // Parameter sliders should be present.
     await expect(page.getByText('参数控制')).toBeVisible()
@@ -136,7 +136,7 @@ test.describe('MathWeaver', () => {
     await expect(page.getByText('解释数学路径')).toBeVisible()
 
     // Switch to Cayley graph model (connects to group theory core).
-    await page.getByText('Cayley 图可视化').click()
+    await page.getByRole('button', { name: 'Cayley 图可视化' }).click()
     await expect(page.getByRole('img', { name: /Cayley/ })).toBeVisible({ timeout: 10000 })
   })
 })

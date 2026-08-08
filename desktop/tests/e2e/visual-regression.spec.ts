@@ -128,8 +128,9 @@ test.describe('Visual Regression — Mode Layouts', () => {
 
   test('proof mode full-page layout', async ({ page }) => {
     await page.getByRole('tab', { name: '证明', exact: true }).click()
-    // Wait for proof panel to render.
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    // Wait for proof panel to render. Use a heading locator because the
+    // text "证明步骤" also appears in a <p> description elsewhere.
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
     await settlePage(page, 500)
 
     await expect(page).toHaveScreenshot('proof-mode-layout.png', {
@@ -140,8 +141,9 @@ test.describe('Visual Regression — Mode Layouts', () => {
 
   test('dag mode full-page layout', async ({ page }) => {
     await page.getByRole('tab', { name: '知识地图', exact: true }).click()
-    // Wait for the DAG graph to render.
-    await expect(page.getByText('概念依赖图')).toBeVisible({ timeout: 5000 })
+    // Wait for the DAG graph to render. Use a heading locator because the
+    // text "概念依赖图" also appears in a <nav> aria-label elsewhere.
+    await expect(page.getByRole('heading', { name: /概念依赖图/ })).toBeVisible({ timeout: 5000 })
     await settlePage(page, 500)
 
     await expect(page).toHaveScreenshot('dag-mode-layout.png', {
@@ -175,7 +177,7 @@ test.describe('Visual Regression — Component Details', () => {
 
   test('DAG graph component', async ({ page }) => {
     await page.getByRole('tab', { name: '知识地图', exact: true }).click()
-    await expect(page.getByText('概念依赖图')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /概念依赖图/ })).toBeVisible({ timeout: 5000 })
     await settlePage(page, 500)
 
     // Screenshot the card containing the DAG graph.
@@ -188,7 +190,7 @@ test.describe('Visual Regression — Component Details', () => {
 
   test('proof panel component', async ({ page }) => {
     await page.getByRole('tab', { name: '证明', exact: true }).click()
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
     await settlePage(page, 500)
 
     // Screenshot the main column containing the proof editor.
@@ -265,8 +267,9 @@ test.describe('Visual Regression — After Interactions', () => {
   })
 
   test('Cayley table after loading S3 preset', async ({ page }) => {
-    // Click the S3 preset button to load a 6x6 table.
-    await page.getByRole('button', { name: 'S3' }).click()
+    // Click the S3 preset button to load a 6x6 table. The button label uses
+    // a subscript glyph (S₃), so the accessible name is "S₃", not "S3".
+    await page.getByRole('button', { name: 'S₃' }).click()
     await settlePage(page, 300)
 
     const table = page.getByRole('grid', { name: /运算表/ })
@@ -279,7 +282,7 @@ test.describe('Visual Regression — After Interactions', () => {
 
   test('proof panel after submitting proof', async ({ page }) => {
     await page.getByRole('tab', { name: '证明', exact: true }).click()
-    await expect(page.getByText('证明步骤')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: /证明步骤/ })).toBeVisible({ timeout: 5000 })
 
     // Fill in proof steps.
     await page.locator('.ddps-step-textarea').first().fill("设 e 和 e' 都是群 G 的幺元")

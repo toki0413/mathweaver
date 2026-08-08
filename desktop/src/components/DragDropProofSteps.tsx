@@ -120,6 +120,7 @@ function DragDropProofStepsBase({ steps, onReorder, onEdit, onRemove }: DragDrop
               onChange={e => onEdit(idx, e.target.value)}
               placeholder={`第 ${idx + 1} 步：写出你的推导...`}
               rows={2}
+              aria-label={`第 ${idx + 1} 步推导`}
             />
             <button
               type="button"
