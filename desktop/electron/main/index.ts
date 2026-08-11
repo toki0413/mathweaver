@@ -9,7 +9,17 @@
  * with LLM configuration stored in electron-store.
  */
 
-import { app, BrowserWindow, shell, ipcMain, dialog, Menu, nativeImage, Tray } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  dialog,
+  Menu,
+  nativeImage,
+  Tray,
+  crashReporter,
+} from 'electron'
 import { join } from 'path'
 import { writeFileSync, readFileSync } from 'fs'
 import { randomBytes } from 'crypto'
@@ -39,6 +49,26 @@ process.on('unhandledRejection', reason => {
     reason: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined,
   })
+})
+
+// ---------------------------------------------------------------------------
+// Crash reporter — collects native crashes (segfaults, aborts) and writes
+// them to the OS crash dump directory. In production, these can be uploaded
+// to a crash reporting service (Sentry, Crashpad server) by setting the
+// uploadUrl in the CRASH_REPORTER_URL env var.
+// ---------------------------------------------------------------------------
+
+crashReporter.start({
+  productName: 'MathWeaver',
+  companyName: 'MathWeaver',
+  submitURL: process.env.CRASH_REPORTER_URL || '',
+  uploadToServer: Boolean(process.env.CRASH_REPORTER_URL),
+  compress: true,
+})
+
+logger.info('Crash reporter started', {
+  module: 'Main',
+  uploadEnabled: Boolean(process.env.CRASH_REPORTER_URL),
 })
 
 // ---------------------------------------------------------------------------
@@ -307,6 +337,38 @@ function createWindow(): BrowserWindow {
     win.loadURL('http://localhost:5174')
     win.webContents.openDevTools()
   }
+
+  // --- Renderer crash monitoring ---
+  win.webContents.on('render-process-gone', (_event, details) => {
+    logger.error('Renderer process gone', {
+      module: 'Main',
+      url: win.webContents.getURL(),
+      reason: details.reason,
+      exitCode: details.exitCode,
+    })
+  })
+
+  win.webContents.on('unresponsive', () => {
+    logger.warn('Renderer process became unresponsive', {
+      module: 'Main',
+      url: win.webContents.getURL(),
+    })
+  })
+
+  win.webContents.on('responsive', () => {
+    logger.info('Renderer process became responsive again', {
+      module: 'Main',
+    })
+  })
+
+  // --- Performance monitoring: measure startup time ---
+  win.webContents.on('did-finish-load', () => {
+    const startupMs = Math.round(process.uptime() * 1000)
+    logger.info('Window finished loading', {
+      module: 'Main',
+      startupMs,
+    })
+  })
 
   return win
 }

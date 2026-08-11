@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-08-11
+
+### Fixed — 产业级发布差距修复
+- 修复 Webgazer 资源路径：`electron-builder.yml` 中 `webgazer.all.js` 不存在，改为指向 `webgazer.js`（webgazer@2.0.1 实际入口），眼动追踪功能在打包后可用
+- CI 移除 `desktop-e2e` job 的 `continue-on-error: true`，E2E 测试现在为阻断性
+- Release workflow `ci-gate` 加入 E2E 测试 + 无障碍审计，发布前必须通过
+
+### Added — 产业级基础设施
+- 代码签名基础设施：CI/CD build job 注入 `CSC_LINK` / `CSC_KEY_PASSWORD` / `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID`，证书存在时自动签名 + macOS 公证
+- 崩溃监控：集成 Electron `crashReporter`（native crash 收集，支持远程上传）+ `render-process-gone` / `unresponsive` / `responsive` 渲染进程状态监控
+- 性能监控：`did-finish-load` 事件记录启动耗时到日志
+- 无障碍 CI 审计：独立 a11y 测试步骤 + HTML 报告上传（30 天保留）
+- 隐私政策文档 `PRIVACY.md`：本地数据存储说明、第三方数据传输说明、崩溃报告策略、数据删除指南
+
+### Changed — 质量门槛提升
+- 覆盖率阈值从 35% 提升至 40%（statements 40 / branches 38 / functions 42 / lines 40）
+- Release CI Gate 使用 `test:coverage` 替代 `test`，强制检查覆盖率
+- CI 工作流 E2E 测试改为阻断性，失败即阻止 CI 通过
+
 ## [0.4.4] - 2026-08-08
 
 ### Added — 数学建模实验室 + GeoChat 设计理念集成

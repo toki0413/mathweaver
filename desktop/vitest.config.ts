@@ -41,10 +41,10 @@ export default defineConfig({
       // See: https://frontendchecklist.io/rules/testing/test-coverage
       thresholds: {
         global: {
-          statements: 35,
-          branches: 35,
-          functions: 40,
-          lines: 35,
+          statements: 40,
+          branches: 38,
+          functions: 42,
+          lines: 40,
         },
       },
     },

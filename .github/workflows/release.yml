@@ -18,7 +18,7 @@ jobs:
   # Gate: ensure CI passes before building release artifacts
   # ---------------------------------------------------------------------------
   ci-gate:
-    name: CI Gate (ensure quality checks pass)
+    name: CI Gate (quality + E2E + a11y)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,13 +47,42 @@ jobs:
         working-directory: desktop
         run: npm run format:check
 
-      - name: Unit tests
+      - name: Unit tests with coverage
         working-directory: desktop
-        run: npm run test
+        run: npm run test:coverage
 
       - name: Build (electron-vite)
         working-directory: desktop
         run: npx electron-vite build
+
+      # --- E2E tests (blocking) ---
+      - name: Install Playwright browsers
+        working-directory: desktop
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        working-directory: desktop
+        run: npx playwright test
+
+      - name: Run accessibility audit
+        working-directory: desktop
+        run: npx playwright test tests/e2e/accessibility.spec.ts --reporter=html
+
+      - name: Upload E2E results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-gate-e2e-results
+          path: desktop/test-results/
+          retention-days: 7
+
+      - name: Upload accessibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-gate-a11y-report
+          path: desktop/playwright-report/
+          retention-days: 30
 
   # ---------------------------------------------------------------------------
   # Build desktop installers on each platform
@@ -99,9 +128,20 @@ jobs:
       - name: Build (electron-vite)
         run: npx electron-vite build
 
+      # --- Code Signing (conditional on secrets) ---
+      # Windows: signs the NSIS installer when CSC_LINK is set
+      # macOS: signs + notarizes when CSC_LINK + APPLE_ID are set
       - name: Package (${{ matrix.platform }})
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Windows code signing (EV or OV certificate)
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # macOS notarization
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # Team ID for macOS notarization
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npx electron-builder --${{ matrix.platform }} --publish never
 
       - name: Upload artifacts

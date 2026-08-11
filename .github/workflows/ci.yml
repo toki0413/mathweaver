@@ -97,7 +97,6 @@ jobs:
   desktop-e2e:
     name: Desktop E2E (Playwright)
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: desktop
@@ -119,13 +118,24 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run E2E tests
+      - name: Run E2E tests (blocking)
         run: npx playwright test
 
-      - name: Upload test results
+      - name: Run accessibility audit
+        run: npx playwright test tests/e2e/accessibility.spec.ts --reporter=html
+
+      - name: Upload E2E test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-results
           path: desktop/test-results/
           retention-days: 7
+
+      - name: Upload accessibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-report
+          path: desktop/playwright-report/
+          retention-days: 30

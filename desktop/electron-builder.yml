@@ -15,7 +15,7 @@ asar: true
 # Extra files to include alongside the app bundle.
 # The local webgazer.js script is bundled so eye-tracking works offline.
 extraResources:
-  - from: node_modules/webgazer/dist/webgazer.all.js
+  - from: node_modules/webgazer/dist/webgazer.js
     to: webgazer/webgazer.all.js
     filter: ["**/*"]
 
