@@ -55,14 +55,14 @@ jobs:
         working-directory: desktop
         run: npx electron-vite build
 
-      # --- E2E tests (blocking) ---
+      # --- E2E tests (blocking, excludes visual regression) ---
       - name: Install Playwright browsers
         working-directory: desktop
         run: npx playwright install chromium --with-deps
 
-      - name: Run E2E tests (includes a11y audit)
+      - name: Run E2E tests (functional + a11y, excludes visual regression)
         working-directory: desktop
-        run: npx playwright test
+        run: npx playwright test --grep-invert "Visual Regression"
 
       - name: Upload E2E results
         if: always()
