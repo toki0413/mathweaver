@@ -118,11 +118,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run E2E tests (blocking)
+      - name: Run E2E tests (includes a11y audit)
         run: npx playwright test
-
-      - name: Run accessibility audit
-        run: npx playwright test tests/e2e/accessibility.spec.ts --reporter=html
 
       - name: Upload E2E test results
         if: always()
@@ -132,7 +129,7 @@ jobs:
           path: desktop/test-results/
           retention-days: 7
 
-      - name: Upload accessibility report
+      - name: Upload a11y & E2E HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
