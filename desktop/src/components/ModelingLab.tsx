@@ -751,7 +751,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
   )
 
   const categoryColors: Record<string, string> = {
-    dynamics: '#9c4a2c',
+    dynamics: '#843f24',
     physics: 'var(--accent-2, #6a9bcc)',
     epidemiology: 'var(--accent-3, #788c5d)',
     algebra: '#9b7bcc',
