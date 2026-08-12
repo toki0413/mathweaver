@@ -258,7 +258,7 @@ test.describe('Visual Regression — After Interactions', () => {
     // Enter an out-of-range value to break closure and show the "not closed" badge.
     const firstCellInput = table.locator('input').first()
     await firstCellInput.fill('9')
-    await expect(page.getByText('✗ 未闭合')).toBeVisible()
+    await expect(page.getByText('× 未闭合')).toBeVisible()
     await settlePage(page, 300)
 
     await expect(table).toHaveScreenshot('cayley-table-after-fill.png', {

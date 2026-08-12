@@ -87,7 +87,7 @@ test.describe('MathWeaver real-backend teaching loop', () => {
     const table = page.getByRole('grid', { name: /运算表/ })
     const firstCell = table.locator('input').first()
     await firstCell.fill('9')
-    await expect(page.getByText('✗ 未闭合')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('× 未闭合')).toBeVisible({ timeout: 10000 })
   })
 
   test('real session: full teaching loop surfaces four-field gauges', async ({ page }) => {

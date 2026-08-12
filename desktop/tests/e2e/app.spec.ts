@@ -112,7 +112,7 @@ test.describe('MathWeaver', () => {
     await firstCellInput.fill('9')
 
     // The badge should now report a closure violation.
-    await expect(page.getByText('✗ 未闭合')).toBeVisible()
+    await expect(page.getByText('× 未闭合')).toBeVisible()
   })
 
   test('modeling mode renders canvas and parameter sliders', async ({ page }) => {

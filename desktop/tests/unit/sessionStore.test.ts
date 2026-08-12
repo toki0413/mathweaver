@@ -1217,6 +1217,161 @@ describe('sessionStore', () => {
   })
 
   // -------------------------------------------------------------------------
+  // setEpistemicState
+  // -------------------------------------------------------------------------
+
+  describe('setEpistemicState', () => {
+    it('normalizes the eye-tracking load and stores it in the cognitive field', () => {
+      useStore.setState({
+        fourFields: {
+          knowledge: { mastery: 0.5, zpd: [0, 1] },
+          cognitive: {
+            cognitive_load: 0.4,
+            is_overloaded: false,
+            backtrack_count: 0,
+            trial_sequence_length: 0,
+          },
+          emotional: { engagement: 0.5, flow_state: 0.5 },
+          interaction: { response_count: 0, hint_count: 0 },
+        },
+      })
+
+      useStore.getState().setEpistemicState(80)
+
+      const cognitive = useStore.getState().fourFields?.cognitive
+      expect(cognitive?.cognitive_load).toBe(0.8)
+    })
+
+    it('clamps out-of-range load values to 0-1', () => {
+      useStore.setState({
+        fourFields: {
+          knowledge: { mastery: 0.5, zpd: [0, 1] },
+          cognitive: {
+            cognitive_load: 0.4,
+            is_overloaded: false,
+            backtrack_count: 0,
+            trial_sequence_length: 0,
+          },
+          emotional: { engagement: 0.5, flow_state: 0.5 },
+          interaction: { response_count: 0, hint_count: 0 },
+        },
+      })
+
+      useStore.getState().setEpistemicState(150)
+      expect(useStore.getState().fourFields?.cognitive.cognitive_load).toBe(1)
+
+      useStore.getState().setEpistemicState(-20)
+      expect(useStore.getState().fourFields?.cognitive.cognitive_load).toBe(0)
+    })
+
+    it('flags overload when load exceeds 0.85', () => {
+      useStore.setState({
+        fourFields: {
+          knowledge: { mastery: 0.5, zpd: [0, 1] },
+          cognitive: {
+            cognitive_load: 0.4,
+            is_overloaded: false,
+            backtrack_count: 0,
+            trial_sequence_length: 0,
+          },
+          emotional: { engagement: 0.5, flow_state: 0.5 },
+          interaction: { response_count: 0, hint_count: 0 },
+        },
+      })
+
+      useStore.getState().setEpistemicState(90)
+      expect(useStore.getState().fourFields?.cognitive.is_overloaded).toBe(true)
+    })
+
+    it('is a no-op when fourFields is not yet initialized', () => {
+      useStore.setState({ fourFields: null })
+      expect(() => useStore.getState().setEpistemicState(50)).not.toThrow()
+      expect(useStore.getState().fourFields).toBeNull()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // recordTableActivity
+  // -------------------------------------------------------------------------
+
+  describe('recordTableActivity', () => {
+    function withCognitive() {
+      useStore.setState({
+        fourFields: {
+          knowledge: { mastery: 0.5, zpd: [0, 1] },
+          cognitive: {
+            cognitive_load: 0.4,
+            is_overloaded: false,
+            backtrack_count: 2,
+            trial_sequence_length: 3,
+          },
+          emotional: { engagement: 0.5, flow_state: 0.5 },
+          interaction: { response_count: 0, hint_count: 0 },
+        },
+      })
+    }
+
+    it('increments the trial sequence length on every cell edit', () => {
+      withCognitive()
+      useStore.getState().recordTableActivity('edit')
+      const cognitive = useStore.getState().fourFields?.cognitive
+      expect(cognitive?.trial_sequence_length).toBe(4)
+      expect(cognitive?.backtrack_count).toBe(2)
+    })
+
+    it('increments the backtrack counter on a backtrack', () => {
+      withCognitive()
+      useStore.getState().recordTableActivity('backtrack')
+      const cognitive = useStore.getState().fourFields?.cognitive
+      expect(cognitive?.trial_sequence_length).toBe(4)
+      expect(cognitive?.backtrack_count).toBe(3)
+    })
+
+    it('is a no-op when fourFields is not yet initialized', () => {
+      useStore.setState({ fourFields: null })
+      expect(() => useStore.getState().recordTableActivity('edit')).not.toThrow()
+      expect(useStore.getState().fourFields).toBeNull()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // recordWhiteboardActivity
+  // -------------------------------------------------------------------------
+
+  describe('recordWhiteboardActivity', () => {
+    it('increments the stroke count and records the active state', () => {
+      useStore.getState().recordWhiteboardActivity(true)
+      const act = useStore.getState().whiteboardActivity
+      expect(act.strokeCount).toBe(1)
+      expect(act.active).toBe(true)
+      expect(act.lastActivityAt).toBeGreaterThan(0)
+    })
+
+    it('increments the stroke count across multiple strokes', () => {
+      useStore.setState({
+        whiteboardActivity: { strokeCount: 0, active: false, lastActivityAt: 0 },
+      })
+      useStore.getState().recordWhiteboardActivity(true)
+      useStore.getState().recordWhiteboardActivity(true)
+      useStore.getState().recordWhiteboardActivity(false)
+      const act = useStore.getState().whiteboardActivity
+      expect(act.strokeCount).toBe(3)
+      expect(act.active).toBe(false)
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // setAgeLevel
+  // -------------------------------------------------------------------------
+
+  describe('setAgeLevel', () => {
+    it('updates the age level', () => {
+      useStore.getState().setAgeLevel('teens')
+      expect(useStore.getState().ageLevel).toBe('teens')
+    })
+  })
+
+  // -------------------------------------------------------------------------
   // initBackendUrl
   // -------------------------------------------------------------------------
 
