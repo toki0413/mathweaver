@@ -363,7 +363,7 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
               animation: milestone ? 'streakPop 0.4s ease-out' : undefined,
             }}
           >
-            🔥
+            
           </span>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
           {!compact && (
@@ -424,7 +424,7 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
             }}
           >
             <div style={{ fontSize: '54px', lineHeight: 1, textShadow: '0 0 18px var(--warn)' }}>
-              🔥
+              
             </div>
             <div
               style={{
@@ -469,7 +469,7 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
             animation: 'streakToastIn 0.3s ease-out',
           }}
         >
-          <span style={{ fontSize: '18px', filter: 'grayscale(0.3)' }}>🔥</span>
+          <span style={{ fontSize: '18px', filter: 'grayscale(0.3)' }}></span>
           <span>
             你的 <b style={{ color: 'var(--warn)' }}>{breakLost}</b> 天连续学习中断了，最长记录{' '}
             <b>{bestStreak}</b> 天。今天重新开始吧！

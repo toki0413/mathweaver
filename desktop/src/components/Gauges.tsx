@@ -676,7 +676,7 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
           >
             {trendArrow}
           </tspan>
-          {' \u00b7 准确率 '}
+          {'\u00b7 准确率'}
           <tspan
             fill={accuracy < 0.4 ? 'var(--err)' : accuracy > 0.85 ? 'var(--ok)' : 'var(--ink)'}
             fontWeight={700}

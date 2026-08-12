@@ -91,13 +91,13 @@ export function OperationStepVisualizer({
     const base: { id: VizMode; label: string; icon: string; desc: string }[] = []
     if (ageLevel === 'kids') {
       base.push(
-        { id: 'binary', label: '碰一碰', icon: '✨', desc: '两个数字碰一碰' },
-        { id: 'associativity', label: '谁先谁后', icon: '🔄', desc: '换顺序试试看' },
-        { id: 'inverse', label: '找好搭档', icon: '🤝', desc: '谁的搭档是谁？' },
-        { id: 'cyclic', label: '绕圈圈', icon: '⭕', desc: '一直碰下去会怎样？' },
-        { id: 'commutativity', label: '换位置', icon: '⚖', desc: '换位置结果一样吗？' },
-        { id: 'subgroup', label: '找小帮派', icon: '👪', desc: '谁能组成小家族？' },
-        { id: 'order', label: '绕几圈', icon: '🔢', desc: '要碰几次才回家？' },
+        { id: 'binary', label: '碰一碰', icon: '', desc: '两个数字碰一碰' },
+        { id: 'associativity', label: '谁先谁后', icon: '↔', desc: '换顺序试试看' },
+        { id: 'inverse', label: '找好搭档', icon: '', desc: '谁的搭档是谁？' },
+        { id: 'cyclic', label: '绕圈圈', icon: '○', desc: '一直碰下去会怎样？' },
+        { id: 'commutativity', label: '换位置', icon: '·', desc: '换位置结果一样吗？' },
+        { id: 'subgroup', label: '找小帮派', icon: '', desc: '谁能组成小家族？' },
+        { id: 'order', label: '绕几圈', icon: '', desc: '要碰几次才回家？' },
       )
     } else if (ageLevel === 'tweens') {
       base.push(
@@ -105,7 +105,7 @@ export function OperationStepVisualizer({
         { id: 'associativity', label: '结合律', icon: '()', desc: '(a∗b)∗c vs a∗(b∗c)' },
         { id: 'inverse', label: '逆元搜索', icon: '⁻¹', desc: '寻找 a⁻¹' },
         { id: 'cyclic', label: '循环子群', icon: '⟨a⟩', desc: '生成 ⟨a⟩' },
-        { id: 'commutativity', label: '交换律', icon: '⚖', desc: '检查 a∗b = b∗a' },
+        { id: 'commutativity', label: '交换律', icon: '·', desc: '检查 a∗b = b∗a' },
         { id: 'subgroup', label: '子群检测', icon: 'H', desc: '检测子集是否构成子群' },
         { id: 'order', label: '阶计算', icon: '|a|', desc: '计算元素的阶' },
       )
@@ -115,7 +115,7 @@ export function OperationStepVisualizer({
         { id: 'associativity', label: 'Associativity', icon: '()', desc: '(a∗b)∗c vs a∗(b∗c)' },
         { id: 'inverse', label: 'Inverse', icon: '⁻¹', desc: 'Find a⁻¹' },
         { id: 'cyclic', label: 'Cyclic', icon: '⟨a⟩', desc: 'Generate ⟨a⟩' },
-        { id: 'commutativity', label: 'Commutativity', icon: '⚖', desc: 'Check a∗b = b∗a ∀a,b' },
+        { id: 'commutativity', label: 'Commutativity', icon: '·', desc: 'Check a∗b = b∗a ∀a,b' },
         { id: 'subgroup', label: 'Subgroup', icon: 'H', desc: 'Test if subset is a subgroup' },
         { id: 'order', label: 'Order', icon: '|a|', desc: 'Compute |a|' },
       )
@@ -233,11 +233,11 @@ export function OperationStepVisualizer({
         label:
           ageLevel === 'kids'
             ? equal
-              ? '两边一样！谁先谁后都一样！🎉'
-              : '两边不一样！这个表谁先谁后有区别！🤔'
+              ? '两边一样！谁先谁后都一样！'
+              : '两边不一样！这个表谁先谁后有区别！'
             : equal
               ? '✓ 两者相等，结合律在此三元组上成立'
-              : '✗ 两者不等，结合律在此三元组上不成立',
+              : '× 两者不等，结合律在此三元组上不成立',
         type: 'compare',
         expr: `(${elemA}∗${elemB})∗${elemC} = ${left ?? '?'}  vs  ${elemA}∗(${elemB}∗${elemC}) = ${right ?? '?'}`,
       })
@@ -278,7 +278,7 @@ export function OperationStepVisualizer({
         steps.push({
           label:
             ageLevel === 'kids'
-              ? `找到了！${elemA} 碰 ${b} = ${identity}（老大）！好搭档就是 ${b}！🎉`
+              ? `找到了！${elemA} 碰 ${b} = ${identity}（老大）！好搭档就是 ${b}！`
               : `✓ ${elemA} ∗ ${b} = ${identity}，所以 ${elemA}⁻¹ = ${b}`,
           cell: { row: elemA, col: b },
           result,
@@ -301,7 +301,7 @@ export function OperationStepVisualizer({
     }
     if (!found) {
       steps.push({
-        label: ageLevel === 'kids' ? `没有找到好搭档...${elemA} 可能没有搭档哦` : `✗ 未找到逆元`,
+        label: ageLevel === 'kids' ? `没有找到好搭档...${elemA} 可能没有搭档哦` : `× 未找到逆元`,
         type: 'compare',
       })
     }
@@ -357,7 +357,7 @@ export function OperationStepVisualizer({
         steps.push({
           label:
             ageLevel === 'kids'
-              ? `回到老大了！${elemA} 绕了 ${power} 圈！🎉`
+              ? `回到老大了！${elemA} 绕了 ${power} 圈！`
               : `回到单位元！${elemA} 的阶为 ${power}`,
           type: 'cycle',
           expr: ageLevel === 'kids' ? `绕了 ${power} 圈` : `|${elemA}| = ${power}`,
@@ -438,11 +438,11 @@ export function OperationStepVisualizer({
       label:
         ageLevel === 'kids'
           ? equal
-            ? `一样！换位置碰都是 ${ab ?? '?'}！🎉`
-            : `不一样！${elemA} 碰 ${elemB} = ${ab ?? '?'}，但 ${elemB} 碰 ${elemA} = ${ba ?? '?'}！🤔`
+            ? `一样！换位置碰都是 ${ab ?? '?'}！`
+            : `不一样！${elemA} 碰 ${elemB} = ${ab ?? '?'}，但 ${elemB} 碰 ${elemA} = ${ba ?? '?'}！`
           : equal
             ? '✓ 两者相等，交换律在此二元组上成立'
-            : '✗ 两者不等，交换律在此二元组上不成立',
+            : '× 两者不等，交换律在此二元组上不成立',
       type: 'compare',
       expr: `${elemA} ∗ ${elemB} = ${ab ?? '?'}  vs  ${elemB} ∗ ${elemA} = ${ba ?? '?'}`,
     })
@@ -487,10 +487,10 @@ export function OperationStepVisualizer({
             ageLevel === 'kids'
               ? inSet
                 ? `${a} 碰 ${b} = ${ab}，还在小帮派里！✓`
-                : `${a} 碰 ${b} = ${ab ?? '?'}，跑出小帮派了！✗`
+                : `${a} 碰 ${b} = ${ab ?? '?'}，跑出小帮派了！×`
               : inSet
                 ? `✓ ${a} ∗ ${b} = ${ab} ∈ H`
-                : `✗ ${a} ∗ ${b} = ${ab ?? '?'} ∉ H`,
+                : `× ${a} ∗ ${b} = ${ab ?? '?'} ∉ H`,
           cell: { row: a, col: b },
           result: ab ?? undefined,
           type: 'lookup',
@@ -507,10 +507,10 @@ export function OperationStepVisualizer({
         ageLevel === 'kids'
           ? hasIdentity
             ? `第二步：老大 ${identity} 在小帮派里！✓`
-            : `第二步：老大 ${identity >= 0 ? identity : '?'} 不在小帮派里！✗`
+            : `第二步：老大 ${identity >= 0 ? identity : '?'} 不在小帮派里！×`
           : hasIdentity
             ? `② 单位元：✓ ${identity} ∈ H`
-            : `② 单位元：✗ ${identity >= 0 ? identity : '?'} ∉ H`,
+            : `② 单位元：× ${identity >= 0 ? identity : '?'} ∉ H`,
       type: 'compare',
       expr: ageLevel === 'kids' ? '老大检查' : `${identity} ∈ H ? ${hasIdentity}`,
     })
@@ -546,7 +546,7 @@ export function OperationStepVisualizer({
           })
         } else {
           steps.push({
-            label: ageLevel === 'kids' ? `${a} 在小帮派里找不到好搭档！✗` : `✗ ${a}⁻¹ ∉ H`,
+            label: ageLevel === 'kids' ? `${a} 在小帮派里找不到好搭档！×` : `× ${a}⁻¹ ∉ H`,
             type: 'compare',
           })
           inverseOk = false
@@ -559,11 +559,11 @@ export function OperationStepVisualizer({
       label:
         ageLevel === 'kids'
           ? isSubgroup
-            ? `太棒了！{ ${elems.join(', ')} } 是一个小帮派！🎉`
+            ? `太棒了！{ ${elems.join(', ')} } 是一个小帮派！`
             : `还不是小帮派哦，再调整一下试试看！`
           : isSubgroup
             ? `✓ H = { ${elems.join(', ')} } 是子群`
-            : `✗ H = { ${elems.join(', ')} } 不是子群`,
+            : `× H = { ${elems.join(', ')} } 不是子群`,
       type: 'compare',
       expr:
         ageLevel === 'kids' ? (isSubgroup ? '是小帮派！' : '不是小帮派') : `子群? ${isSubgroup}`,
@@ -625,7 +625,7 @@ export function OperationStepVisualizer({
         steps.push({
           label:
             ageLevel === 'kids'
-              ? `回到老大了！${elemA} 碰了 ${order} 次回到起点！🎉`
+              ? `回到老大了！${elemA} 碰了 ${order} 次回到起点！`
               : `回到单位元！|${elemA}| = ${order}`,
           type: 'cycle',
           expr: `|${elemA}| = ${order}`,
@@ -789,9 +789,9 @@ export function OperationStepVisualizer({
       {showReward && (
         <div className="op-step-reward">
           <div className="op-step-reward-inner">
-            <div className="op-step-reward-emoji">🎉</div>
+            <div className="op-step-reward-emoji"></div>
             <div className="op-step-reward-text">{rewardText}</div>
-            <div className="op-step-reward-star">⭐</div>
+            <div className="op-step-reward-star"></div>
           </div>
         </div>
       )}
@@ -807,7 +807,7 @@ export function OperationStepVisualizer({
           >
             <span className="op-step-mode-icon">{tab.icon}</span>
             <span className="op-step-mode-label">{tab.label}</span>
-            {completedModes.has(tab.id) && <span className="op-step-mode-check">⭐</span>}
+            {completedModes.has(tab.id) && <span className="op-step-mode-check"></span>}
           </button>
         ))}
       </div>

@@ -196,7 +196,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           {cloudPresets.length > 0 && (
             <>
               <div className="preset-group-label">
-                <span className="preset-group-icon">☁</span>
+                <span className="preset-group-icon">·</span>
                 云端模型
               </div>
               <div className="preset-grid">
@@ -223,7 +223,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           {localPresets.length > 0 && (
             <>
               <div className="preset-group-label" style={{ marginTop: '16px' }}>
-                <span className="preset-group-icon">⚙</span>
+                <span className="preset-group-icon">❖</span>
                 本地模型
               </div>
               <div className="preset-grid">

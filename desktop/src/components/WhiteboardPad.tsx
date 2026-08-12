@@ -65,7 +65,7 @@ const COLORS: ColorOption[] = [
 ]
 
 const TOOLS: ToolOption[] = [
-  { id: 'pen', label: '画笔', icon: '✎' },
+  { id: 'pen', label: '画笔', icon: '·' },
   { id: 'eraser', label: '橡皮', icon: '▱' },
   { id: 'text', label: '文字', icon: 'T' },
 ]

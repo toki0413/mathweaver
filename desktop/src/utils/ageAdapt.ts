@@ -320,7 +320,7 @@ export function getEncouragement(
 ): string {
   const phrases: Record<AgeLevel, Record<string, string[]>> = {
     kids: {
-      correct: ['太棒了！🌟', '答对了！你真聪明！', '哇！就是这个！🎉', '没错！继续冒险！'],
+      correct: ['太棒了！', '答对了！你真聪明！', '哇！就是这个！', '没错！继续冒险！'],
       wrong: [
         '没关系，再想想看～',
         '差一点点！试试别的？',
@@ -333,14 +333,14 @@ export function getEncouragement(
         '试试看不同的数字组合',
       ],
       milestone: [
-        '🏆 你完成了一个大挑战！',
-        '🎊 恭喜！你已经是密码大师了！',
-        '⭐ 你解锁了新技能！',
+        '你完成了一个大挑战！',
+        '恭喜！你已经是密码大师了！',
+        '你解锁了新技能！',
       ],
     },
     tweens: {
       correct: [
-        '不错！答对了 👍',
+        '不错！答对了',
         '正确！你的直觉很好',
         '没错！继续探索',
         '答对了，越来越接近真相了',
@@ -352,7 +352,7 @@ export function getEncouragement(
         '再检查一下运算表？',
       ],
       stuck: ['需要提示吗？', '试试从简单的情况开始', '换个角度看问题试试'],
-      milestone: ['🏆 成就解锁！', '进步很大！继续保持', '你已经掌握了一个重要概念'],
+      milestone: ['成就解锁！', '进步很大！继续保持', '你已经掌握了一个重要概念'],
     },
     teens: {
       correct: ['正确。', '准确。', '对的，继续。', '成立。'],
@@ -399,132 +399,132 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'play-1',
         phase: 'play',
-        title: '🔮 第 1 关：魔法密码表',
+        title: '第 1 关：魔法密码表',
         story:
           '欢迎来到魔法学院！这是一张魔法密码表，两个数字碰一碰就会变出新数字。试着改几个格子里面的数字，看看会发生什么！',
         task: '点击表格里的数字，把它们改成别的数（0 到 2）。改 5 个格子试试！',
         hint: '直接点格子里的数字就能修改啦！',
-        successMsg: '🎉 太棒了！你已经开始使用魔法密码表了！',
+        successMsg: '太棒了！你已经开始使用魔法密码表了！',
         actionLabel: '去玩密码表',
         actionTarget: 'cayley',
       },
       {
         id: 'play-2',
         phase: 'play',
-        title: '🔍 第 2 关：数字会漏出去吗？',
+        title: '第 2 关：数字会漏出去吗？',
         story:
           '如果你把数字改得太大（比如改成 3），它就「漏」到表外面去了！试试找一个会「漏出去」的数字。',
         task: '把某个格子改成 3（比 2 大的数），看看会发生什么？红色的格子就是「漏出去」了！',
         hint: '当所有数字都在 0 到 2 之间，就叫「不漏出去的规则」！',
-        successMsg: '🌟 你发现了「不漏出去的规则」！这就是大数学家说的「闭合性」！',
+        successMsg: '你发现了「不漏出去的规则」！这就是大数学家说的「闭合性」！',
         actionLabel: '去试试看',
         actionTarget: 'cayley',
       },
       {
         id: 'discover-1',
         phase: 'discover',
-        title: '👑 第 3 关：找隐形斗篷老大',
+        title: 'â 第 3 关：找隐形斗篷老大',
         story:
           '在魔法密码表里，藏着一个「隐形斗篷老大」。它跟谁碰一碰，谁就不变！比如老大是 0，那 0 碰 1 还是 1，0 碰 2 还是 2。',
         task: '找一找：哪一行跟最上面的数字一模一样？那就是老大！',
         hint: '看看第 0 行 — 它是不是 0, 1, 2？如果是，那 0 就是老大！',
-        successMsg: '🏆 找到了！老大就是「隐形斗篷」！大数学家叫它「单位元」！',
+        successMsg: '找到了！老大就是「隐形斗篷」！大数学家叫它「单位元」！',
         actionLabel: '去找老大',
         actionTarget: 'cayley',
       },
       {
         id: 'discover-2',
         phase: 'discover',
-        title: '🤝 第 4 关：找到好搭档',
+        title: '第 4 关：找到好搭档',
         story:
           '每个数字都有自己的「好搭档」！两个好搭档碰一碰，就会变成老大（隐形斗篷老大）！比如 1 的好搭档是 2，因为 1 碰 2 = 0（老大）。',
         task: '用「运算步骤」工具，选一个数字 a，然后点「逆元搜索」模式，看看谁是好搭档！',
         hint: '点「运算步骤可视化」下面的按钮，选「逆元搜索」模式，然后按 ▶ 播放！',
-        successMsg: '🎉 太厉害了！每个数字都有自己的好搭档！大数学家叫它「逆元」！',
+        successMsg: '太厉害了！每个数字都有自己的好搭档！大数学家叫它「逆元」！',
         actionLabel: '去找好搭档',
         actionTarget: 'explore',
       },
       {
         id: 'discover-assoc',
         phase: 'discover',
-        title: '🔄 第 5 关：谁先谁后都一样？',
+        title: '↔ 第 5 关：谁先谁后都一样？',
         story:
           '三个数字碰一碰时，先碰前两个再碰第三个，和先碰后两个再碰第一个，结果一样吗？比如 (1 碰 2) 再碰 1，和 1 碰 (2 碰 1)，会得到一样的答案吗？',
         task: '用「运算步骤」工具的「结合律」模式，选三个数字 a, b, c，看看 (a∗b)∗c 和 a∗(b∗c) 是不是一样！',
         hint: '如果不管谁先谁后结果都一样，这就是「谁先谁后都一样」的规则！大数学家叫它「结合律」',
-        successMsg: '🎉 太神奇了！谁先谁后结果都一样！大数学家叫它「结合律」！',
+        successMsg: '太神奇了！谁先谁后结果都一样！大数学家叫它「结合律」！',
         actionLabel: '去试试看',
         actionTarget: 'explore',
       },
       {
         id: 'discover-3',
         phase: 'discover',
-        title: '⭕ 第 6 关：绕圈圈家族',
+        title: '○ 第 6 关：绕圈圈家族',
         story:
           '有些家族很特别：从老大开始，一直跟同一个人碰一碰，就能走遍所有人再回到老大！试试从 0 开始一直碰 1，看看会怎样。',
         task: '用「运算步骤」工具，选「绕圈圈」模式，选一个数字，看看绕几圈才回家！',
         hint: '如果 0→1→2→0，就是绕了 3 圈！圈数就是这个数字的「阶」。',
-        successMsg: '🎉 你发现了绕圈圈家族！一个人就能变出所有人！',
+        successMsg: '你发现了绕圈圈家族！一个人就能变出所有人！',
         actionLabel: '去绕圈圈',
         actionTarget: 'explore',
       },
       {
         id: 'challenge-1',
         phase: 'challenge',
-        title: '🔄 第 7 关：换位置也一样吗？',
+        title: '↔ 第 7 关：换位置也一样吗？',
         story:
           '两个数字碰一碰，交换位置后结果一样吗？比如 1 碰 2 和 2 碰 1，结果一样吗？注意：这是有些家族才有的额外本领，不是每个家族都有的哦！',
         task: '用「运算步骤」工具，选 a=1, b=2，看看 1∗2 和 2∗1 是否一样！然后试试 a=0 看看。',
         hint: '如果 1∗2 = 2∗1，就说明这对数字「换位置也一样」！如果所有数字对都这样，就叫「交换律」！注意：这是额外本领，不是群公理哦！',
-        successMsg: '⭐ 你发现了「换位置也一样」的规律！试试 S3 预设表，看看是不是所有表都这样！',
+        successMsg: '你发现了「换位置也一样」的规律！试试 S3 预设表，看看是不是所有表都这样！',
         actionLabel: '去试一试',
         actionTarget: 'explore',
       },
       {
         id: 'challenge-2',
         phase: 'challenge',
-        title: '👪 第 8 关：找小帮派',
+        title: '第 8 关：找小帮派',
         story:
           '大家族里可能藏着小帮派！小帮派自己也是一个完整的家族——有老大、有好搭档、不漏出去、谁先谁后都一样。试试在 4×4 表里找找有没有 2 个人的小帮派。',
         task: '加载 Klein 预设表（4×4），想想 {0, 1} 是不是一个小帮派？0+0=0 ✓，0+1=1 ✓，1+1=0 ✓，1 的好搭档是 1 自己！',
         hint: '在 Klein 表里，{0,1} 是小帮派！{0,2} 和 {0,3} 也是！每个小帮派都有 2 个人。',
-        successMsg: '🏆 你找到了小帮派！大数学家叫它「子群」！',
+        successMsg: '你找到了小帮派！大数学家叫它「子群」！',
         actionLabel: '去找小帮派',
         actionTarget: 'cayley',
       },
       {
         id: 'create-1',
         phase: 'create',
-        title: '🎨 第 9 关：创造你自己的密码表',
+        title: '第 9 关：创造你自己的密码表',
         story:
           '现在你是魔法师了！试试自己设计一张密码表。记得四条规则：不能漏出去（数字在 0 到 2 之间）、要有一个老大（单位元行）、每个数字都要有好搭档（逆元）、谁先谁后都一样（结合律）！',
         task: '从空白表开始，试着填一个「不漏出去 + 有老大 + 有好搭档 + 谁先谁后都一样」的密码表。填好后点「验证动画」看看！',
         hint: '最简单的：让 0 当老大，然后让 1 和 2 互为好搭档（1∗2=0, 2∗1=0）',
-        successMsg: '🎊 你创造了属于自己的魔法密码表！这就是一个「群」！',
+        successMsg: '你创造了属于自己的魔法密码表！这就是一个「群」！',
         actionLabel: '去创造',
         actionTarget: 'cayley',
       },
       {
         id: 'reflect-1',
         phase: 'reflect',
-        title: '🤔 第 10 关：你发现了什么？',
+        title: '第 10 关：你发现了什么？',
         story:
           '回顾你的冒险：你发现了「不漏出去的规则」、「隐形斗篷老大」、「好搭档」和「谁先谁后都一样」！这四件事就是数学家研究「群」时必看的四条公理！至于「换位置也一样」（交换律），那是有些群才有的额外本领，不是所有群都必须有的哦！',
         task: '在对话框里说说：你觉得「群」是什么？什么样的密码表才是一个「群」？「换位置也一样」是群必须有的吗？',
         hint: '一个「群」必须满足四条公理：1) 不漏出去（闭合性）2) 有老大（单位元）3) 每个数字有好搭档（逆元）4) 谁先谁后都一样（结合律）。「换位置也一样」（交换律）是额外性质，不是公理！',
-        successMsg: '🌟 你已经像数学家一样思考了！你分清了群公理和额外性质！',
+        successMsg: '你已经像数学家一样思考了！你分清了群公理和额外性质！',
         actionLabel: '去说说看',
         actionTarget: 'chat',
       },
       {
         id: 'reflect-2',
         phase: 'reflect',
-        title: '🎓 第 11 关：毕业挑战',
+        title: '第 11 关：毕业挑战',
         story:
           '你已经掌握了所有基础！现在来终极挑战：用你学到的所有知识，解释为什么 S3 表不是一个「换位置也一样」的家族。',
         task: '在对话框里说说：S3 表里哪两个数字换位置后结果不同？为什么这说明它不是交换群？但它仍然是一个群吗？',
         hint: '看看 S3 表里，table[1][2] 和 table[2][1] 是不是不一样？不一样说明不满足交换律，但 S3 仍然满足四条群公理，所以它是一个（非交换）群！',
-        successMsg: '🎊 恭喜毕业！你已经是真正的群论冒险家了！',
+        successMsg: '恭喜毕业！你已经是真正的群论冒险家了！',
         actionLabel: '去毕业',
         actionTarget: 'chat',
       },
@@ -536,7 +536,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'play-1',
         phase: 'play',
-        title: '🧪 第 1 关：操作运算表',
+        title: '第 1 关：操作运算表',
         story:
           '运算表（也叫 Cayley 表）是研究群论的工具。修改表中的数字，观察验证徽章的变化。数字范围必须在 0 到 n-1 之间。',
         task: '修改几个单元格的值，观察「闭合性」「结合律」「交换律」徽章如何变化。',
@@ -548,7 +548,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'discover-1',
         phase: 'discover',
-        title: '👁 第 2 关：寻找单位元',
+        title: '第 2 关：寻找单位元',
         story: '单位元 e 满足：e∗a = a 对所有 a 成立。在运算表中，就是「与列头完全相同的那一行」。',
         task: '观察运算表，找到满足 table[e][j] = j 的行 e。它会被高亮标记为「单位元」。',
         hint: '看哪一行的值依次是 0, 1, 2, ..., n-1？',
@@ -559,7 +559,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'discover-2',
         phase: 'discover',
-        title: '🔗 第 3 关：逆元与逆元搜索',
+        title: '第 3 关：逆元与逆元搜索',
         story:
           '每个元素 a 的逆元 a⁻¹ 满足 a∗a⁻¹ = e（单位元）。用「运算步骤可视化」的逆元搜索模式，看系统如何逐个尝试找到逆元。',
         task: '在运算步骤可视化中选择「逆元搜索」模式，选择一个元素 a，然后播放动画。',
@@ -571,7 +571,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'discover-assoc',
         phase: 'discover',
-        title: '🔄 第 4 关：结合律探索',
+        title: '↔ 第 4 关：结合律探索',
         story:
           '三个元素运算时，(a∗b)∗c 和 a∗(b∗c) 是否相等？这就是结合律，群的四条公理之一。用运算步骤可视化观察两种运算顺序的结果。',
         task: '在运算步骤可视化中选择「结合律」模式，选三个元素 a, b, c，对比 (a∗b)∗c 和 a∗(b∗c)。',
@@ -583,7 +583,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'discover-3',
         phase: 'discover',
-        title: '🔍 第 5 关：子群发现',
+        title: '第 5 关：子群发现',
         story:
           '群中的某些子集自己也能构成群！在运算表中找一个子集 H，使得 H 中任意两元素的运算结果仍在 H 中，且 H 中每个元素的逆元也在 H 中。',
         task: '加载 Klein 四元群预设。验证 {0, 1} 是否构成子群：检查 0∗1, 1∗1 是否仍在 {0,1} 中，以及逆元。',
@@ -595,7 +595,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'challenge-1',
         phase: 'challenge',
-        title: '⚖ 第 6 关：交换律与反例',
+        title: '· 第 6 关：交换律与反例',
         story:
           '运算总是满足交换律吗？table[a][b] = table[b][a] 对所有 a, b 成立吗？加载 S3 预设表（非交换群的经典例子）观察。注意：交换律是额外性质，不是群公理！',
         task: '先加载 Z3 预设（交换群），再加载 S3 预设（非交换群）。对比交换律徽章的变化。用运算步骤可视化探索 a∗b 与 b∗a 的差异。',
@@ -608,7 +608,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'challenge-2',
         phase: 'challenge',
-        title: '🔢 第 7 关：循环子群',
+        title: '第 7 关：循环子群',
         story:
           '从一个元素 a 出发，不断做运算 a, a², a³, ...，直到回到单位元。生成的集合就是循环子群 ⟨a⟩。',
         task: '在运算步骤可视化中选择「循环子群」模式，选一个元素，观察 ⟨a⟩ 的生成过程。',
@@ -620,7 +620,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'challenge-3',
         phase: 'challenge',
-        title: '📐 第 8 关：Lagrange 定理验证',
+        title: '第 8 关：Lagrange 定理验证',
         story:
           'Lagrange 定理说：子群的阶一定整除群的阶。Klein 群有 4 个元素，它的子群阶只能是 1, 2, 4。不可能有 3 阶子群！',
         task: '在 Klein 四元群中找出所有子群：{0}, {0,1}, {0,2}, {0,3}, {0,1,2,3}。验证它们的阶 1,2,2,2,4 都整除 4。',
@@ -632,7 +632,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'create-1',
         phase: 'create',
-        title: '🔨 第 9 关：构造一个群',
+        title: '第 9 关：构造一个群',
         story:
           '综合运用所学：构造一个满足所有群公理的运算表（闭合、有单位元、有逆元、满足结合律）。',
         task: '从空白 4×4 表开始，手动填入一个 Klein 四元群或 Z4 循环群，然后用「验证动画」检查。',
@@ -644,7 +644,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'create-2',
         phase: 'create',
-        title: '🏗️ 第 10 关：构造陪集',
+        title: '第 10 关：构造陪集',
         story:
           '给定子群 H 和元素 a，左陪集 aH = {a∗h : h ∈ H}。所有左陪集划分群 G，大小相等且互不相交。这就是 Lagrange 定理的直观证明！',
         task: '在 Z₄ 中取 H={0,2}。计算陪集 0+H={0,2} 和 1+H={1,3}。两个陪集大小都是 2，正好覆盖 Z₄！',
@@ -656,7 +656,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'reflect-1',
         phase: 'reflect',
-        title: '📝 第 11 关：总结与反思',
+        title: '第 11 关：总结与反思',
         story:
           '回顾整个发现过程：操作 → 单位元 → 逆元 → 结合律 → 交换律反例 → 子群 → 循环子群 → Lagrange → 构造群 → 陪集。这就是数学发现的 Lakatos 循环。',
         task: '在对话中总结：群论的四个公理分别对应了你刚才做的哪些操作？交换律是公理吗？为什么？',
@@ -668,7 +668,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'reflect-2',
         phase: 'reflect',
-        title: '🎓 第 12 关：综合反思',
+        title: '第 12 关：综合反思',
         story:
           '回顾完整旅程：公理 → 单位元 → 逆元 → 结合律 → 交换律 → 循环子群 → 构造群 → 子群 → Lagrange → 陪集。你已经从公理走到了群论的核心定理！',
         task: '在对话中解释：为什么 Lagrange 定理意味着素数阶群一定是循环群？（提示：素数 p 的因数只有 1 和 p）',
@@ -840,27 +840,27 @@ export const PHASE_META: Record<
   { icon: string; color: string; label: Record<AgeLevel, string> }
 > = {
   play: {
-    icon: '🎮',
+    icon: '',
     color: '#2C7A9E',
     label: { kids: '玩一玩', tweens: '操作', teens: 'Explore' },
   },
   discover: {
-    icon: '🔍',
+    icon: '',
     color: '#8A6A1F',
     label: { kids: '找一找', tweens: '发现', teens: 'Discover' },
   },
   challenge: {
-    icon: '⚔',
+    icon: '·',
     color: '#9A3B2E',
     label: { kids: '挑战', tweens: '挑战', teens: 'Challenge' },
   },
   create: {
-    icon: '🎨',
+    icon: '',
     color: '#6B6259',
     label: { kids: '创造', tweens: '构造', teens: 'Construct' },
   },
   reflect: {
-    icon: '🤔',
+    icon: '',
     color: '#3D4F7A',
     label: { kids: '想一想', tweens: '反思', teens: 'Reflect' },
   },
@@ -876,13 +876,13 @@ export const AGE_LEVELS: {
   emoji: string
   desc: string
 }[] = [
-  { id: 'kids', label: '小学', range: '8-10 岁', emoji: '🧒', desc: '游戏化语言，完全用生活隐喻' },
-  { id: 'tweens', label: '初中', range: '11-13 岁', emoji: '🧑', desc: '半学术语言，保留直觉入口' },
+  { id: 'kids', label: '小学', range: '8-10 岁', emoji: '', desc: '游戏化语言，完全用生活隐喻' },
+  { id: 'tweens', label: '初中', range: '11-13 岁', emoji: '', desc: '半学术语言，保留直觉入口' },
   {
     id: 'teens',
     label: '高中及以上',
     range: '14+ 岁',
-    emoji: '👨‍🎓',
+    emoji: '',
     desc: '完整学术术语，严谨表达',
   },
 ]
@@ -905,7 +905,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-closure',
     conceptKey: 'closure',
-    icon: '🫧',
+    icon: '',
     title: { kids: '不漏出去的规则', tweens: '闭合性 (Closure)', teens: 'Closure Axiom' },
     body: {
       kids: '如果两个数字碰一碰，结果还在 0 到 n-1 之间，没有「漏」出去，这就叫「不漏出去的规则」！这是成为「群」的第一条规则。',
@@ -915,16 +915,16 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
         'Closure: ∀ a, b ∈ G, a∗b ∈ G. In the Cayley table, every entry must be a valid element of G. This is the first group axiom — the operation maps G×G → G.',
     },
     example: {
-      kids: '在 3×3 表里，1 碰 2 = 0 没漏出去 ✓。但如果某个格子 = 3，就漏出去了 ✗！',
-      tweens: 'Z₃ 中 1+2 = 0 ∈ {0,1,2} ✓。若某格 = 3，则违反闭合性 ✗。',
-      teens: 'In Z₃: 1+2 ≡ 0 (mod 3) ∈ Z₃ ✓. A value of 3 violates closure ✗.',
+      kids: '在 3×3 表里，1 碰 2 = 0 没漏出去 ✓。但如果某个格子 = 3，就漏出去了 ×！',
+      tweens: 'Z₃ 中 1+2 = 0 ∈ {0,1,2} ✓。若某格 = 3，则违反闭合性 ×。',
+      teens: 'In Z₃: 1+2 ≡ 0 (mod 3) ∈ Z₃ ✓. A value of 3 violates closure ×.',
     },
     unlockAfter: ['play-2'],
   },
   {
     id: 'card-identity',
     conceptKey: 'identity',
-    icon: '👑',
+    icon: 'â',
     title: { kids: '隐形斗篷老大', tweens: '单位元 (Identity)', teens: 'Identity Element' },
     body: {
       kids: '老大有一个神奇斗篷：它跟谁碰一碰，谁就不变！比如老大是 0，那 0 碰 1 = 1，0 碰 2 = 2。每个群只有一个老大！',
@@ -944,7 +944,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-inverse',
     conceptKey: 'inverse',
-    icon: '🤝',
+    icon: '',
     title: { kids: '好搭档', tweens: '逆元 (Inverse)', teens: 'Inverse Element' },
     body: {
       kids: '每个数字都有自己的好搭档！两个好搭档碰一碰就变成老大（0）。比如 1 的好搭档是 2，因为 1 碰 2 = 0。',
@@ -964,7 +964,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-associativity',
     conceptKey: 'associativity',
-    icon: '🔄',
+    icon: '↔',
     title: {
       kids: '谁先谁后都一样',
       tweens: '结合律 (Associativity)',
@@ -988,7 +988,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-commutativity',
     conceptKey: 'commutativity',
-    icon: '⚖',
+    icon: '·',
     title: {
       kids: '换位置也一样',
       tweens: '交换律 (Commutativity)',
@@ -1003,7 +1003,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     },
     example: {
       kids: 'Z₃ 是交换群：1+2 = 2+1 = 0。但 S₃ 不是：有些数字换位置结果不同！',
-      tweens: 'Z₃ 交换 ✓（表关于对角线对称）。S₃ 不交换 ✗（存在 a,b 使 a∗b≠b∗a）。',
+      tweens: 'Z₃ 交换 ✓（表关于对角线对称）。S₃ 不交换 ×（存在 a,b 使 a∗b≠b∗a）。',
       teens:
         'Z₃ is abelian: table symmetric ✓. S₃ is non-abelian: e.g. (12)∘(13) ≠ (13)∘(12). Abelian groups have simpler structure (all subgroups are normal).',
     },
@@ -1012,7 +1012,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-cyclic',
     conceptKey: 'cyclic_group',
-    icon: '⭕',
+    icon: '○',
     title: { kids: '绕圈圈家族', tweens: '循环群 (Cyclic Group)', teens: 'Cyclic Group' },
     body: {
       kids: '有些家族里，一个人就能变出所有人！从老大开始，不停地跟同一个人碰一碰，就能走遍所有人再回到老大。这就是绕圈圈家族！',
@@ -1032,7 +1032,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-subgroup',
     conceptKey: 'subgroup',
-    icon: '👪',
+    icon: '',
     title: { kids: '家族里的小帮派', tweens: '子群 (Subgroup)', teens: 'Subgroup' },
     body: {
       kids: '有时候大家族里藏着小帮派！小帮派自己也是个完整的家族——有老大、有好搭档、不漏出去。最小的帮派只有老大一个人！',
@@ -1052,7 +1052,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-lagrange',
     conceptKey: 'lagrange',
-    icon: '📏',
+    icon: '',
     title: { kids: '大帮派切成小帮派', tweens: 'Lagrange 定理', teens: "Lagrange's Theorem" },
     body: {
       kids: '一个大帮派可以切成一样大的小队！比如 6 个人的帮派可以切成 3 个 2 人小队，或 2 个 3 人小队。小队的人数一定能整除大帮派的总人数！',
@@ -1073,7 +1073,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-coset',
     conceptKey: 'coset',
-    icon: '🎫',
+    icon: '',
     title: { kids: '排队分组', tweens: '陪集 (Coset)', teens: 'Coset' },
     body: {
       kids: '把大家族里的人排成小队，每队都有一个队长。队长不同，队伍就不同。所有小队加起来正好是整个家族，一个人不漏、不重复！',
@@ -1093,7 +1093,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-isomorphism',
     conceptKey: 'isomorphism',
-    icon: '👯',
+    icon: '',
     title: { kids: '双胞胎家族', tweens: '同构 (Isomorphism)', teens: 'Isomorphism' },
     body: {
       kids: '有些家族虽然名字不同，但长得一模一样！就像双胞胎，他们的密码表只是数字换了名字，碰一碰的结果完全对应。这就是「双胞胎家族」！',
@@ -1130,35 +1130,35 @@ export interface AchievementDef {
 export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first-step',
-    icon: '👶',
+    icon: '',
     title: { kids: '初出茅庐', tweens: '初步探索', teens: 'First Step' },
     desc: { kids: '完成第一个任务！', tweens: '完成第一个任务', teens: 'Complete first mission' },
     condition: { type: 'missions_completed', count: 1 },
   },
   {
     id: 'halfway',
-    icon: '🏅',
+    icon: '',
     title: { kids: '过半啦！', tweens: '过半成就', teens: 'Halfway There' },
     desc: { kids: '完成一半任务！', tweens: '完成一半任务', teens: 'Complete half the missions' },
     condition: { type: 'missions_completed', count: 6 },
   },
   {
     id: 'star-collector',
-    icon: '⭐',
+    icon: '',
     title: { kids: '星星收集者', tweens: '星星收集者', teens: 'Star Collector' },
     desc: { kids: '收集 3 颗星星！', tweens: '收集 3 颗星星', teens: 'Collect 3 stars' },
     condition: { type: 'stars_collected', count: 3 },
   },
   {
     id: 'star-master',
-    icon: '🌟',
+    icon: '',
     title: { kids: '星星大师', tweens: '星星大师', teens: 'Star Master' },
     desc: { kids: '收集 5 颗星星！', tweens: '收集 5 颗星星', teens: 'Collect 5 stars' },
     condition: { type: 'stars_collected', count: 5 },
   },
   {
     id: 'mode-explorer',
-    icon: '🔬',
+    icon: '',
     title: { kids: '模式探险家', tweens: '模式探索者', teens: 'Mode Explorer' },
     desc: {
       kids: '完成 3 种运算模式！',
@@ -1169,7 +1169,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     id: 'all-modes',
-    icon: '🧪',
+    icon: '',
     title: { kids: '全部通关', tweens: '全模式通关', teens: 'All Modes' },
     desc: {
       kids: '完成所有运算模式！',
@@ -1180,7 +1180,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     id: 'group-master',
-    icon: '🏆',
+    icon: '',
     title: { kids: '群论大师', tweens: '群论达人', teens: 'Group Theorist' },
     desc: { kids: '完成全部冒险！', tweens: '完成全部任务', teens: 'Complete all missions' },
     condition: { type: 'all_done' },
@@ -1252,7 +1252,7 @@ export const STORY_SCENES: StoryScene[] = [
   {
     id: 'story-birthday-party',
     conceptKey: 'group',
-    icon: '🎂',
+    icon: '',
     title: {
       kids: '生日派对的秘密',
       tweens: '从生日派对到群',
@@ -1266,7 +1266,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'Consider 3 people at a round table. Each seating arrangement is a permutation. The set of all arrangements forms S₃.',
         },
-        visual: '🎭\n🔴 🔵 🟢\n  🎂',
+        visual: '\n● ● ●\n  ',
       },
       {
         text: {
@@ -1275,7 +1275,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'A transposition (ij) swaps positions i,j. It has order 2: (ij)² = e. The 3 transpositions generate S₃.',
         },
-        visual: '🔄\n🔴 🔵 🟢 → 🔵 🔴 🟢',
+        visual: '↔\n● ● ● → ● ● ●',
       },
       {
         text: {
@@ -1284,7 +1284,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'The 3-cycle (123) generates a cyclic subgroup of order 3: {e, (123), (132)} ≅ Z₃. This is A₃, the alternating group.',
         },
-        visual: '⭕\n🔴→🔵→🟢→🔴',
+        visual: '○\n●→●→●→●',
       },
       {
         text: {
@@ -1293,14 +1293,14 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             '|S₃| = 6 = 3!. Elements: e, (12), (13), (23), (123), (132). S₃ is the smallest non-abelian group. Its subgroup lattice has 6 subgroups.',
         },
-        visual: '🎉\n  e\n (12)(13)(23)\n(123)(132)\n  S₃',
+        visual: '\n  e\n (12)(13)(23)\n(123)(132)\n  S₃',
       },
     ],
   },
   {
     id: 'story-snowflake',
     conceptKey: 'dihedral_group',
-    icon: '❄️',
+    icon: '✿',
     title: {
       kids: '雪花的魔法',
       tweens: '雪花与二面体群',
@@ -1314,7 +1314,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'A regular hexagon has 12 symmetries: 6 rotations + 6 reflections. These form the dihedral group D₆ of order 12.',
         },
-        visual: '❄️\n  /\\\n /  \\\n|    |\n \\  /\n  \\/',
+        visual: '✿\n  /\\\n /  \\\n|    |\n \\  /\n  \\/',
       },
       {
         text: {
@@ -1323,7 +1323,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'Rotations: r^k for k=0..5, r⁶=e. ⟨r⟩ ≅ Z₆ is the rotation subgroup (index 2, hence normal).',
         },
-        visual: '🔄 60° → 120° → 180° → 240° → 300° → 360°=e',
+        visual: '↔ 60° → 120° → 180° → 240° → 300° → 360°=e',
       },
       {
         text: {
@@ -1332,7 +1332,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'Reflection s: s²=e. Key relation: srs = r⁻¹, or sr = r⁻¹s. Dₙ = ⟨r, s | rⁿ=e, s²=e, srs=r⁻¹⟩. Non-abelian for n≥3.',
         },
-        visual: '🪞 s² = e\nsr = r⁻¹s ≠ rs',
+        visual: ' s² = e\nsr = r⁻¹s ≠ rs',
       },
       {
         text: {
@@ -1341,14 +1341,14 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             '|D₆| = 12. Subgroups: ⟨r⟩≅Z₆ (normal), 3×⟨rᵏ, s⟩≅D₂, 6×⟨s⟩≅Z₂. D₆ has 16 subgroups total.',
         },
-        visual: '❄️ D₆\n|D₆| = 12\n6 rotations + 6 reflections',
+        visual: '✿ D₆\n|D₆| = 12\n6 rotations + 6 reflections',
       },
     ],
   },
   {
     id: 'story-rubik-cube',
     conceptKey: 'symmetric_group',
-    icon: '🧊',
+    icon: '',
     title: {
       kids: '魔方的秘密',
       tweens: '魔方与群论',
@@ -1362,7 +1362,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             "The Rubik's Cube group has order |G| = 43,252,003,274,489,856,000 ≈ 4.3×10¹⁹. God's number = 20 (max moves to solve any state).",
         },
-        visual: '🧊\n🔴🟢🟡\n🟠🔵⚪',
+        visual: '\n●●●\n●●○',
       },
       {
         text: {
@@ -1372,7 +1372,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'G is a subgroup of (S₈ × S₁₂) ⋊ (Z₃)⁸ × (Z₂)¹². Parity constraint: corner permutation parity = edge permutation parity. Index [S₄₈:G] = 12.',
         },
-        visual: '🔄\nCorner: S₈ ∩ A₈\nEdge: S₁₂ ∩ A₁₂',
+        visual: '↔\nCorner: S₈ ∩ A₈\nEdge: S₁₂ ∩ A₁₂',
       },
       {
         text: {
@@ -1381,7 +1381,7 @@ export const STORY_SCENES: StoryScene[] = [
           teens:
             'Each face turn has order 4. G = ⟨U, D, L, R, F, B⟩. The commutator subgroup [G,G] has index 2 (only even permutations are reachable).',
         },
-        visual: '⭕ r⁴ = e\n6 generators → |G| ≈ 4.3×10¹⁹',
+        visual: '○ r⁴ = e\n6 generators → |G| ≈ 4.3×10¹⁹',
       },
     ],
   },

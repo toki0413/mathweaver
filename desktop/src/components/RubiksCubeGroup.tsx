@@ -410,7 +410,7 @@ export function RubiksCubeGroup({ ageLevel }: Props) {
             </div>
           </div>
           <div className={`rcg-comm-result ${commIsIdentity ? 'comm' : 'noncomm'}`}>
-            <div className="rcg-comm-status">{commIsIdentity ? '✓ 可交换' : '✗ 不可交换'}</div>
+            <div className="rcg-comm-status">{commIsIdentity ? '✓ 可交换' : '× 不可交换'}</div>
             <div className="rcg-comm-cycle">
               [A,B] = <code>{toCycle(commResult)}</code>
             </div>
@@ -453,10 +453,10 @@ export function RubiksCubeGroup({ ageLevel }: Props) {
               </div>
               <div className="rcg-seq-buttons">
                 <button onClick={handleUndo} disabled={sequence.length === 0}>
-                  ↶ 撤销
+                   撤销
                 </button>
                 <button onClick={handleResetSeq} disabled={sequence.length === 0}>
-                  ↺ 清空
+                   清空
                 </button>
               </div>
               <div className="rcg-seq-result">

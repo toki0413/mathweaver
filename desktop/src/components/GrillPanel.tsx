@@ -136,7 +136,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
       const messages = ['✓ 正确！', '太棒了！', '答对了！', '干得漂亮！']
       setCelebrationText(
         newStreak >= 3
-          ? `${newStreak} 连对！🔥`
+          ? `${newStreak} 连对！`
           : messages[Math.floor(Math.random() * messages.length)],
       )
       setShowCelebration(true)
@@ -325,7 +325,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 animation: 'streakPop 0.3s ease-out',
               }}
             >
-              🔥 {streak} 连对！
+               {streak} 连对！
             </div>
           )}
 
@@ -401,7 +401,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 color: 'var(--danger, #e06c75)',
               }}
             >
-              📌 还有 {wrongQuestions.length} 道错题将在结束时重新出现
+               还有 {wrongQuestions.length} 道错题将在结束时重新出现
             </div>
           )}
 
@@ -418,7 +418,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 <div
                   style={{ fontWeight: 700, color: 'var(--warn, #e5c07b)', marginBottom: '4px' }}
                 >
-                  🔄 错题复习 ({wrongQuestions.length} 道剩余)
+                  ↔ 错题复习 ({wrongQuestions.length} 道剩余)
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--muted, #8b95a5)' }}>
                   之前答错的问题，再来一次！
@@ -491,14 +491,14 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                         style={L1_STYLE}
                         onClick={() => setHintLevel(1)}
                       >
-                        💡 方向提示
+                         方向提示
                       </button>
                       <button
                         className="btn btn-hint-l2"
                         style={L2_STYLE}
                         onClick={() => setHintLevel(2)}
                       >
-                        📝 详细提示
+                         详细提示
                       </button>
                       <button
                         className="btn btn-hint-answer"

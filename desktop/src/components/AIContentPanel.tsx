@@ -59,9 +59,9 @@ const TOPIC_PRESETS: Record<AgeLevel, string[]> = {
 
 /** 内容类型 Tab 配置 */
 const TYPE_TABS: { id: ContentType; icon: string; label: Record<AgeLevel, string> }[] = [
-  { id: 'exercise', icon: '✏️', label: { kids: '习题', tweens: '习题', teens: 'Exercise' } },
-  { id: 'story', icon: '📖', label: { kids: '故事', tweens: '故事', teens: 'Story' } },
-  { id: 'challenge', icon: '🎯', label: { kids: '挑战', tweens: '挑战', teens: 'Challenge' } },
+  { id: 'exercise', icon: '·', label: { kids: '习题', tweens: '习题', teens: 'Exercise' } },
+  { id: 'story', icon: '', label: { kids: '故事', tweens: '故事', teens: 'Story' } },
+  { id: 'challenge', icon: '', label: { kids: '挑战', tweens: '挑战', teens: 'Challenge' } },
 ]
 
 /** 年龄适配文案表 */
@@ -83,32 +83,32 @@ const L = {
     AgeLevel,
     string
   >,
-  generate: { kids: '✨ 让 AI 变魔法', tweens: '✨ 生成内容', teens: '✨ Generate' } as Record<
+  generate: { kids: '让 AI 变魔法', tweens: '生成内容', teens: ' Generate' } as Record<
     AgeLevel,
     string
   >,
-  generating: { kids: '✨ 让 AI 变魔法', tweens: '✨ 生成内容', teens: '✨ Generate' } as Record<
+  generating: { kids: '让 AI 变魔法', tweens: '生成内容', teens: ' Generate' } as Record<
     AgeLevel,
     string
   >,
   loading: {
-    kids: 'AI 正在想题目... 🤔',
+    kids: 'AI 正在想题目...',
     tweens: 'AI 正在生成内容...',
     teens: 'Generating content...',
   } as Record<AgeLevel, string>,
-  showHint: { kids: '💡 显示提示', tweens: '💡 显示提示', teens: '💡 Show Hint' } as Record<
+  showHint: { kids: '显示提示', tweens: '显示提示', teens: ' Show Hint' } as Record<
     AgeLevel,
     string
   >,
-  hideHint: { kids: '🙈 收起提示', tweens: '🙈 收起提示', teens: '🙈 Hide Hint' } as Record<
+  hideHint: { kids: '收起提示', tweens: '收起提示', teens: ' Hide Hint' } as Record<
     AgeLevel,
     string
   >,
-  showAnswer: { kids: '👀 显示答案', tweens: '👀 显示答案', teens: '👀 Show Answer' } as Record<
+  showAnswer: { kids: '显示答案', tweens: '显示答案', teens: ' Show Answer' } as Record<
     AgeLevel,
     string
   >,
-  hideAnswer: { kids: '🙈 收起答案', tweens: '🙈 收起答案', teens: '🙈 Hide Answer' } as Record<
+  hideAnswer: { kids: '收起答案', tweens: '收起答案', teens: ' Hide Answer' } as Record<
     AgeLevel,
     string
   >,
@@ -118,7 +118,7 @@ const L = {
     tweens: '生成失败，请重试',
     teens: 'Generation failed',
   } as Record<AgeLevel, string>,
-  retry: { kids: '🔁 再试一次', tweens: '🔁 重试', teens: '🔁 Retry' } as Record<AgeLevel, string>,
+  retry: { kids: '↔ 再试一次', tweens: '↔ 重试', teens: '↔ Retry' } as Record<AgeLevel, string>,
   empty: {
     kids: '选一个主题，点「让 AI 变魔法」吧！',
     tweens: '选择主题后点击生成，AI 会为你创建内容。',
@@ -329,9 +329,9 @@ function AIContentPanel({ ageLevel, tableSize, table }: AIContentPanelProps) {
         {/* ── 头部标题 ── */}
         <div className="aic-header">
           <span className="aic-title">
-            {ageLevel === 'kids' && '🪄 '}
-            {ageLevel === 'tweens' && '🧠 '}
-            {ageLevel === 'teens' && '⚡ '}
+            {ageLevel === 'kids' && ' '}
+            {ageLevel === 'tweens' && ' '}
+            {ageLevel === 'teens' && '! '}
             {L.panelTitle[ageLevel]}
           </span>
         </div>
@@ -425,7 +425,7 @@ function AIContentPanel({ ageLevel, tableSize, table }: AIContentPanelProps) {
         {/* ── 错误态 ── */}
         {hasError && (
           <div className="aic-error">
-            <div className="aic-error-icon">⚠️</div>
+            <div className="aic-error-icon">⚠</div>
             <div className="aic-error-body">
               <div className="aic-error-title">{L.errorTitle[ageLevel]}</div>
               <div className="aic-error-detail">{storeError?.detail || storeError?.headline}</div>
@@ -450,7 +450,7 @@ function AIContentPanel({ ageLevel, tableSize, table }: AIContentPanelProps) {
         {!isLoading && !hasError && !displayItem && (
           <div className="aic-empty">
             <div className="aic-empty-icon">
-              {currentType === 'exercise' ? '✏️' : currentType === 'story' ? '📖' : '🎯'}
+              {currentType === 'exercise' ? '·' : currentType === 'story' ? '' : ''}
             </div>
             <div className="aic-empty-text">{L.empty[ageLevel]}</div>
           </div>

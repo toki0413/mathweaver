@@ -778,7 +778,7 @@ const StructureComparisonTable = memo(function StructureComparisonTable({
         {fromBackend
           ? '数据来源：后端 /api/curriculum/compare'
           : '数据来源：内置 fallback（后端不可用）'}
-        {' · 同一结构概念在不同分支中的对应表现，帮助建立跨领域类比'}
+        {'· 同一结构概念在不同分支中的对应表现，帮助建立跨领域类比'}
       </div>
     </>
   )

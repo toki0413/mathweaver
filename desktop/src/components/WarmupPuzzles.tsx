@@ -39,27 +39,27 @@ interface CategoryMeta {
 
 const CATEGORY_META: Record<PuzzleCategory, CategoryMeta> = {
   logic: {
-    icon: '🔍',
+    icon: '',
     label: { kids: '逻辑', tweens: '逻辑推理', teens: 'Logic' },
     color: '#5c6b8c', // 青黛蓝
   },
   math: {
-    icon: '🔢',
+    icon: '',
     label: { kids: '数学', tweens: '数学', teens: 'Math' },
     color: '#b8862e', // 赭石 / 琥珀
   },
   physics: {
-    icon: '⚡',
+    icon: '!',
     label: { kids: '物理', tweens: '物理', teens: 'Physics' },
     color: '#4a7c59', // 竹绿
   },
   linguistic: {
-    icon: '📝',
+    icon: '',
     label: { kids: '语言', tweens: '语言', teens: 'Linguistic' },
     color: '#9e6b3e', // 棕琥珀
   },
   trick: {
-    icon: '🎭',
+    icon: '',
     label: { kids: '小把戏', tweens: '思维把戏', teens: 'Trick' },
     color: '#9e2b22', // 深朱砂
   },
@@ -298,7 +298,7 @@ export function WarmupPuzzles({ ageLevel }: Props) {
             <div className="wp-card-meta">
               {isDaily && (
                 <span className="wp-daily-badge" title={ui.dailyBadge}>
-                  ✦ {ui.dailyBadge}
+                  ★ {ui.dailyBadge}
                 </span>
               )}
               <span className="wp-diff-badge">{DIFFICULTY_BADGE[ageLevel]}</span>
@@ -338,7 +338,7 @@ export function WarmupPuzzles({ ageLevel }: Props) {
           {showHint && (
             <div className="wp-reveal wp-hint">
               <div className="wp-reveal-label">
-                <span aria-hidden>💡</span> {ui.hintLabel}
+                <span aria-hidden></span> {ui.hintLabel}
               </div>
               <div className="wp-reveal-body">{puzzle.hint}</div>
             </div>
@@ -353,7 +353,7 @@ export function WarmupPuzzles({ ageLevel }: Props) {
               <div className="wp-answer-text">{puzzle.answer}</div>
 
               <div className="wp-reveal-label wp-sub-label">
-                <span aria-hidden>📖</span> {ui.explanationLabel}
+                <span aria-hidden></span> {ui.explanationLabel}
               </div>
               <div className="wp-reveal-body">{puzzle.explanation}</div>
 

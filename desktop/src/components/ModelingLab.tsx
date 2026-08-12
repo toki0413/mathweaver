@@ -953,10 +953,10 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
             {running ? '⏸ 暂停' : '▶ 播放'}
           </button>
           <button className="ml-btn" onClick={handleReset} aria-label="重置">
-            ↻ 重置
+             重置
           </button>
           <button className="ml-btn" onClick={handleSnapshot} aria-label="保存快照">
-            📸 快照
+             快照
           </button>
           <span style={{ flex: 1 }} />
           <span

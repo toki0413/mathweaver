@@ -583,7 +583,7 @@ const mockApi = {
         claim: s,
         justification: hasMathContent ? '步骤已验证' : '步骤缺乏数学内容',
         is_valid: hasMathContent,
-        feedback: hasMathContent ? '✓ 步骤有效' : '✗ 步骤无效，请补充数学论断',
+        feedback: hasMathContent ? '✓ 步骤有效' : '× 步骤无效，请补充数学论断',
         matched_expected: '',
         implicit_steps: [] as string[],
       }

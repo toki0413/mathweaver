@@ -542,7 +542,7 @@ function PatternBuilderBase({ elements, size, table, onPatternComplete }: Patter
   const commutativity = (() => {
     if (!hasAnyTest) return { text: '待测试', cls: '' }
     if (isAbelian) return { text: '已测对均可交换 ✓', cls: 'pb-ok' }
-    return { text: '存在不可交换对 ✗', cls: 'pb-fail' }
+    return { text: '存在不可交换对 ×', cls: 'pb-fail' }
   })()
 
   return (

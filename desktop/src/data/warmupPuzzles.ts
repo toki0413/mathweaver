@@ -187,8 +187,8 @@ export const WARMUP_PUZZLES: WarmupPuzzle[] = [
     answer: '罪犯是 C。',
     explanation:
       '设罪犯为 X。\n' +
-      '• 若 X=A：A 的两条「是 B」(假)、「不是我」(假) → 两假，违反规则。✗\n' +
-      '• 若 X=B：A 的两条「是 B」(真)、「不是我」(真) → 两真，违反规则。✗\n' +
+      '• 若 X=A：A 的两条「是 B」(假)、「不是我」(假) → 两假，违反规则。×\n' +
+      '• 若 X=B：A 的两条「是 B」(真)、「不是我」(真) → 两真，违反规则。×\n' +
       '• 若 X=C：A(假,真)、B(真,假)、C(真,假)，三人都是一真一假。✓\n' +
       '所以罪犯是 C。关键在于「一真一假」的约束会同时排除两种极端情况。',
     connectionToGroupTheory:
@@ -251,7 +251,7 @@ export const WARMUP_PUZZLES: WarmupPuzzle[] = [
       '验证另一条件：爱丽丝说 2×8 = 16，儿子说 8 + 8 = 16，相等 ✓。\n' +
       '所以真实门牌号是 8。',
     connectionToGroupTheory:
-      '×2、÷4、+8 都是「仿射变换」x ↦ ax + b。所有可逆仿射变换构成一个群（仿射群）。这个谜题就是在一个变换群里反推「原像」——求一个数，使它在不同群元作用下满足给定关系。',
+      '×2、÷4、+8 都是「仿射变换」x → ax + b。所有可逆仿射变换构成一个群（仿射群）。这个谜题就是在一个变换群里反推「原像」——求一个数，使它在不同群元作用下满足给定关系。',
   },
 
   // --- 数学：天平称币（9 枚） ---
@@ -264,11 +264,11 @@ export const WARMUP_PUZZLES: WarmupPuzzle[] = [
     answer: '称 2 次。',
     explanation:
       '第 1 次：把 9 枚分成 3、3、3，称其中两组。\n' +
-      '  • 若平衡，假币在没称的那 3 枚里；\n' +
-      '  • 若不平衡，假币在较轻的那 3 枚里。\n' +
+      '• 若平衡，假币在没称的那 3 枚里；\n' +
+      '• 若不平衡，假币在较轻的那 3 枚里。\n' +
       '第 2 次：从可疑的 3 枚中取 2 枚称。\n' +
-      '  • 若平衡，没称的那枚是假币；\n' +
-      '  • 若不平衡，较轻的那枚是假币。\n' +
+      '• 若平衡，没称的那枚是假币；\n' +
+      '• 若不平衡，较轻的那枚是假币。\n' +
       '2 次足矣。本质：每次称重有 3 种结果（左轻/平衡/右轻），2 次可区分 3² = 9 种情况。',
     connectionToGroupTheory:
       '每次称重是一个三分决策，编码了 log₃3 比特信息。2 次称重的决策树有 3² = 9 个叶子，恰好覆盖 9 枚硬币——这种「群作用的轨道数 = 信息容量」的思想在编码与群论中反复出现。',
@@ -287,10 +287,10 @@ export const WARMUP_PUZZLES: WarmupPuzzle[] = [
     explanation:
       '回文 = 反转后等于自身。\n' +
       '• 「abcba」反过来是「abcba」，相同 ✓\n' +
-      '• 「abca」反过来是「acba」，不同 ✗\n' +
+      '• 「abca」反过来是「acba」，不同 ×\n' +
       '一个长度为 n 的串 s 是回文，当且仅当对所有 i，s[i] = s[n−1−i]。',
     connectionToGroupTheory:
-      '「反转」是一个阶为 2 的操作（反转两次回到原串）。回文正是这个操作下的「不动点」——作用后保持不变。这与偶函数（在 x↦−x 下不变）是同一回事：不动点 = 特征值 +1 的部分。',
+      '「反转」是一个阶为 2 的操作（反转两次回到原串）。回文正是这个操作下的「不动点」——作用后保持不变。这与偶函数（在 x→−x 下不变）是同一回事：不动点 = 特征值 +1 的部分。',
   },
 
   // --- 把戏：自指悖论 ---
@@ -396,7 +396,7 @@ export const WARMUP_PUZZLES: WarmupPuzzle[] = [
       'Alice reports φ_A(N) = 2N, Bob reports φ_B(N) = N/4, the son reports φ_S(N) = N + 8.\n' +
       'Given φ_A(N) = φ_S(N) and φ_B(N) = N − 6, recover N. ' +
       'Verify that φ_A, φ_B, φ_S are elements of the affine group Aff(ℝ).',
-    hint: 'Each φ(x) = ax + b is invertible iff a ≠ 0, hence lies in Aff(ℝ) = {x ↦ ax+b : a ≠ 0}. Solve the two linear equations.',
+    hint: 'Each φ(x) = ax + b is invertible iff a ≠ 0, hence lies in Aff(ℝ) = {x → ax+b : a ≠ 0}. Solve the two linear equations.',
     answer: 'N = 8. All three maps are in Aff(ℝ): a = 2, 1/4, 1 (with b = 0, 0, 8); all a ≠ 0.',
     explanation:
       'Invertibility: φ_A(x)=2x (a=2), φ_B(x)=x/4 (a=1/4), φ_S(x)=x+8 (a=1); all a ≠ 0, so each is in Aff(ℝ), with inverses x/2, 4x, x−8.\n' +

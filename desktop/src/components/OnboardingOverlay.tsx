@@ -392,7 +392,7 @@ export function OnboardingOverlay({
 
   const welcomeTitle =
     ageLevel === 'kids'
-      ? '欢迎来到魔法学院！🧙‍♂️'
+      ? '欢迎来到魔法学院！'
       : ageLevel === 'tweens'
         ? '欢迎来到 MathWeaver！'
         : 'Welcome to MathWeaver'
@@ -421,7 +421,7 @@ export function OnboardingOverlay({
   const backLabel = ageLevel === 'teens' ? 'Back' : '上一步'
   const nextLabel = ageLevel === 'teens' ? 'Next' : '下一步'
   const finishLabel =
-    ageLevel === 'kids' ? '开始冒险 🚀' : ageLevel === 'tweens' ? '开始探索' : 'Get started'
+    ageLevel === 'kids' ? '开始冒险' : ageLevel === 'tweens' ? '开始探索' : 'Get started'
 
   /** 步骤副标题（teens 用英文） */
   const stepSub = (n: number) =>
@@ -461,7 +461,7 @@ export function OnboardingOverlay({
                       ? 'Please select an age level to continue.'
                       : '请先选择年龄等级，再点击「下一步」'
                     : ageLevel === 'kids'
-                      ? '太棒了！点击「下一步」开始冒险吧～ 🎉'
+                      ? '太棒了！点击「下一步」开始冒险吧～'
                       : ageLevel === 'tweens'
                         ? '已选择！点击「下一步」继续 →'
                         : 'Selection saved. Click "Next" to continue.'}
@@ -474,7 +474,7 @@ export function OnboardingOverlay({
           {ageLevel === 'kids' && step === 1 && (
             <>
               <div className="onboarding-sub">{stepSub(2)}</div>
-              <div className="onboarding-title">开始你的魔法冒险！🔮</div>
+              <div className="onboarding-title">开始你的魔法冒险！</div>
               <div className="onboarding-body">
                 进入后，你会看到一张
                 <span style={{ color: 'var(--accent)' }}>{t('onboarding_cayley', ageLevel)}</span>。
@@ -496,19 +496,19 @@ export function OnboardingOverlay({
           {ageLevel === 'kids' && step === 2 && (
             <>
               <div className="onboarding-sub">{stepSub(3)}</div>
-              <div className="onboarding-title">遇到困难怎么办？🤔</div>
+              <div className="onboarding-title">遇到困难怎么办？</div>
               <div className="onboarding-body">
                 卡住了？没关系，每个魔法师都会遇到困难！
                 <div className="onboarding-feature-list" style={{ marginTop: '12px' }}>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">💡</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">点提示按钮</div>
                       <div className="feat-desc">卡住时点一下，就有线索啦</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">🧙</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('llm', ageLevel)}帮你</div>
                       <div className="feat-desc">随时问问题，{t('llm', ageLevel)}会陪你</div>
@@ -536,7 +536,7 @@ export function OnboardingOverlay({
                 ，一步步来。
                 <div className="onboarding-feature-list">
                   <div className="onboarding-feature">
-                    <span className="feat-icon">📋</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('onboarding_cayley', ageLevel)}</div>
                       <div className="feat-desc">
@@ -545,21 +545,21 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">✅</span>
+                    <span className="feat-icon">✓</span>
                     <div>
                       <div className="feat-name">{t('z3_engine', ageLevel)}</div>
                       <div className="feat-desc">自动检查你的运算是否满足群的规则</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">💡</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('conjecture_engine', ageLevel)}</div>
                       <div className="feat-desc">提出猜想，系统自动验证</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">🎬</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('manim_anim', ageLevel)}</div>
                       <div className="feat-desc">群运算的可视化动画演示</div>
@@ -651,7 +651,7 @@ export function OnboardingOverlay({
                 {t('groups_to_proofs', ageLevel)}.
                 <div className="onboarding-feature-list">
                   <div className="onboarding-feature">
-                    <span className="feat-icon">📋</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('onboarding_cayley', ageLevel)}</div>
                       <div className="feat-desc">
@@ -660,14 +660,14 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">✅</span>
+                    <span className="feat-icon">✓</span>
                     <div>
                       <div className="feat-name">{t('z3_engine', ageLevel)}</div>
                       <div className="feat-desc">Formal verification of group axioms via Z3</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">💡</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('conjecture_engine', ageLevel)}</div>
                       <div className="feat-desc">
@@ -676,7 +676,7 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">🎬</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('manim_anim', ageLevel)}</div>
                       <div className="feat-desc">Animated visualizations of group operations</div>
@@ -696,7 +696,7 @@ export function OnboardingOverlay({
                 Beyond the basics:
                 <div className="onboarding-feature-list">
                   <div className="onboarding-feature">
-                    <span className="feat-icon">🎲</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">3D Symmetry Groups</div>
                       <div className="feat-desc">
@@ -705,7 +705,7 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">👁</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">{t('eye_tracking', ageLevel)}</div>
                       <div className="feat-desc">
@@ -714,14 +714,14 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">✏️</span>
+                    <span className="feat-icon">·</span>
                     <div>
                       <div className="feat-name">{t('latex_render', ageLevel)}</div>
                       <div className="feat-desc">Live formula editing and preview</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon">🎯</span>
+                    <span className="feat-icon"></span>
                     <div>
                       <div className="feat-name">Flashcards</div>
                       <div className="feat-desc">Spaced repetition for retention</div>

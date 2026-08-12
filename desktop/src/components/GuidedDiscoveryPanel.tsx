@@ -305,7 +305,7 @@ export function GuidedDiscoveryPanel({
         {showCelebration && (
           <div className="gdp-celebration">
             <div className="gdp-celebration-inner">
-              <div className="gdp-celebration-stars">⭐</div>
+              <div className="gdp-celebration-stars"></div>
               <div className="gdp-celebration-text">{celebrationText}</div>
               <div className="gdp-celebration-encouragement">
                 {getEncouragement(ageLevel, 'milestone')}
@@ -317,13 +317,13 @@ export function GuidedDiscoveryPanel({
         {/* 头部：标题 + 星星收集 */}
         <div className="gdp-header">
           <span className="gdp-title">
-            {ageLevel === 'kids' && '🗺️ '}
-            {ageLevel === 'tweens' && '🧭 '}
+            {ageLevel === 'kids' && ' '}
+            {ageLevel === 'tweens' && ' '}
             {ageLevel === 'teens' && ''}
             {panelTitle}
           </span>
           <div className="gdp-star-counter">
-            <span className="gdp-star-icon">⭐</span>
+            <span className="gdp-star-icon"></span>
             <span className="gdp-star-count">{collectedStars}</span>
           </div>
         </div>
@@ -339,7 +339,7 @@ export function GuidedDiscoveryPanel({
                 } ${i === currentIdx ? 'current' : ''}`}
                 title={m.title}
               >
-                {i < currentIdx || completedSteps.has(m.id) ? '⭐' : '☆'}
+                {i < currentIdx || completedSteps.has(m.id) ? '' : '☆'}
               </div>
             ))}
           </div>
@@ -378,13 +378,13 @@ export function GuidedDiscoveryPanel({
 
           {/* 任务 */}
           <div className="gdp-step-task">
-            <span className="gdp-task-icon">📋</span>
+            <span className="gdp-task-icon"></span>
             {currentMission.task}
           </div>
 
           {/* 提示 — 点击展开 */}
           <button className="gdp-hint-toggle" onClick={() => setHintVisible(!hintVisible)}>
-            {hintVisible ? '🙈 收起提示' : '💡 显示提示'}
+            {hintVisible ? '收起提示' : '显示提示'}
           </button>
           {hintVisible && <div className="gdp-step-hint">{currentMission.hint}</div>}
 
@@ -408,7 +408,7 @@ export function GuidedDiscoveryPanel({
             </button>
             <button className="gdp-nav-btn primary" onClick={handleCompleteClick}>
               {isLast
-                ? `🎉 ${ageLevel === 'kids' ? '完成冒险' : ageLevel === 'tweens' ? '完成全部' : 'Complete'}`
+                ? ` ${ageLevel === 'kids' ? '完成冒险' : ageLevel === 'tweens' ? '完成全部' : 'Complete'}`
                 : `✓ ${ageLevel === 'kids' ? '完成这关' : ageLevel === 'tweens' ? '完成此步' : 'Done'}`}
             </button>
             <button className="gdp-nav-btn" onClick={handleNext} disabled={isLast}>
@@ -421,7 +421,7 @@ export function GuidedDiscoveryPanel({
         {showCheckpoint && (
           <div className="gdp-checkpoint">
             <div className="gdp-checkpoint-header">
-              <span className="gdp-checkpoint-icon">🔐</span>
+              <span className="gdp-checkpoint-icon"></span>
               <span className="gdp-checkpoint-title">
                 {ageLevel === 'kids' ? '小测验' : ageLevel === 'tweens' ? '快速检查' : 'Checkpoint'}
               </span>
@@ -430,7 +430,7 @@ export function GuidedDiscoveryPanel({
                 onClick={handleCheckpointCancel}
                 title={ageLevel === 'kids' ? '取消' : 'Cancel'}
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -476,10 +476,10 @@ export function GuidedDiscoveryPanel({
             <button className="gdp-cards-toggle" onClick={() => setCardsCollapsed(!cardsCollapsed)}>
               <span>
                 {ageLevel === 'kids'
-                  ? '📚 已解锁的知识卡片'
+                  ? '已解锁的知识卡片'
                   : ageLevel === 'tweens'
-                    ? '📚 已解锁知识卡片'
-                    : '📚 Unlocked Knowledge Cards'}
+                    ? '已解锁知识卡片'
+                    : ' Unlocked Knowledge Cards'}
                 <span className="gdp-cards-count">({unlockedCards.length})</span>
               </span>
               <span className="gdp-cards-arrow">{cardsCollapsed ? '▸' : '▾'}</span>
@@ -496,10 +496,10 @@ export function GuidedDiscoveryPanel({
                     <div className="gdp-kcard-example">
                       <span className="gdp-kcard-example-label">
                         {ageLevel === 'kids'
-                          ? '💡 例子：'
+                          ? '例子：'
                           : ageLevel === 'tweens'
-                            ? '💡 例子：'
-                            : '💡 Example: '}
+                            ? '例子：'
+                            : ' Example: '}
                       </span>
                       {card.example[ageLevel]}
                     </div>
@@ -514,10 +514,10 @@ export function GuidedDiscoveryPanel({
         <div className="gdp-achievements">
           <div className="gdp-achievements-title">
             {ageLevel === 'kids'
-              ? '🎖️ 成就徽章'
+              ? '成就徽章'
               : ageLevel === 'tweens'
-                ? '🎖️ 成就徽章'
-                : '🎖️ Achievements'}
+                ? '成就徽章'
+                : ' Achievements'}
           </div>
           <div className="gdp-achievements-grid">
             {ACHIEVEMENTS.map((a: AchievementDef) => {
@@ -528,7 +528,7 @@ export function GuidedDiscoveryPanel({
                   className={`gdp-badge ${unlocked ? 'unlocked' : 'locked'}`}
                   title={`${a.title[ageLevel]} — ${a.desc[ageLevel]}`}
                 >
-                  <span className="gdp-badge-icon">{unlocked ? a.icon : '🔒'}</span>
+                  <span className="gdp-badge-icon">{unlocked ? a.icon : ''}</span>
                   <span className="gdp-badge-label">{a.title[ageLevel]}</span>
                 </div>
               )
@@ -550,7 +550,7 @@ export function GuidedDiscoveryPanel({
               .filter(m => completedSteps.has(m.id))
               .map(m => (
                 <div key={m.id} className="gdp-completed-item">
-                  <span className="gdp-check">{ageLevel === 'kids' ? '⭐' : '✓'}</span>
+                  <span className="gdp-check">{ageLevel === 'kids' ? '' : '✓'}</span>
                   <span>
                     {PHASE_META[m.phase].icon} {m.title}
                   </span>
@@ -563,7 +563,7 @@ export function GuidedDiscoveryPanel({
         {isLast && completedSteps.has(currentMission.id) && (
           <div className="gdp-finale">
             <div className="gdp-finale-trophy">
-              {ageLevel === 'kids' ? '🏆' : ageLevel === 'tweens' ? '🎓' : '✓'}
+              {ageLevel === 'kids' ? '' : ageLevel === 'tweens' ? '' : '✓'}
             </div>
             <div className="gdp-finale-text">
               {ageLevel === 'kids'
@@ -572,7 +572,7 @@ export function GuidedDiscoveryPanel({
                   ? '恭喜完成全部任务！你已经掌握了群论的基本结构。'
                   : 'Discovery cycle complete. You have constructed and verified a group from first principles.'}
             </div>
-            <div className="gdp-finale-stars">{'⭐'.repeat(collectedStars)}</div>
+            <div className="gdp-finale-stars">{''.repeat(collectedStars)}</div>
           </div>
         )}
       </div>

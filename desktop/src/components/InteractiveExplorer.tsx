@@ -345,7 +345,7 @@ const S3_SUBGROUPS: SubgroupInfo[] = [
 
 const STATUS_META: Record<PropStatus, { symbol: string; label: string; cls: string }> = {
   pass: { symbol: '✓', label: '满足', cls: 'ie-prop-pass' },
-  fail: { symbol: '✗', label: '不满足', cls: 'ie-prop-fail' },
+  fail: { symbol: '×', label: '不满足', cls: 'ie-prop-fail' },
   unknown: { symbol: '?', label: '未确定', cls: 'ie-prop-unknown' },
 }
 

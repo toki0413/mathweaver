@@ -568,10 +568,10 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
         }}
       >
         <span className={`iq-type-badge ${activeType}`}>
-          {activeType === 'choice' && '🔘 选择题'}
-          {activeType === 'truefalse' && '⚖ 判断题'}
-          {activeType === 'matching' && '🔗 匹配题'}
-          {activeType === 'open' && '✍ 简答题'}
+          {activeType === 'choice' && '选择题'}
+          {activeType === 'truefalse' && '· 判断题'}
+          {activeType === 'matching' && '匹配题'}
+          {activeType === 'open' && '· 简答题'}
         </span>
 
         {/* Allow switching to open-ended mode for any question type */}
@@ -582,7 +582,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
               onClick={() => setActiveType('open')}
               title="切换为自由输入模式"
             >
-              ✍ 自由输入
+              · 自由输入
             </button>
           </div>
         )}
@@ -666,7 +666,7 @@ export const InteractiveQuestion: React.FC<InteractiveQuestionProps> = ({
                 if (!disabled && (e.key === 'Enter' || e.key === ' ')) setSelectedTF(false)
               }}
             >
-              <span className="iq-tf-icon">✗</span>
+              <span className="iq-tf-icon">×</span>
               <span className="iq-tf-label">错误</span>
             </div>
           </div>

@@ -315,19 +315,19 @@ export default function App() {
     const isKids = ageLevel === 'kids'
     return {
       closure: isKids
-        ? { title: '🎉 发现啦！', message: '所有数字都没跑出去！这就是「闭合性」' }
+        ? { title: '发现啦！', message: '所有数字都没跑出去！这就是「闭合性」' }
         : { title: '闭合性满足', message: '运算表所有结果都在有效范围内' },
       associativity: isKids
-        ? { title: '🎉 发现啦！', message: '谁先谁后结果都一样！这就是「结合律」' }
+        ? { title: '发现啦！', message: '谁先谁后结果都一样！这就是「结合律」' }
         : { title: '结合律满足', message: '(a∗b)∗c = a∗(b∗c) 对所有元素成立' },
       identity: isKids
-        ? { title: '🎉 发现啦！', message: '找到老大了！碰了它不会变！这就是「单位元」' }
+        ? { title: '发现啦！', message: '找到老大了！碰了它不会变！这就是「单位元」' }
         : { title: '单位元发现', message: '存在元素 e 使 e∗a = a∗e = a' },
       inverses: isKids
-        ? { title: '🎉 发现啦！', message: '每个人都有好搭档！碰一碰就变老大！这就是「逆元」' }
+        ? { title: '发现啦！', message: '每个人都有好搭档！碰一碰就变老大！这就是「逆元」' }
         : { title: '逆元完备', message: '每个元素都存在逆元' },
       commutativity: isKids
-        ? { title: '🎉 发现啦！', message: '换位置碰结果也一样！这就是「交换律」' }
+        ? { title: '发现啦！', message: '换位置碰结果也一样！这就是「交换律」' }
         : { title: '交换律满足', message: 'a∗b = b∗a 对所有元素成立' },
     }
   }, [ageLevel])
@@ -344,7 +344,7 @@ export default function App() {
         })
         soundSystem.play('star')
         setMascotState('celebrating')
-        setMascotMessage(ageLevel === 'kids' ? '你太厉害了！🎉' : '发现新性质！')
+        setMascotMessage(ageLevel === 'kids' ? '你太厉害了！' : '发现新性质！')
         setTimeout(() => {
           setMascotState('idle')
           setMascotMessage(undefined)
@@ -377,10 +377,10 @@ export default function App() {
   const mascotMoods = useMemo(() => {
     if (ageLevel === 'kids') {
       return {
-        welcome: '嗨！我是欧拉猫头鹰！一起来玩魔法密码表吧！🦉',
+        welcome: '嗨！我是欧拉猫头鹰！一起来玩魔法密码表吧！',
         idle: '有什么不懂的随时问我哦！',
         encouraging: '你可以的！再试一次！',
-        celebrating: '太棒了！你真厉害！🎉',
+        celebrating: '太棒了！你真厉害！',
       }
     } else if (ageLevel === 'tweens') {
       return {
@@ -819,7 +819,7 @@ export default function App() {
             aria-label="音效开关"
             title={soundEnabled ? '关闭音效' : '开启音效'}
           >
-            <span style={{ fontSize: '14px' }}>{soundEnabled ? '🔊' : '🔇'}</span>
+            <span style={{ fontSize: '14px' }}>{soundEnabled ? '' : ''}</span>
           </button>
           <div className={`backend-status ${backendReady ? 'connected' : 'disconnected'}`}>
             <span className="status-dot" />
@@ -843,7 +843,7 @@ export default function App() {
             onClick={() => setMockBannerDismissed(true)}
             aria-label="关闭"
           >
-            ✕
+            ×
           </button>
         </div>
       )}
@@ -897,7 +897,7 @@ export default function App() {
               <div className="section-group">
                 <div className="section-group-label">今日热身</div>
                 <CollapsibleSection
-                  title={isKidsMode ? '🧩 每日脑力热身' : '每日热身谜题'}
+                  title={isKidsMode ? '每日脑力热身' : '每日热身谜题'}
                   hint="逻辑 · 物理 · 数学 · 语言"
                   defaultOpen={false}
                 >
@@ -1051,7 +1051,7 @@ export default function App() {
                 </div>
 
                 <CollapsibleSection
-                  title={isKidsMode ? '🎮 游戏场' : '学生互动游戏场'}
+                  title={isKidsMode ? '游戏场' : '学生互动游戏场'}
                   hint={isKidsMode ? '碰一碰 · 找搭档 · 彩色表' : '拖拽 · 翻牌 · 颜色可视化'}
                   defaultOpen={false}
                 >
@@ -1156,7 +1156,7 @@ export default function App() {
 
                 {/* 魔方群论实验室 — 交换子与非交换性 */}
                 <CollapsibleSection
-                  title={isKidsMode ? '🧊 魔方魔法实验室' : '魔方群论实验室'}
+                  title={isKidsMode ? '魔方魔法实验室' : '魔方群论实验室'}
                   hint={isKidsMode ? '转一转魔方' : '交换子 · 非交换性 · 置换群'}
                   defaultOpen={false}
                 >
@@ -1248,7 +1248,7 @@ export default function App() {
               <div className="section-group">
                 <div className="section-group-label">{isKidsMode ? '我的发现' : '问题发明'}</div>
                 <CollapsibleSection
-                  title={isKidsMode ? '✨ 发明你自己的数学问题！' : '发明新问题并首次解决'}
+                  title={isKidsMode ? '发明你自己的数学问题！' : '发明新问题并首次解决'}
                   hint={isKidsMode ? '当一个小数学家' : '良构检查 · 新颖性检验 · 保存'}
                   defaultOpen={false}
                 >

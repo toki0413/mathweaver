@@ -395,7 +395,7 @@ function CayleyTableBase({
                         setEditingCell(raw)
                         // Commit valid integers immediately — including
                         // out-of-range values, which the real-time closure
-                        // check flags as invalid (red cell + "✗ 未闭合"
+                        // check flags as invalid (red cell + "× 未闭合"
                         // badge). The editing buffer still lets the cell be
                         // temporarily cleared (empty string → NaN → no commit)
                         // so the user can retype freely without parseInt
@@ -449,7 +449,7 @@ function CayleyTableBase({
             }}
             title="切换颜色视图"
           >
-            {colorMode ? '🎨 颜色' : '🎨 OFF'}
+            {colorMode ? '颜色' : ' OFF'}
           </button>
         )}
         <div
@@ -525,7 +525,7 @@ function CayleyTableBase({
           }}
           title="点击高亮无效单元格"
         >
-          {isClosed ? '✓ 闭合' : '✗ 未闭合'}
+          {isClosed ? '✓ 闭合' : '× 未闭合'}
         </span>
         <span
           className={isAssociative ? 'assoc-check-pass' : 'assoc-check-fail'}
@@ -544,7 +544,7 @@ function CayleyTableBase({
           }}
           title="点击高亮违反结合律的单元格"
         >
-          {isAssociative ? '✓ 结合律' : '✗ 非结合律'}
+          {isAssociative ? '✓ 结合律' : '× 非结合律'}
         </span>
         <span
           className={identityRows.size > 0 ? 'closure-check-pass' : 'closure-check-fail'}
@@ -561,7 +561,7 @@ function CayleyTableBase({
           }}
           title="点击高亮单位元"
         >
-          {identityRows.size > 0 ? `✓ 单位元=${[...identityRows][0]}` : '✗ 无单位元'}
+          {identityRows.size > 0 ? `✓ 单位元=${[...identityRows][0]}` : '× 无单位元'}
         </span>
         <span
           className={hasInverses ? 'closure-check-pass' : 'closure-check-fail'}
@@ -580,7 +580,7 @@ function CayleyTableBase({
         >
           {hasInverses
             ? '✓ 逆元'
-            : `✗ 逆元缺失${noInverseElements.length > 0 ? `(${noInverseElements.join(',')})` : ''}`}
+            : `× 逆元缺失${noInverseElements.length > 0 ? `(${noInverseElements.join(',')})` : ''}`}
         </span>
         <span
           className={isCommutative ? 'closure-check-pass' : 'assoc-check-fail'}
@@ -599,7 +599,7 @@ function CayleyTableBase({
           }}
           title="点击高亮不交换的对称对"
         >
-          {isCommutative ? '✓ 交换律' : '✗ 非交换'}
+          {isCommutative ? '✓ 交换律' : '× 非交换'}
         </span>
       </div>
 

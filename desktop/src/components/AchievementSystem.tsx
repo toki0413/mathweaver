@@ -305,7 +305,7 @@ export function AchievementSystem({
                       justifyContent: 'center',
                     }}
                   >
-                    {unlocked ? a.icon : '🔒'}
+                    {unlocked ? a.icon : ''}
                   </div>
                   <div className="badge-label">{a.title[ageLevel]}</div>
                 </div>
