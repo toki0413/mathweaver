@@ -1,6 +1,6 @@
 {
   "name": "mathweaver",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "MathWeaver - 多智能体数学认知操作系统",
   "main": "./out/main/index.js",
   "author": "MathWeaver Team",
