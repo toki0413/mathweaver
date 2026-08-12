@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useStore } from '@/stores/sessionStore'
 import { GrillPanel } from '@/components/GrillPanel'
@@ -108,8 +108,8 @@ describe('GrillPanel', () => {
       expect(select).toBeInTheDocument()
 
       const options = within(select).getAllByRole('option')
-      // The CURRICULUM_LEVELS array has 9 entries.
-      expect(options).toHaveLength(9)
+      // CURRICULUM_LEVELS has 10 entries + the leading "默认" option = 11.
+      expect(options).toHaveLength(11)
 
       // Spot-check a few labels.
       expect(screen.getByText('默认（群论）')).toBeInTheDocument()
@@ -606,6 +606,109 @@ describe('GrillPanel', () => {
         loading: true,
       })
       expect(screen.getByText('正在生成下一个问题')).toBeInTheDocument()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // Wrong-question re-ask phase
+  // -------------------------------------------------------------------------
+
+  /**
+   * Render with a summary whose adaptive.streak_wrong is > 0 so the
+   * "答错检测" effect records the current question into wrongQuestions.
+   * The effect runs after mount, so the caller must await the banner.
+   */
+  function renderWithWrongQuestion() {
+    const utils = renderGrillPanel({
+      active: true,
+      currentQuestion: SAMPLE_QUESTION,
+      summary: {
+        ...SAMPLE_SUMMARY,
+        adaptive: { ...SAMPLE_SUMMARY.adaptive, streak_wrong: 1 },
+      },
+    })
+    return utils
+  }
+
+  describe('wrong-question re-ask phase', () => {
+    it('records a wrong question and shows the pending banner', async () => {
+      renderWithWrongQuestion()
+      await waitFor(() => {
+        expect(screen.getByText(/还有 1 道错题将在结束时重新出现/)).toBeInTheDocument()
+      })
+    })
+
+    it('"结束并复习错题" enters the re-ask phase and shows the queued question', async () => {
+      const user = userEvent.setup()
+      renderWithWrongQuestion()
+
+      const endBtn = await screen.findByRole('button', {
+        name: /结束并复习错题/,
+      })
+      await user.click(endBtn)
+
+      expect(screen.getByText(/错题复习/)).toBeInTheDocument()
+      // The recorded question text is shown in the re-ask section.
+      expect(screen.getByText(/What is a group/)).toBeInTheDocument()
+    })
+
+    it('submitting a re-ask answer removes it from the queue and exits re-ask', async () => {
+      const user = userEvent.setup()
+      renderWithWrongQuestion()
+
+      const endBtn = await screen.findByRole('button', { name: /结束并复习错题/ })
+      await user.click(endBtn)
+
+      const textarea = screen.getByLabelText('输入你的答案')
+      await user.type(textarea, 'A group is a set with an operation.')
+      await user.click(screen.getByRole('button', { name: '提交复习答案' }))
+
+      // With one wrong question, clearing it exits the re-ask phase and the
+      // banner disappears.
+      await waitFor(() => {
+        expect(screen.queryByText(/错题复习/)).not.toBeInTheDocument()
+      })
+    })
+
+    it('re-ask submit button is disabled while the answer is empty', async () => {
+      const user = userEvent.setup()
+      renderWithWrongQuestion()
+
+      const endBtn = await screen.findByRole('button', { name: /结束并复习错题/ })
+      await user.click(endBtn)
+
+      expect(screen.getByRole('button', { name: '提交复习答案' })).toBeDisabled()
+    })
+
+    it('"跳过" skips the re-asked question without submitting', async () => {
+      const user = userEvent.setup()
+      renderWithWrongQuestion()
+
+      const endBtn = await screen.findByRole('button', { name: /结束并复习错题/ })
+      await user.click(endBtn)
+
+      await user.click(screen.getByRole('button', { name: '跳过' }))
+      await waitFor(() => {
+        expect(screen.queryByText(/错题复习/)).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // End-challenge button
+  // -------------------------------------------------------------------------
+
+  describe('end-challenge button', () => {
+    it('shows "结束挑战" when there are no wrong questions', () => {
+      renderGrillPanel({ active: true, currentQuestion: SAMPLE_QUESTION })
+      expect(screen.getByRole('button', { name: '结束挑战' })).toBeInTheDocument()
+    })
+
+    it('shows the wrong-question count when wrong questions exist', async () => {
+      renderWithWrongQuestion()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '结束并复习错题 (1)' })).toBeInTheDocument()
+      })
     })
   })
 })

@@ -10,6 +10,7 @@ import {
   getPresetById,
 } from '../../electron/backend/llm/client'
 import type { LLMConfig } from '../../electron/backend/types'
+import logger from '../../electron/backend/utils/logger'
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
@@ -721,11 +722,15 @@ describe('OpenAICompatibleClient retry logic', () => {
     originalFetch = globalThis.fetch
     // Replace setTimeout with an instant-resolving timer to avoid real delays
     vi.useFakeTimers()
+    // Each failed attempt logs a warn via winston by design. Silence it so
+    // expected retry-failure paths do not pollute the runner output.
+    vi.spyOn(logger, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
     globalThis.fetch = originalFetch
     vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it('chat retries on 429 rate_limit error then succeeds', async () => {

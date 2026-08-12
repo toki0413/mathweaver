@@ -27,6 +27,7 @@ from ..dag.concept_dag import ConceptDAG, get_dag
 from ..evidence.chain import EvidenceChain
 from ..grill.adaptive import AdaptiveDifficulty
 from ..grill.encouragement import EncouragementEngine
+from ..intent import GRILL_TRIGGER_KEYWORDS, PROOF_TRIGGER_KEYWORDS
 from ..llm.client import extract_content
 from ..models.state import (
     AgentMessage,
@@ -660,7 +661,7 @@ class Orchestrator:
 
         # --- Grill Me mode detection ---
         # Trigger: student says "考考我" / "grill me" / "考考看" / "来考考"
-        grill_trigger_keywords = ["考考我", "grill me", "考考看", "来考考", "审问我", "面试我"]
+        grill_trigger_keywords = GRILL_TRIGGER_KEYWORDS
         is_grill_trigger = any(kw in student_input.lower() for kw in grill_trigger_keywords)
 
         if is_grill_trigger and self.grill_session is None:
@@ -681,7 +682,7 @@ class Orchestrator:
         # --- Proof mode detection ---
         # When student writes a proof, the orchestrator runs the proof
         # assistant directly and passes results to the collaboration agent.
-        proof_trigger_keywords = ["证明", "求证", "prove", "proof", "我要证", "验证以下"]
+        proof_trigger_keywords = PROOF_TRIGGER_KEYWORDS
         is_proof = any(kw in student_input.lower() for kw in proof_trigger_keywords)
         proof_result_data: dict[str, Any] | None = None
 

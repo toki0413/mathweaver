@@ -45,6 +45,8 @@ export const CURRICULUM_LEVELS: string[] = [
   'discrete_math',
   'number_theory',
   'group_theory',
+  'physics',
+  'chemistry',
 ]
 
 // 每个级别的人类可读标签
@@ -57,6 +59,8 @@ export const CURRICULUM_LABELS: Record<string, string> = {
   discrete_math: '离散数学（大学）',
   number_theory: '数论（大学）',
   group_theory: '群论（大学）',
+  physics: '物理（数学的延伸）',
+  chemistry: '化学（数学的延伸）',
 }
 
 // ---------------------------------------------------------------------------

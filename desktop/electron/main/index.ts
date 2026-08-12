@@ -170,8 +170,12 @@ function initBackend(): void {
       if (llmConfig.apiKey) {
         try {
           toStore.apiKey = encrypt(llmConfig.apiKey)
-        } catch {
-          /* keep plaintext */
+        } catch (err) {
+          logger.error('Failed to encrypt API key from env config — key will not be persisted', {
+            module: 'Main',
+            error: err instanceof Error ? err.message : String(err),
+          })
+          toStore.apiKey = '' // Do not store plaintext — user must re-enter via Settings
         }
       }
       store.set('settings.llm', toStore)
@@ -189,7 +193,10 @@ function initBackend(): void {
     provider: llmConfig.provider,
     model: llmConfig.model,
   })
-  backend.init(llmConfig)
+  // Use a file-based SQLite database for persistent storage (B2 fix).
+  // Falls back to in-memory if the native module fails to load.
+  const dbPath = join(app.getPath('userData'), 'mathweaver.db')
+  backend.init(llmConfig, dbPath)
 }
 
 // ---------------------------------------------------------------------------
@@ -321,7 +328,7 @@ function createWindow(): BrowserWindow {
           "default-src 'self'",
           "script-src 'self'",
           `style-src 'self' 'nonce-${cspNonce}' 'unsafe-inline'`,
-          "img-src 'self' data: https:",
+          "img-src 'self' data:",
           "font-src 'self' data:",
           "connect-src 'self' https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com http://localhost:11434 http://localhost:1234",
           "object-src 'none'",
@@ -550,15 +557,27 @@ safeIpcHandleSync('settings:set', (_event, key: string, value: unknown) => {
   return true
 })
 
+/**
+ * Mask an API key for display: show first 4 and last 4 characters.
+ * Keys shorter than 12 chars are fully masked except the last char.
+ */
+function maskApiKey(key: string): string {
+  if (!key) return ''
+  if (key.length <= 12) return '*'.repeat(key.length - 1) + key.slice(-1)
+  return key.slice(0, 4) + '*'.repeat(key.length - 8) + key.slice(-4)
+}
+
 safeIpcHandleSync('settings:get-llm-config', () => {
   const config = { ...(store.get('settings.llm') as LLMConfig) }
-  // Decrypt the API key before returning it to the renderer so the settings
-  // panel can display it (masked) and re-submit unchanged values without
-  // double-encrypting. A failed decrypt (e.g. machine ID changed) logs the
-  // error and returns an empty key rather than crashing the handler.
+  // Return a masked API key to the renderer — the full plaintext key
+  // is never exposed to the renderer process, reducing the impact of
+  // a potential XSS in the renderer. The renderer only needs to know
+  // whether a key is set (for display) and can send a new key via
+  // settings:set-llm-config when the user re-enters it.
   if (config.apiKey) {
     try {
-      config.apiKey = decrypt(config.apiKey)
+      const plaintext = decrypt(config.apiKey)
+      config.apiKey = maskApiKey(plaintext)
     } catch (err) {
       logger.error('Failed to decrypt API key for get-llm-config', {
         module: 'Settings',
@@ -579,18 +598,20 @@ safeIpcHandle('settings:set-llm-config', async (_event, config: Partial<LLMConfi
 
   // If the caller supplied a non-empty apiKey, encrypt it for storage.
   // An empty apiKey (e.g. for local Ollama) is stored as-is.
-  let storedApiKey = plaintextConfig.apiKey
+  let storedApiKey = ''
   if (plaintextConfig.apiKey) {
     try {
       storedApiKey = encrypt(plaintextConfig.apiKey)
     } catch (err) {
-      logger.error('Failed to encrypt API key', {
+      logger.error('Failed to encrypt API key — key will not be persisted to disk', {
         module: 'Settings',
         error: err instanceof Error ? err.message : String(err),
       })
-      // Fall back to storing plaintext rather than blocking the save; this is
-      // better than losing the user's input. The next save will retry.
-      storedApiKey = plaintextConfig.apiKey
+      // Do not store plaintext. The backend still receives the plaintext
+      // key in memory (via updateLLMConfig below), so the current session
+      // works, but the key won't be persisted and the user must re-enter
+      // it next time.
+      storedApiKey = ''
     }
   }
 
@@ -607,7 +628,10 @@ safeIpcHandle('settings:set-llm-config', async (_event, config: Partial<LLMConfi
     hasApiKey: Boolean(plaintextConfig.apiKey),
   })
   // Return the plaintext config so the renderer keeps an accurate view.
-  return { success: true, config: plaintextConfig }
+  return {
+    success: true,
+    config: { ...plaintextConfig, apiKey: maskApiKey(plaintextConfig.apiKey) },
+  }
 })
 
 safeIpcHandleSync('settings:get-llm-presets', () => {

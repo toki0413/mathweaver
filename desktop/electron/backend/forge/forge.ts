@@ -64,9 +64,70 @@ export function mkForgeResult(
   }
 }
 
+/** Cayley 表最大允许维度，防止 O(n³) 验证卡死主进程 */
+const MAX_CAYLEY_TABLE_SIZE = 10
+
 // ---------------------------------------------------------------------------
 // L1: Brute-force Cayley Table Verification
 // ---------------------------------------------------------------------------
+
+/**
+ * 校验 Cayley 表的基本完整性：非空、方阵、元素 ∈ [0, n)、n 不超上限。
+ * 返回 [isValid, errorMessage]；isValid=true 时可安全进行 O(n³) 验证。
+ */
+function validateCayleyTable(cayleyTable: number[][]): [boolean, string | null] {
+  const n = cayleyTable.length
+  if (n === 0) return [false, 'Empty table']
+  if (n > MAX_CAYLEY_TABLE_SIZE)
+    return [false, `Table too large: n=${n} exceeds max ${MAX_CAYLEY_TABLE_SIZE}`]
+  for (let i = 0; i < n; i++) {
+    if (!Array.isArray(cayleyTable[i]) || cayleyTable[i].length !== n) {
+      return [false, `Row ${i} is not an array of length ${n}`]
+    }
+    for (let j = 0; j < n; j++) {
+      const val = cayleyTable[i][j]
+      if (!Number.isInteger(val) || val < 0 || val >= n) {
+        return [false, `Entry (${i},${j})=${val} out of range [0,${n})`]
+      }
+    }
+  }
+  return [true, null]
+}
+
+/**
+ * Find the first associativity violation in a Cayley table.
+ *
+ * Returns `[true, null]` when associativity holds; otherwise
+ * `[false, violationDescription]`. Callers pass the table plus an optional
+ * validation error already produced by `validateCayleyTable` so the
+ * violation message matches their context.
+ */
+function findAssociativityViolation(
+  cayleyTable: number[][],
+  validationError: string | null,
+  prefix: string,
+): [boolean, string | null] {
+  const n = cayleyTable.length
+  if (validationError !== null) {
+    return [false, `Invalid Cayley table: ${validationError}`]
+  }
+  for (let a = 0; a < n; a++) {
+    for (let b = 0; b < n; b++) {
+      for (let c = 0; c < n; c++) {
+        const left = cayleyTable[cayleyTable[a][b]][c]
+        const right = cayleyTable[a][cayleyTable[b][c]]
+        if (left !== right) {
+          return [
+            false,
+            `${prefix}(${a}*${b})*${c} = ${cayleyTable[a][b]}*${c} = ${left}, ` +
+              `but ${a}*(${b}*${c}) = ${a}*${cayleyTable[b][c]} = ${right}`,
+          ]
+        }
+      }
+    }
+  }
+  return [true, null]
+}
 
 /**
  * Verify whether a Cayley table defines a group.
@@ -91,22 +152,12 @@ export function verifyGroupAxiomsCayley(cayleyTable: number[][]): [boolean, stri
   }
 
   // Check associativity: (a*b)*c == a*(b*c)
-  for (let a = 0; a < n; a++) {
-    for (let b = 0; b < n; b++) {
-      for (let c = 0; c < n; c++) {
-        const left = cayleyTable[cayleyTable[a][b]][c]
-        const right = cayleyTable[a][cayleyTable[b][c]]
-        if (left !== right) {
-          return [
-            false,
-            `Associativity violated: (${a}*${b})*${c} = ` +
-              `${cayleyTable[a][b]}*${c} = ${left}, ` +
-              `but ${a}*(${b}*${c}) = ${a}*${cayleyTable[b][c]} = ${right}`,
-          ]
-        }
-      }
-    }
-  }
+  const [assoc, assocError] = findAssociativityViolation(
+    cayleyTable,
+    null,
+    'Associativity violated: ',
+  )
+  if (!assoc) return [false, assocError as string]
 
   // Check identity element
   let identity: number | null = null
@@ -163,23 +214,8 @@ export function checkCommutativityCayley(cayleyTable: number[][]): [boolean, str
  * @returns [isAssociative, violationDescription]
  */
 export function checkAssociativityCayley(cayleyTable: number[][]): [boolean, string | null] {
-  const n = cayleyTable.length
-  for (let a = 0; a < n; a++) {
-    for (let b = 0; b < n; b++) {
-      for (let c = 0; c < n; c++) {
-        const left = cayleyTable[cayleyTable[a][b]][c]
-        const right = cayleyTable[a][cayleyTable[b][c]]
-        if (left !== right) {
-          return [
-            false,
-            `(${a}*${b})*${c} = ${cayleyTable[a][b]}*${c} = ${left}, ` +
-              `but ${a}*(${b}*${c}) = ${a}*${cayleyTable[b][c]} = ${right}`,
-          ]
-        }
-      }
-    }
-  }
-  return [true, null]
+  const [valid, validationError] = validateCayleyTable(cayleyTable)
+  return findAssociativityViolation(cayleyTable, valid ? null : validationError, '')
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +253,14 @@ export function findNonAssociativeTable(n = 3): ForgeResult {
       false,
       FallbackLevel.L1_BRUTE_FORCE,
       `在 ${n} 元集合上，所有二元运算都满足结合律`,
+    )
+  }
+
+  if (n > MAX_CAYLEY_TABLE_SIZE) {
+    return mkForgeResult(
+      false,
+      FallbackLevel.L1_BRUTE_FORCE,
+      `n=${n} 超过最大支持维度 ${MAX_CAYLEY_TABLE_SIZE}，暴力枚举不可行`,
     )
   }
 
@@ -269,6 +313,14 @@ export function findNonAssociativeTable(n = 3): ForgeResult {
 /** Brute-force verify if a given Cayley table satisfies associativity. */
 export function verifyAssociativity(cayleyTable: number[][]): ForgeResult {
   const n = cayleyTable.length
+  const [valid, validationError] = validateCayleyTable(cayleyTable)
+  if (!valid) {
+    return mkForgeResult(
+      false,
+      FallbackLevel.L1_BRUTE_FORCE,
+      `Invalid Cayley table: ${validationError}`,
+    )
+  }
   for (let a = 0; a < n; a++) {
     for (let b = 0; b < n; b++) {
       for (let c = 0; c < n; c++) {
@@ -353,7 +405,7 @@ export class CounterExampleForge {
 
   /**
    * Generate a counter-example for a student's conjecture.
-   * Tries L1 first, falls back to L2/L4.
+   * Tries L1 first, falls back to L2/L3/L4.
    */
   async generateCounterExample(
     studentConjecture: string,
@@ -373,7 +425,15 @@ export class CounterExampleForge {
 
     // L2: LLM generates candidate, brute-force verifies
     if (this.llmClient !== null) {
-      return await this.fallbackL2(studentConjecture, ctx)
+      const l2Result = await this.fallbackL2(studentConjecture, ctx)
+      if (l2Result.success) return l2Result
+
+      // L3: LLM + heuristic verify (for undecidable nonlinear cases)
+      const l3Result = await this.fallbackL3(studentConjecture, ctx)
+      if (l3Result.success) return l3Result
+
+      // L4: LLM-only (last resort)
+      return await this.fallbackL4(studentConjecture, ctx)
     }
 
     // L4: No LLM available
@@ -469,8 +529,94 @@ export class CounterExampleForge {
       )
     }
 
-    // LLM's candidate didn't violate anything — fall through to L4
-    return await this.fallbackL4(conjecture, context)
+    // LLM's candidate didn't violate anything — return failure so
+    // generateCounterExample can decide whether to try L3 heuristic verify
+    return mkForgeResult(
+      false,
+      FallbackLevel.L2_LLM_VERIFY,
+      'L2 未能找到违反猜想的反例，将尝试 L3 启发式验证',
+    )
+  }
+
+  /**
+   * L3: LLM generates a counter-example with heuristic verification.
+   * Used for non-linear or undecidable conjectures where brute-force
+   * verification is not possible. The LLM's response is checked for
+   * internal consistency using heuristic rules (keyword detection,
+   * structure validation) rather than exhaustive enumeration.
+   */
+  private async fallbackL3(
+    conjecture: string,
+    context: Record<string, unknown>,
+  ): Promise<ForgeResult> {
+    let llmText = ''
+    try {
+      const resp = await this.llmClient!.chat(
+        '你是数学反例专家。请分析以下猜想并提供反例或证明其正确性。' +
+          '如果猜想涉及非线性运算或无法用 Cayley 表表示的结构，' +
+          '请给出具体的数值反例并解释为什么它违反了猜想。' +
+          '如果猜想是正确的，请说明原因。',
+        `猜想: ${conjecture}\n上下文: ${JSON.stringify(context)}`,
+        undefined,
+        0.3,
+      )
+      llmText = resp.content
+    } catch (e) {
+      return mkForgeResult(
+        false,
+        FallbackLevel.L3_LLM_HEURISTIC,
+        `L3 LLM 调用失败: ${e instanceof Error ? e.message : String(e)}`,
+      )
+    }
+
+    // Heuristic verification: check if the response contains
+    // a structured counter-example or a valid proof sketch
+    const lower = llmText.toLowerCase()
+    const hasCounterExample =
+      llmText.includes('反例') ||
+      llmText.includes('不成立') ||
+      lower.includes('counter') ||
+      lower.includes('violat')
+    const hasReasoning =
+      llmText.includes('因为') ||
+      llmText.includes('由于') ||
+      lower.includes('because') ||
+      lower.includes('since') ||
+      lower.includes('therefore')
+
+    if (hasCounterExample && hasReasoning) {
+      return mkForgeResult(
+        true,
+        FallbackLevel.L3_LLM_HEURISTIC,
+        `LLM 启发式验证通过（含反例和推理）: ${llmText.slice(0, 200)}`,
+        {
+          counterExample: llmText.slice(0, 500),
+          metadata: { llm_generated: true, heuristic_verified: true, z3_verified: false },
+        },
+      )
+    }
+
+    if (hasCounterExample) {
+      return mkForgeResult(
+        true,
+        FallbackLevel.L3_LLM_HEURISTIC,
+        `LLM 启发式验证（反例未经完整推理验证）: ${llmText.slice(0, 200)}`,
+        {
+          counterExample: llmText.slice(0, 500),
+          metadata: { llm_generated: true, heuristic_verified: false, z3_verified: false },
+        },
+      )
+    }
+
+    // No counter-example found — conjecture may be correct
+    return mkForgeResult(
+      false,
+      FallbackLevel.L3_LLM_HEURISTIC,
+      `LLM 分析认为猜想可能正确: ${llmText.slice(0, 300)}`,
+      {
+        metadata: { llm_generated: true, heuristic_verified: false, z3_verified: false },
+      },
+    )
   }
 
   /** L4: LLM-only generation with annotation (last resort). */
@@ -538,10 +684,12 @@ function extractCayleyTable(text: string): number[][] | null {
     if (
       Array.isArray(candidate) &&
       candidate.length > 0 &&
+      candidate.length <= MAX_CAYLEY_TABLE_SIZE &&
       Array.isArray(candidate[0]) &&
-      candidate.every(r => Array.isArray(r)) &&
-      candidate.every(r => r.length === candidate[0].length) &&
-      candidate.every(r => r.every(v => Number.isInteger(v)))
+      candidate.every(r => Array.isArray(r) && r.length === candidate[0].length && r.length > 0) &&
+      candidate.every(r =>
+        r.every((v: number) => Number.isInteger(v) && v >= 0 && v < candidate.length),
+      )
     ) {
       return candidate as number[][]
     }

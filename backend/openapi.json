@@ -1,0 +1,1065 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MathWeaver API",
+    "description": "Multi-Agent Cognitive Operating System for Math Education",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dag": {
+      "get": {
+        "summary": "Get Dag Nodes",
+        "description": "Get the concept DAG nodes for a curriculum level.",
+        "operationId": "get_dag_nodes_api_dag_get",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Dag Nodes Api Dag Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/historical/narrative": {
+      "post": {
+        "summary": "Get Historical Narrative",
+        "description": "Retrieve a historical narrative for a concept via RAG.\n\nUses the ``HistoricalAgent``'s BM25 retrieval to find relevant\nmathematical-history entries, then returns a narrative summary plus\nthe raw retrieved entries.\n\nReturns:\n    JSON with ``narrative`` (str), ``entries`` (list of\n    ``{title, content, score}``), ``node_id``, and\n    ``retrieval_method``.",
+        "operationId": "get_historical_narrative_api_historical_narrative_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoricalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Historical Narrative Api Historical Narrative Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/curriculum/compare": {
+      "post": {
+        "summary": "Compare Curriculum Structures",
+        "description": "Compare how a concept appears across different curriculum levels.\n\nSearches each specified curriculum DAG for nodes whose name or\ndescription contains ``concept_keyword``, then returns a structured\ncomparison highlighting the concept's structural role in each\ncurriculum.\n\nReturns:\n    JSON with ``comparisons`` (list of ``{level, concept_id,\n    concept_name, description, structural_type}``) and ``keyword``.",
+        "operationId": "compare_curriculum_structures_api_curriculum_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurriculumCompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Compare Curriculum Structures Api Curriculum Compare Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/curricula": {
+      "get": {
+        "summary": "List Curricula",
+        "description": "List all available curriculum levels.",
+        "operationId": "list_curricula_api_curricula_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Curricula Api Curricula Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/curricula/{level}/dag": {
+      "get": {
+        "summary": "Get Curriculum Dag",
+        "description": "Get the DAG for a specific curriculum level.",
+        "operationId": "get_curriculum_dag_api_curricula__level__dag_get",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Curriculum Dag Api Curricula  Level  Dag Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dag/{node_id}/path": {
+      "get": {
+        "summary": "Get Learning Path",
+        "description": "Get the learning path to a target node.",
+        "operationId": "get_learning_path_api_dag__node_id__path_get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "student_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "demo",
+              "title": "Student Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Learning Path Api Dag  Node Id  Path Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/session/start": {
+      "post": {
+        "summary": "Start Session",
+        "description": "Start a new teaching session.",
+        "operationId": "start_session_api_session_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Session Api Session Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/session/state": {
+      "get": {
+        "summary": "Get Session State",
+        "description": "Get current four-field state.",
+        "operationId": "get_session_state_api_session_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Session State Api Session State Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/session/input": {
+      "post": {
+        "summary": "Process Input",
+        "description": "Process a student input through the teaching loop.",
+        "operationId": "process_input_api_session_input_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentInputRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Process Input Api Session Input Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/forge/verify-group": {
+      "post": {
+        "summary": "Verify Group Axioms",
+        "description": "Verify if a Cayley table defines a group.\n\nResponse structure follows narrative hierarchy:\n- headline: what the student most needs to know\n- verdict: the core boolean results\n- evidence: detailed violations and explanations",
+        "operationId": "verify_group_axioms_api_forge_verify_group_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CayleyTableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verify Group Axioms Api Forge Verify Group Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/forge/find-non-associative": {
+      "post": {
+        "summary": "Find Non Associative",
+        "description": "Use Z3 to find a non-associative binary operation.\n\nResponse structure:\n- headline: whether a counter-example was found\n- result: the counter-example and explanation\n- metadata: Z3 model details and verification level",
+        "operationId": "find_non_associative_api_forge_find_non_associative_post",
+        "parameters": [
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "title": "N"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Find Non Associative Api Forge Find Non Associative Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "summary": "Get Metrics",
+        "description": "Get orchestrator metrics.",
+        "operationId": "get_metrics_api_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Metrics Api Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/proof/theorems": {
+      "get": {
+        "summary": "List Theorems",
+        "description": "List available theorems for proof verification.",
+        "operationId": "list_theorems_api_proof_theorems_get",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Theorems Api Proof Theorems Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/proof/verify": {
+      "post": {
+        "summary": "Verify Proof",
+        "description": "Submit and verify a student proof.",
+        "operationId": "verify_proof_api_proof_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProofSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verify Proof Api Proof Verify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/grill/start": {
+      "post": {
+        "summary": "Start Grill",
+        "description": "Start a Grill Me interview session.",
+        "operationId": "start_grill_api_grill_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrillStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Grill Api Grill Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/grill/answer": {
+      "post": {
+        "summary": "Submit Grill Answer",
+        "description": "Submit a grill answer and get the next question.",
+        "operationId": "submit_grill_answer_api_grill_answer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrillAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Submit Grill Answer Api Grill Answer Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conjecture/translate": {
+      "post": {
+        "summary": "Nl To Z3 Translate",
+        "description": "Translate a natural-language conjecture into a Z3 verification task.\n\nPipeline: NL → StructuredConjecture → Z3 → Verdict.\nUses the LLM (if configured) to parse the claim, then Z3 for\nformal verification. Falls back to rule-based parsing offline.\n\nResponse structure:\n- headline: human-readable summary of the verdict\n- verdict: confirmed / refuted / undecidable\n- counter_example: the refuting structure (if refuted)\n- explanation: why Z3 reached this verdict\n- smt_summary: the Z3 encoding used (human-readable)\n- structured_parse: the parsed conjecture structure",
+        "operationId": "nl_to_z3_translate_api_conjecture_translate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NLToZ3Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Nl To Z3 Translate Api Conjecture Translate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/animations": {
+      "get": {
+        "summary": "List Animations",
+        "description": "List all available pre-rendered animations.\n\nReturns animation metadata including whether a video file\nis available or if SVG frames should be used instead.",
+        "operationId": "list_animations_api_animations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Animations Api Animations Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/animations/{anim_id}": {
+      "get": {
+        "summary": "Get Animation",
+        "description": "Get a specific animation's frame data (for SVG playback).\n\nIf a pre-rendered video exists, returns its path; otherwise\nreturns the SVG frames for client-side playback.",
+        "operationId": "get_animation_api_animations__anim_id__get",
+        "parameters": [
+          {
+            "name": "anim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Anim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Animation Api Animations  Anim Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/animations/{anim_id}/video": {
+      "get": {
+        "summary": "Get Animation Video",
+        "description": "Stream a pre-rendered animation video file.",
+        "operationId": "get_animation_video_api_animations__anim_id__video_get",
+        "parameters": [
+          {
+            "name": "anim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Anim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CayleyTableRequest": {
+        "properties": {
+          "table": {
+            "items": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Table"
+          }
+        },
+        "type": "object",
+        "required": [
+          "table"
+        ],
+        "title": "CayleyTableRequest"
+      },
+      "CurriculumCompareRequest": {
+        "properties": {
+          "levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Levels",
+            "default": [
+              "group_theory",
+              "linear_algebra",
+              "number_theory"
+            ]
+          },
+          "concept_keyword": {
+            "type": "string",
+            "title": "Concept Keyword",
+            "default": "isomorphism"
+          }
+        },
+        "type": "object",
+        "title": "CurriculumCompareRequest"
+      },
+      "GrillAnswerRequest": {
+        "properties": {
+          "qid": {
+            "type": "string",
+            "title": "Qid"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "is_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Correct"
+          },
+          "response_time_ms": {
+            "type": "number",
+            "title": "Response Time Ms",
+            "default": 5000.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "qid",
+          "answer"
+        ],
+        "title": "GrillAnswerRequest"
+      },
+      "GrillStartRequest": {
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "title": "Student Id",
+            "default": "grill_student"
+          },
+          "curriculum_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculum Level"
+          }
+        },
+        "type": "object",
+        "title": "GrillStartRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistoricalRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "node_id": {
+            "type": "string",
+            "title": "Node Id",
+            "default": "group_definition"
+          },
+          "top_k": {
+            "type": "integer",
+            "title": "Top K",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "HistoricalRequest"
+      },
+      "NLToZ3Request": {
+        "properties": {
+          "claim": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Claim"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim"
+        ],
+        "title": "NLToZ3Request"
+      },
+      "ProofSubmitRequest": {
+        "properties": {
+          "theorem_id": {
+            "type": "string",
+            "title": "Theorem Id"
+          },
+          "student_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Student Steps"
+          },
+          "curriculum_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculum Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theorem_id",
+          "student_steps"
+        ],
+        "title": "ProofSubmitRequest"
+      },
+      "StartSessionRequest": {
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "title": "Student Id"
+          },
+          "student_name": {
+            "type": "string",
+            "title": "Student Name",
+            "default": ""
+          },
+          "target_node_id": {
+            "type": "string",
+            "title": "Target Node Id",
+            "default": "group_definition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "student_id"
+        ],
+        "title": "StartSessionRequest"
+      },
+      "StudentInputRequest": {
+        "properties": {
+          "student_input": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Student Input"
+          },
+          "response_time_ms": {
+            "type": "number",
+            "title": "Response Time Ms",
+            "default": 5000.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "student_input"
+        ],
+        "title": "StudentInputRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

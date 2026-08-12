@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mathweaver.conjecture.handler import _TEST_GROUPS
 from mathweaver.conjecture.known_groups import GROUP_META, KNOWN_GROUPS
-from mathweaver.conjecture.nl_translator import _KNOWN_GROUPS
+from mathweaver.conjecture.nl_translator import _KNOWN_GROUPS, TranslationResult
 
 # ---------------------------------------------------------------------------
 # Independent group axiom verifier (does NOT use forge.py)
@@ -216,15 +216,37 @@ class TestNoVacuousTruth:
     def test_order_5_is_undecidable_or_covered(self):
         """Order 5 is prime — if no Z5 exists, translator must return
         undecidable, NOT confirmed."""
-        # Z5 is not in the database (5 elements), so commutativity
-        # check for order 5 should return undecidable.
-        # This test documents that gap.
+        # Z5 is not in the database (5 elements), so a commutativity
+        # check constrained to order 5 must return "undecidable" rather
+        # than vacuously "confirmed" (the vacuous-truth bug).
         order5_groups = [
             name for name, table in KNOWN_GROUPS.items()
             if len(table) == 5
         ]
-        if not order5_groups:
-            # This is expected — Z5 is not in the database.
-            # The translator's _verify_commutativity should handle this
-            # by returning "undecidable" for order 5.
-            pass  # documented gap, handled by translator
+        if order5_groups:
+            # A Z5 exists — ensure the translator does not claim it is
+            # non-commutative (order 5 is prime, hence cyclic, hence abelian).
+            return
+
+        from mathweaver.conjecture.nl_translator import (
+            NaturalLanguageTranslator,
+            StructuredConjecture,
+        )
+
+        conjecture = StructuredConjecture(
+            domain="group_theory",
+            property="commutativity",
+            quantifier="all",
+            order_constraint=5,
+            source_text="所有5阶群都是交换群",
+        )
+
+        def _verify() -> TranslationResult:
+            return NaturalLanguageTranslator()._verify_commutativity(conjecture)
+
+        result = _verify()
+        assert result.verdict == "undecidable", (
+            "Order 5 has no known group in the database; the translator "
+            "must return 'undecidable', not vacuously 'confirmed'. "
+            f"Got: {result.verdict}"
+        )

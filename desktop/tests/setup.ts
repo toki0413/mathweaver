@@ -62,4 +62,47 @@ if (typeof window !== 'undefined') {
   w.api = mockElectronAPI
 }
 
+/**
+ * Stub the Web Audio API for jsdom.
+ *
+ * jsdom does not implement AudioContext, so the sound module
+ * (src/utils/sound.ts) would log "[sound] Web Audio API 不可用" on every
+ * init. Providing a minimal stub lets it initialize cleanly and keeps the
+ * test runner output free of expected-environment warning noise.
+ */
+if (typeof window !== 'undefined') {
+  const noop = () => {}
+  class MockAudioContext {
+    currentTime = 0
+    state: AudioContextState = 'running'
+    destination = { connect: noop }
+    createGain() {
+      return {
+        gain: {
+          value: 1,
+          setValueAtTime: noop,
+          exponentialRampToValueAtTime: noop,
+        },
+        connect: noop,
+      }
+    }
+    createOscillator() {
+      return {
+        type: 'sine',
+        frequency: {
+          setValueAtTime: noop,
+          exponentialRampToValueAtTime: noop,
+        },
+        connect: noop,
+        start: noop,
+        stop: noop,
+      }
+    }
+    resume(): Promise<void> {
+      return Promise.resolve()
+    }
+  }
+  ;(window as unknown as { AudioContext: unknown }).AudioContext = MockAudioContext
+}
+
 export {}

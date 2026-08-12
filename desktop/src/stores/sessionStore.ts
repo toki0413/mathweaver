@@ -5,7 +5,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 // Types
 // ---------------------------------------------------------------------------
 
-interface ChatMessage {
+export interface ChatMessage {
   role: 'user' | 'system'
   content: string
   phase?: string

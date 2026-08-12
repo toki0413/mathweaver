@@ -62,6 +62,7 @@ import { type KnowledgeBase, buildDefaultKB } from '../agents/historical'
 import type { ConceptDAG } from '../dag/concept_dag'
 import { getDag } from '../dag/concept_dag'
 import { createModuleLogger } from '../utils/logger'
+import { StateStore } from '../persistence/store'
 
 const log = createModuleLogger('Orchestrator')
 
@@ -707,6 +708,9 @@ export class Orchestrator {
   grillSession: SimpleGrillSession | null
   agents: Record<string, BaseAgent>
   private sessionStart: Date | null = null
+  private store: StateStore | null
+  /** 串行化锁，防止并发 processStudentInput 竞态 */
+  private _processingLock: Promise<Record<string, unknown>> = Promise.resolve({})
 
   constructor(
     opts: {
@@ -729,6 +733,16 @@ export class Orchestrator {
     this.knowledgeBase = buildDefaultKB()
     this.paramLearner = new ParameterLearner()
     this.grillSession = null
+
+    // Initialize persistence store
+    if (opts.dbPath) {
+      this.store = new StateStore(opts.dbPath)
+      if (this.store.isFallbackMode) {
+        log.warn('StateStore is in fallback (in-memory) mode — session data will not persist')
+      }
+    } else {
+      this.store = null
+    }
 
     // Initialize independent agents (1.1: each agent is self-contained)
     const llm = this.llmClient
@@ -772,6 +786,17 @@ export class Orchestrator {
         const gaps = this.dag.checkPrerequisites(targetNodeId, this.profile.dag_mastery)
         this.state.knowledge.prerequisite_gaps = gaps
 
+        // Persist session to SQLite
+        if (this.store) {
+          try {
+            this.store.saveSession(studentId, studentId, this.state, this.profile)
+          } catch (err) {
+            log.error('Failed to persist session', {
+              error: err instanceof Error ? err.message : String(err),
+            })
+          }
+        }
+
         return {
           session_id: `sess_${studentId}_${Math.floor(this.sessionStart.getTime() / 1000)}`,
           student_id: studentId,
@@ -782,6 +807,17 @@ export class Orchestrator {
           learning_path: this.dag.getLearningPath(targetNodeId, this.profile.dag_mastery),
           phase: this.phase,
         }
+      }
+    }
+
+    // Persist session to SQLite
+    if (this.store) {
+      try {
+        this.store.saveSession(studentId, studentId, this.state, this.profile)
+      } catch (err) {
+        log.error('Failed to persist session', {
+          error: err instanceof Error ? err.message : String(err),
+        })
       }
     }
 
@@ -1011,6 +1047,16 @@ export class Orchestrator {
   // -- Teaching Loop --
 
   async processStudentInput(
+    studentInput: string,
+    inputMetadata: Record<string, unknown> | null = null,
+  ): Promise<Record<string, unknown>> {
+    const run = this._processStudentInputInternal.bind(this, studentInput, inputMetadata)
+    // Chain onto the previous lock holder to serialize execution
+    this._processingLock = this._processingLock.then(() => run())
+    return this._processingLock
+  }
+
+  private async _processStudentInputInternal(
     studentInput: string,
     inputMetadata: Record<string, unknown> | null = null,
   ): Promise<Record<string, unknown>> {

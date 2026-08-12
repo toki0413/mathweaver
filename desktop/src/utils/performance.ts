@@ -79,7 +79,6 @@ class PerformanceMonitor {
     if (this.initialized || !ENABLED) return
     this.initialized = true
     this.startFlushTimer()
-    this.captureMemoryBaseline()
   }
 
   // --- Mark / Measure (Web Performance API style) ---
@@ -311,13 +310,6 @@ class PerformanceMonitor {
     this.flushTimer = setInterval(() => this.flush(), FLUSH_INTERVAL_MS)
     // Flush on page unload
     window.addEventListener('beforeunload', () => this.flush())
-  }
-
-  private captureMemoryBaseline(): void {
-    const mem = this.getMemoryUsage()
-    if (mem) {
-      // Baseline captured; stored implicitly via getMemoryUsage side effects.
-    }
   }
 
   // --- Cleanup ---

@@ -17,6 +17,12 @@ import re
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+from ..intent import (
+    CONJECTURE_TRIGGER_KEYWORDS,
+    GRILL_TRIGGER_KEYWORDS,
+    PROOF_TRIGGER_KEYWORDS,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -101,12 +107,9 @@ class MockLLMClient:
 
         is_cayley = "[[" in student_input or "cayley" in student_input.lower()
         is_history = "历史" in student_input or "history" in student_input.lower()
-        is_conjecture = any(kw in student_input for kw in
-                             ["我猜", "猜想", "所有", "任何", "每个", "一定", "必然", "总是"])
-        is_grill_trigger = any(kw in student_input.lower() for kw in
-                                ["考考我", "grill me", "考考看", "来考考", "审问我", "面试我"])
-        is_proof = any(kw in student_input for kw in
-                       ["证明", "求证", "prove", "proof", "我要证", "验证以下"])
+        is_conjecture = any(kw in student_input for kw in CONJECTURE_TRIGGER_KEYWORDS)
+        is_grill_trigger = any(kw in student_input.lower() for kw in GRILL_TRIGGER_KEYWORDS)
+        is_proof = any(kw in student_input for kw in PROOF_TRIGGER_KEYWORDS)
 
         # Grill Me mode: trigger directly routes to deliver (collaboration handles grill)
         if is_grill_trigger and "perception" not in called:

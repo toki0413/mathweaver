@@ -76,6 +76,26 @@ def structured_error(
     return JSONResponse(status_code=status, content=body)
 
 
+def _validate_level(level: str) -> JSONResponse | None:
+    """Validate a curriculum level, returning a structured 404 error if unknown.
+
+    Returns None when the level is valid.
+    """
+    from ..dag.concept_dag import CURRICULUM_LEVELS
+
+    if level not in CURRICULUM_LEVELS:
+        return structured_error(
+            status=404,
+            headline=f"未找到课程层级「{level}」",
+            detail="该层级不在当前课程体系中。",
+            recovery={
+                "suggestion": "请从可用层级中选择",
+                "available_options": list(CURRICULUM_LEVELS),
+            },
+        )
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Request/Response Models
 # ---------------------------------------------------------------------------
@@ -107,17 +127,10 @@ async def health() -> dict[str, Any]:
 @app.get("/api/dag")
 async def get_dag_nodes(level: str | None = None) -> dict[str, Any]:
     """Get the concept DAG nodes for a curriculum level."""
-    from ..dag.concept_dag import CURRICULUM_LEVELS
-    if level and level not in CURRICULUM_LEVELS:
-        return structured_error(
-            status=404,
-            headline=f"未找到课程层级「{level}」",
-            detail="该层级不在当前课程体系中。",
-            recovery={
-                "suggestion": "请从可用层级中选择",
-                "available_options": list(CURRICULUM_LEVELS),
-            },
-        )
+    if level:
+        invalid = _validate_level(level)
+        if invalid is not None:
+            return invalid
     dag = get_dag(level) if level else get_dag()
     nodes = dag.get_all_nodes()
     summary = dag.get_curriculum_summary()
@@ -254,17 +267,9 @@ async def list_curricula() -> dict[str, Any]:
 @app.get("/api/curricula/{level}/dag")
 async def get_curriculum_dag(level: str) -> dict[str, Any]:
     """Get the DAG for a specific curriculum level."""
-    from ..dag.concept_dag import CURRICULUM_LEVELS
-    if level not in CURRICULUM_LEVELS:
-        return structured_error(
-            status=404,
-            headline=f"未找到课程层级「{level}」",
-            detail="该层级不在当前课程体系中。",
-            recovery={
-                "suggestion": "请从可用层级中选择",
-                "available_options": list(CURRICULUM_LEVELS),
-            },
-        )
+    invalid = _validate_level(level)
+    if invalid is not None:
+        return invalid
     dag = get_dag(level)
     nodes = dag.get_all_nodes()
     summary = dag.get_curriculum_summary()

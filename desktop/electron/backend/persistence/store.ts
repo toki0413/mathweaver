@@ -144,6 +144,17 @@ function _entryHash(entry: Record<string, unknown>): string {
   return ''
 }
 
+/**
+ * 安全的 JSON 解析：解析失败时返回空对象而非抛出异常。
+ */
+function safeJsonParse(json: string): Record<string, unknown> {
+  try {
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return {}
+  }
+}
+
 // ---------------------------------------------------------------------------
 // StateStore 类
 // ---------------------------------------------------------------------------
@@ -305,8 +316,8 @@ export class StateStore {
       student_id: row.student_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      state: row.state_json ? JSON.parse(row.state_json) : null,
-      profile: row.profile_json ? JSON.parse(row.profile_json) : null,
+      state: row.state_json ? safeJsonParse(row.state_json) : null,
+      profile: row.profile_json ? safeJsonParse(row.profile_json) : null,
     }
   }
 
@@ -388,7 +399,7 @@ export class StateStore {
       .all(sessionId) as { entry_json: string; entry_hash: string }[]
 
     return rows.map(row => {
-      const parsed = JSON.parse(row.entry_json) as Record<string, unknown>
+      const parsed = safeJsonParse(row.entry_json) as Record<string, unknown>
       parsed['entry_hash'] = row.entry_hash
       return parsed
     })
@@ -447,7 +458,7 @@ export class StateStore {
       )
       .all(sessionId) as { message_json: string }[]
 
-    return rows.map(row => JSON.parse(row.message_json) as Record<string, unknown>)
+    return rows.map(row => safeJsonParse(row.message_json) as Record<string, unknown>)
   }
 
   // -- lifecycle ----------------------------------------------------------

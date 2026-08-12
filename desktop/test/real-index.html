@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MathWeaver - Real-Backend E2E</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Georgia, 'Iowan Old Style', 'Noto Serif CJK SC', serif;
+      background: #1a1a1a;
+      color: #e8e6e3;
+      min-height: 100vh;
+    }
+    #root { min-height: 100vh; }
+  </style>
+  <!-- Real-backend IPC bridge — must load before the app bundle -->
+  <script src="./real-api.js"></script>
+  <!-- React app entry — Vite resolves this from src/main.tsx -->
+  <script type="module" src="/src/main.tsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>

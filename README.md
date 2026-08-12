@@ -15,8 +15,8 @@ mathweaver/
 │   ├── mathweaver/
 │   │   ├── models/          # 四场状态域模型
 │   │   ├── orchestrator/    # 四场耦合引擎 + 状态机
-│   │   ├── agents/          # 六 Agent 基类
-│   │   ├── counterexample/  # Z3 反例工坊（四层 Fallback）
+│   │   ├── agents/          # 七 Agent 基类
+│   │   ├── counterexample/  # 反例工坊（四层 Fallback）
 │   │   ├── dag/             # 数学概念 DAG（群论种子）
 │   │   └── api/             # FastAPI REST + WebSocket
 │   ├── tests/               # 单元测试
@@ -71,11 +71,11 @@ docker compose up --build
 
 ## 核心功能
 
-### 反例工坊 (Z3 四层 Fallback)
+### 反例工坊（四层 Fallback）
 
-- **L1**: Z3 直接验证 Cayley 表的群公理（结合律/单位元/逆元/交换律）
-- **L1 搜索**: Z3 自动搜索非结合运算（反例发现）
-- **L2-L4**: LLM + Z3 / LLM + 启发式验证 / LLM-only（框架已就绪）
+- **L1**: 暴力枚举直接验证 Cayley 表的群公理（结合律/单位元/逆元/交换律）
+- **L1 搜索**: 暴力枚举自动搜索非结合运算（反例发现）
+- **L2-L4**: LLM + 暴力枚举验证 / LLM + 启发式验证 / LLM-only（框架已就绪）
 
 ### 四场耦合引擎
 
@@ -113,7 +113,7 @@ MathWeaver 的设计植根于两条理论脉络：
 | GET | `/api/session/state` | 四场状态快照 |
 | POST | `/api/session/input` | 处理学生输入 |
 | POST | `/api/forge/verify-group` | 验证 Cayley 表群公理 |
-| POST | `/api/forge/find-non-associative` | Z3 搜索非结合运算 |
+| POST | `/api/forge/find-non-associative` | 暴力枚举搜索非结合运算 |
 | WS | `/ws/teach` | WebSocket 实时教学 |
 
 ## 许可证

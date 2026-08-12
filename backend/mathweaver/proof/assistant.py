@@ -33,6 +33,418 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
+# Per-theorem expected-step keyword patterns (single source of truth).
+# Normalized the same way as student input before matching.
+_THEOREM_KEYWORD_PATTERNS: dict[str, list[list[list[str]]]] = {
+"identity_unique": [
+# Step 0: e·f = f (e is identity)
+[["e·f=f", "e=f"], ["ef=f", "单位元"], ["ef=f", "f"]],
+# Step 1: e·f = e (f is identity)
+[["e·f=e", "f=e"], ["ef=e", "单位元"], ["ef=e", "f"]],
+# Step 2: e = f (transitivity)
+[["e=f"], ["传递"]],
+],
+"inverse_unique": [
+# Step 0: b = b·e
+[["b=b·e", "b=be"], ["b=be", "单位元"], ["b=be", "e"]],
+# Step 1: e = a·c
+[["e=a·c", "e=ac"], ["a·c=e", "ac=e", "逆元"], ["e=ac", "逆元"], ["e=ac", "c"]],
+# Step 2: b·e = b·(a·c) (substitution)
+[["b·(a·c)", "b(ac)", "代入"], ["b(ac)", "代入"], ["b·e=b·(a·c)", "代入"], ["be=b(ac)", "代入"]],
+# Step 3: b·(a·c) = (b·a)·c (associativity)
+[["(b·a)·c", "(ba)c", "结合"], ["(ba)c", "结合"], ["b·(a·c)=(b·a)·c", "结合"], ["b(ac)=(ba)c", "结合"]],
+# Step 4: (b·a)·c = e·c (b·a = e)
+[["e·c", "ec", "b·a=e", "ba=e", "逆元"], ["ec", "ba=e", "逆元"], ["ec", "ba=e"], ["(ba)c=ec", "逆元"]],
+# Step 5: e·c = c (identity)
+[["e·c=c", "ec=c", "单位元"], ["ec=c", "单位元"], ["ec=c"]],
+# Step 6: b = c (transitivity)
+[["b=c"], ["传递"]],
+],
+"cancellation_law": [
+# Step 0: Left-multiply by a⁻¹
+[["a⁻¹", "逆元", "左乘"], ["a-1", "左乘"], ["a⁻¹", "左乘"], ["a-1", "逆元"]],
+# Step 1: Associativity (a⁻¹·a)·b = (a⁻¹·a)·c
+[["结合", "(a⁻¹·a)"], ["结合", "(a-1a)"], ["结合", "a⁻¹"]],
+# Step 2: a⁻¹·a = e
+[["=e", "逆元"], ["a⁻¹·a=e", "逆元"], ["a-1a=e"]],
+# Step 3: e·b = e·c
+[["e·b", "e·c", "eb", "ec"], ["eb=ec"], ["e·b=e·c"]],
+# Step 4: b = c
+[["b=c"]],
+],
+"trivial_subgroup": [
+# Step 0: Closure e·e = e
+[["e·e=e", "封闭"], ["ee=e", "封闭"], ["e·e=e", "封闭"]],
+# Step 1: Identity e ∈ {e}
+[["单位元", "∈"], ["单位元", "e"]],
+# Step 2: Inverse e⁻¹ = e
+[["e⁻¹=e", "逆元"], ["e-1=e", "逆元"], ["逆元", "e"]],
+# Step 3: Three conditions satisfied
+[["子群", "条件"], ["三", "满足"], ["子群", "满足"]],
+],
+"abelian_subgroup_of_squares": [
+# Step 0: Closure (ab)² = a²b²
+[["(ab)²", "封闭", "交换"], ["(ab)2", "交换"], ["a²·b²", "交换"], ["a2b2", "交换"], ["(ab)²=a²·b²", "交换"]],
+# Step 1: Identity e = e²
+[["e=e²", "e=e2", "单位元"], ["e=e2", "单位元"], ["e=e²"]],
+# Step 2: Inverse (g²)⁻¹ = (g⁻¹)²
+[["(g⁻¹)²", "逆元"], ["(g-1)2", "逆元"], ["(g²)⁻¹", "逆元"], ["(g2)-1", "逆元"]],
+# Step 3: Three conditions
+[["子群", "条件"], ["三", "满足"], ["子群", "满足"]],
+],
+# ---- High School ----
+"function_monotonicity": [
+[["f(x2)-f(x1)", "差"], ["x2²-x1²", "差"], ["f(x2)-f(x1)=x2²-x1²"], ["f(x2)-f(x1)"]],
+[["因式分解", "x2-x1", "x2+x1"], ["(x2-x1)(x2+x1)", "因式"], ["x2²-x1²=(x2-x1)(x2+x1)"]],
+[["x2>x1", "x2-x1>0"], ["x2-x1>0"]],
+[["x2+x1>0", "非负"], ["x1≥0", "x2+x1"], ["x2+x1≥0"], ["x2+x1>0"]],
+[["正", "相乘"], ["f(x2)-f(x1)>0"], ["两个正", "正"], ["f(x2)>f(x1)"]],
+],
+"am_gm_inequality": [
+[["(√a-√b)²≥0", "构造"], ["(√a-√b)²", "非负"], ["(√a-√b)²≥0"], ["(sqrta-sqrtb)²"]],
+[["展开", "(√a)²", "2√(ab)", "(√b)²"], ["(√a)²-2√(ab)+(√b)²≥0"], ["展开"]],
+[["a-2√(ab)+b≥0", "化简"], ["a-2√(ab)+b≥0"]],
+[["a+b≥2√(ab)", "移项"], ["a+b≥2√(ab)"]],
+[["等号", "a=b", "√a=√b"], ["a=b"], ["√a=√b"]],
+],
+"arithmetic_sequence_sum": [
+[["sn=a1+a2", "写出"], ["sn=a1+a2"]],
+[["倒序", "sn=an+a(n-1)"], ["倒序", "sn"]],
+[["2sn", "相加"], ["2sn=(a1+an)"], ["相加", "2sn"]],
+[["ak+a(n+1-k)=a1+an", "等差"], ["首尾", "相等"], ["配对"]],
+[["n(a1+an)", "n项"], ["2sn=n(a1+an)"], ["n(a1+an)/2"]],
+],
+"cos_double_angle": [
+[["cos2a=cos²a-sin²a", "令"], ["cos(2a)=cos²a-sin²a", "β=α"], ["cos2a=cos²a-sin²a"]],
+[["sin²a+cos²a=1", "消去"], ["毕达哥拉斯", "消去"], ["sin²a+cos²a=1"]],
+[["sin²a=1-cos²a"], ["sin²a=1-cos²a"]],
+[["代入", "cos²a-(1-cos²a)"], ["代入", "1-cos²a"]],
+[["2cos²a-1", "化简"], ["cos2a=2cos²a-1"]],
+],
+# ---- Middle School ----
+"pythagorean_theorem": [
+[["作", "cd", "垂", "高"], ["辅助线", "高"], ["cd⊥ab"]],
+[["相似", "b²=pc", "射影"], ["△acd∽△abc"], ["b²=pc"]],
+[["相似", "a²=qc", "射影"], ["△bcd∽△abc"], ["a²=qc"]],
+[["相加", "a²+b²=(p+q)c"], ["两式相加"]],
+[["p+q=c", "a²+b²=c²"], ["p+q=c"]],
+],
+"triangle_angle_sum": [
+[["平行", "de∥bc", "辅助"], ["作", "平行"]],
+[["内错角", "∠dab=∠b"], ["∠dab=∠b", "内错"]],
+[["内错角", "∠eac=∠c"], ["∠eac=∠c", "内错"]],
+[["平角", "180"], ["∠dab+∠a+∠eac=180"], ["平角", "180°"]],
+[["代入", "∠b+∠a+∠c=180"], ["∠a+∠b+∠c=180"]],
+],
+"quadratic_formula": [
+[["除以a", "x²+(b/a)x"], ["两边除以a"]],
+[["配方", "(b/2a)²"], ["配", "(b/2a)²"]],
+[["完全平方", "(x+b/2a)²", "(b²-4ac)/4a²"], ["(x+b/2a)²"]],
+[["开平方", "±√(b²-4ac)/2a"], ["开平方"]],
+[["移项", "x=(-b±√(b²-4ac))/2a"], ["x=(-b±√(b²-4ac))"]],
+],
+"congruent_sss": [
+[["叠合", "ef与bc重合", "异侧"], ["放置", "重合"]],
+[["连接ad"], ["连ad"], ["辅助线ad"]],
+[["等腰", "ab=db", "∠bad=∠bda", "底角"], ["ab=db", "等腰"], ["△abd", "等腰"]],
+[["等腰", "ac=dc", "∠cad=∠cda", "底角"], ["ac=dc", "等腰"], ["△acd", "等腰"]],
+[["相加", "∠bac=∠bdc"], ["∠bac", "∠bdc"]],
+[["sas", "全等", "△abc≅△dbc"], ["sas"], ["△abc≅△def"]],
+],
+# ---- Elementary ----
+"commutative_addition": [
+[["计数", "a+b", "先数"], ["a+b", "计数"]],
+[["b+a", "先数"], ["b+a", "计数"]],
+[["总数", "相同"], ["一样多"], ["相同"]],
+[["a+b=b+a"], ["a+b=b+a"]],
+],
+"fraction_equivalence": [
+[["a/b", "分成b份", "取a份"], ["分成b份", "取a份"]],
+[["(a×k)/(b×k)", "b×k份", "a×k份"], ["b×k", "a×k"]],
+[["每b份", "一组", "k组"], ["分组", "k组"]],
+[["等价", "分成b份", "取a份"], ["等价", "b份"]],
+[["a/b=(a×k)/(b×k)"], ["a/b=(a×k)/(b×k)"]],
+],
+"distributive_law": [
+[["(b+c)个a", "连加"], ["(b+c)个a"]],
+[["拆", "b个a", "c个a"], ["b个a", "c个a"]],
+[["b个a=a×b"], ["a×b"]],
+[["c个a=a×c"], ["a×c"]],
+[["a×(b+c)=a×b+a×c"], ["a×(b+c)=a×b+a×c"]],
+],
+# ---- Calculus ----
+"power_rule": [
+# Step 0: f'(x) = lim [(x+h)ⁿ - xⁿ] / h
+[["极限", "f'(x)"], ["极限定义"]],
+# Step 1: Expand (x+h)ⁿ via binomial theorem
+[["展开", "C(n,k)"], ["二项式定理", "展开"]],
+# Step 2: (x+h)ⁿ - xⁿ = n·xⁿ⁻¹·h + O(h²)
+[["O(h²"], ["n·xⁿ⁻¹", "h"], ["取", "k"]],
+# Step 3: Divide by h
+[["除以", "h"], ["除法"]],
+# Step 4: Take limit h→0
+[["取极限", "n·xⁿ⁻¹"], ["取极限"]],
+],
+"ftc_part1": [
+# Step 0: F'(x) = lim [F(x+h) - F(x)] / h
+[["导数", "F'(x)"], ["导数定义"]],
+# Step 1: F(x+h) - F(x) = ∫ₓ^{x+h} f(t) dt
+[["积分", "F(x+h)"], ["积分性质"]],
+# Step 2: MVT gives ∫ₓ^{x+h} f(t) dt = f(c)·h
+[["中值定理", "f(c)"], ["中值定理", "积分"]],
+# Step 3: [F(x+h) - F(x)] / h = f(c)
+[["f(c)", "除"], ["/h", "f(c)"], ["除法", "f(c)"]],
+# Step 4: h→0, c→x, f(c)→f(x)
+[["连续", "c→x"], ["连续性", "f(c)"]],
+# Step 5: F'(x) = f(x)
+[["F'(x)=f(x)"], ["所以", "F'(x)"]],
+],
+"chain_rule": [
+# Step 0: h'(x) = lim [f(g(x+Δx)) - f(g(x))] / Δx
+[["导数", "h'(x)"], ["导数定义"]],
+# Step 1: Let Δg = g(x+Δx) - g(x)
+[["中间变量", "Δg"], ["中间变量"]],
+# Step 2: Introduce Δg factor
+[["引入", "Δg"], ["Δg/Δx"]],
+# Step 3: Δx→0 ⟹ Δg→0, first term → f'(g(x))
+[["可导", "f'(g(x))"], ["连续", "f'(g(x))"], ["Δg→0"]],
+# Step 4: Second term Δg/Δx → g'(x)
+[["g'(x)", "h'(x)"], ["f'(g(x))", "g'(x)"]],
+# Step 5: h'(x) = f'(g(x))·g'(x)
+[["h'(x)=f'(g(x))"], ["所以", "h'(x)"]],
+],
+# ---- Linear Algebra ----
+"rank_nullity": [
+# Step 0: ker(T) basis, nullity = k
+[["ker", "基"], ["nullity", "k"]],
+# Step 1: Extend ker basis to V basis
+[["扩充", "基"], ["基扩充"]],
+# Step 2: Prove T(wᵢ) are basis for Im(T)
+[["线性无关", "T(w"], ["T(w₁"], ["T(w"]],
+# Step 3: Linear independence argument
+[["线性无关", "ker"]],
+# Step 4: cᵢ = 0 by linear independence
+[["线性无关性", "cᵢ=0"], ["线性无关", "cᵢ=0"], ["cᵢ=0"]],
+# Step 5: Spanning argument
+[["生成", "T(v)"], ["生成", "bⱼ"]],
+# Step 6: rank = n - k
+[["rank", "n-k"], ["rank", "nullity"]],
+],
+"dim_invariance": [
+# Step 0: B₁ generates, B₂ independent ⟹ m ≤ n
+[["替换定理", "m≤n"], ["替换定理", "生成"]],
+# Step 1: B₂ generates, B₁ independent ⟹ n ≤ m
+[["替换定理", "n≤m"], ["替换定理", "n≤m"]],
+# Step 2: n = m
+[["n=m"], ["双向不等式"]],
+],
+"independence_implies_unique": [
+# Step 0: Subtract two representations
+[["相减", "vᵢ"], ["相减", "=0"]],
+# Step 1: Linear independence ⟹ aᵢ - bᵢ = 0
+[["线性无关", "aᵢ-bᵢ=0"], ["线性无关性", "aᵢ"]],
+# Step 2: aᵢ = bᵢ
+[["aᵢ=bᵢ"], ["结论", "aᵢ"]],
+],
+# ---- Discrete Math ----
+"handshake_lemma": [
+# Step 0: Each edge contributes to two endpoints
+[["贡献", "deg"], ["双重计数", "deg"]],
+# Step 1: Each edge contributes 2
+[["贡献", "2"], ["度数之和", "2"]],
+# Step 2: Σ deg(v) = 2|E|
+[["Σdeg", "2|E|"], ["结论", "deg"]],
+],
+"tree_n_minus_1_edges": [
+# Step 0: Induction on n
+[["归纳", "顶点"]],
+# Step 1: Base case n=1
+[["n=1", "基础"], ["单顶点", "0=1-1"]],
+# Step 2: Inductive hypothesis
+[["假设", "k+1"], ["归纳假设", "k+1"]],
+# Step 3: Tree has a leaf node
+[["叶子", "度数"], ["叶子", "无圈"]],
+# Step 4: Delete leaf
+[["删除", "叶子"], ["删除", "树"]],
+# Step 5: Inductive step
+[["归纳假设", "k-1"], ["k-1条边"]],
+# Step 6: k edges = (k+1)-1
+[["k条边", "(k+1)-1"], ["结论", "k条边"]],
+],
+"bfs_shortest_path": [
+# Step 0: BFS layer expansion
+[["BFS", "按层"], ["按层", "扩展"]],
+# Step 1: d(v) vs δ(v)
+[["d(v)", "δ(v)"], ["层数", "最短距离"]],
+# Step 2: Induction on d(v)
+[["归纳", "⟹δ(v)"], ["对d(v)归纳"]],
+# Step 3: Base case
+[["基础", "d(s)"], ["d(s)=0"]],
+# Step 4: Inductive step setup (not matched by student, implicit)
+[["设d(v)=k", "访问"], ["第k层被访问"]],
+# Step 5: Upper bound δ(v) ≤ k
+[["上界", "δ(v)"], ["上界", "k-1"]],
+# Step 6: Lower bound δ(v) ≥ k
+[["下界", "矛盾"], ["下界", "δ(v)"]],
+# Step 7: d(v) = δ(v)
+[["d(v)=δ(v)"], ["结论", "最短路径"]],
+],
+# ---- Number Theory ----
+"euclid_infinite_primes": [
+# Step 0: Construct N = p₁×...×p_n + 1
+[["构造", "p₁"], ["构造", "p_n+1"]],
+# Step 1: N > 1, has prime factor q
+[["素因子", "q"], ["至少有一个素因子"]],
+# Step 2: If q in list, q | (p₁×...×p_n)
+[["素数", "q|"], ["列表", "q|"]],
+# Step 3: q|N and q|(product) ⟹ q|1, contradiction
+[["矛盾", "q|N"], ["q|N", "q|1"]],
+# Step 4: Prime q divides 1, contradiction
+[["矛盾", "q|1"], ["矛盾", "整除"]],
+# Step 5: Contradiction, primes infinite
+[["矛盾", "无穷"], ["矛盾", "素数无穷"]],
+],
+"euclid_lemma": [
+# Step 0: Assume p ∤ a
+[["假设", "p∤a"], ["反证", "p∤"]],
+# Step 1: gcd(p,a) = 1
+[["素数", "gcd"], ["gcd(p,a)=1"]],
+# Step 2: Bezout: px + ay = 1
+[["Bezout", "px+ay=1"], ["Bezout", "x,y"]],
+# Step 3: Multiply by b
+[["乘以b", "pbx"], ["两边乘以"]],
+# Step 4: p|pbx and p|aby
+[["p|pbx"], ["p|pbx", "p|aby"]],
+# Step 5: p|(pbx+aby) = b (not matched by student, implicit)
+[["p|(pbx+aby)=b"], ["所以", "p|("]],
+# Step 6: p|b
+[["p|b"], ["结论", "p|b"]],
+],
+"fermat_little_theorem": [
+# Step 0: Prove gcd(a,p)=1 ⟹ a^{p-1} ≡ 1
+[["gcd", "a^{p-1}"], ["先证", "gcd"]],
+# Step 1: Consider S = {1,...,p-1}, multiply by a
+[["集合", "乘以a"], ["集合", "aS"]],
+# Step 2: aS = {a, 2a, ..., (p-1)a}
+[["乘以a", "aS"], ["aS={a"]],
+# Step 3: Elements distinct (proof by contradiction)
+[["ia≡ja", "矛盾"], ["互不相同", "矛盾"]],
+# Step 4: aS is a permutation
+[["排列", "aS"], ["排列", "{1"]],
+# Step 5: Products equal
+[["乘积", "1·2"], ["乘积相等", "a·2a"]],
+# Step 6: (p-1)! ≡ a^{p-1}·(p-1)!
+[["a^{p-1}", "(p-1)!"], ["(p-1)!≡a^{p-1}"]],
+# Step 7: Cancel (p-1)!, get a^{p-1} ≡ 1
+[["消去", "a^{p-1}"], ["消去", "(p-1)!"]],
+# Step 8: Multiply by a: a^p ≡ a
+[["乘以a", "a^p"], ["a^p≡a"]],
+],
+# ---- Physics (math applied to nature) ----
+"kinematic_equations": [
+# Step 0: a = dv/dt = const
+[["加速度", "dv/dt"], ["加速度定义"]],
+# Step 1: v(t) = ∫a dt = at + C
+[["积分", "at+C"], ["积分", "v(t)=at"]],
+# Step 2: v(t) = v₀ + at
+[["v₀+at"], ["所以", "v₀+at"]],
+# Step 3: v = dx/dt
+[["速度", "dx/dt"], ["dx/dt"]],
+# Step 4: x(t) = ∫v(t) dt
+[["积分", "v₀t"], ["积分", "½at²"]],
+# Step 5: C' = x₀
+[["x(0)=x₀"], ["x₀", "C'"]],
+# Step 6: x(t) = x₀ + v₀t + ½at²
+[["x₀+v₀t+½at²"], ["所以", "x(t)"]],
+],
+"work_energy_theorem": [
+# Step 0: F = ma = m·dv/dt
+[["牛顿", "dv/dt"], ["牛顿", "ma"]],
+# Step 1: W = ∫F dx
+[["功", "∫F"], ["功", "∫m"]],
+# Step 2: Chain rule dv/dt = v·dv/dx
+[["链式法则", "dv/dx"], ["链式", "v·(dv/dx)"]],
+# Step 3: W = ∫mv dv
+[["代入", "∫mv"], ["代入", "mv"]],
+# Step 4: W = ½mv₂² - ½mv₁²
+[["积分", "½mv"], ["积分", "mv₂"]],
+# Step 5: ΔKE = W_net
+[["动能", "W_net"], ["动能变化量"], ["结论", "动能"]],
+],
+"shm_equation": [
+# Step 0: m·d²x/dt² = -kx
+[["牛顿", "d²x/dt²"], ["牛顿", "kx"]],
+# Step 1: d²x/dt² + (k/m)x = 0
+[["改写", "d²x/dt²"], ["改写", "(k/m)"]],
+# Step 2: ω² = k/m
+[["ω²=k/m"], ["令ω"]],
+# Step 3: Characteristic equation r² + ω² = 0
+[["特征方程", "r²+ω²"], ["特征方程", "iω"]],
+# Step 4: General solution
+[["通解", "cos(ωt)"], ["通解", "sin(ωt)"]],
+# Step 5: Period T = 2π/ω
+[["周期", "2π/ω"], ["周期", "2π√(m/k)"]],
+],
+# ---- Chemistry (math applied to molecules) ----
+"half_life_first_order": [
+# Step 0: dC/C = -k dt
+[["分离变量", "dC/C"], ["分离变量", "-kdt"]],
+# Step 1: Integrate (not matched by student, implicit)
+[["积分", "∫{C₀}^{C}"], ["积分", "∫₀"]],
+# Step 2: ln(C/C₀) = -kt, C(t) = C₀·e^(-kt)
+[["ln(C/C₀)=-kt"], ["C(t)=C₀·e^(-kt)"], ["ln", "C₀e"]],
+# Step 3: C(t₁/₂) = C₀/2
+[["半衰期", "C₀/2"], ["定义", "t₁/₂"]],
+# Step 4: C₀·e^(-k·t₁/₂) = C₀/2
+[["C₀·e^(-k", "C₀/2"], ["代入", "C₀e"]],
+# Step 5: e^(-k·t₁/₂) = 1/2
+[["e^(-k·t₁/₂)=1/2"], ["e^(-k", "1/2"]],
+# Step 6: -k·t₁/₂ = ln(1/2) = -ln2 (not matched, implicit)
+[["-k·t₁/₂=ln(1/2)"], ["ln2"]],
+# Step 7: t₁/₂ = ln2/k
+[["ln2/k"], ["ln2", "与初始浓度无关"]],
+],
+"equilibrium_constant": [
+# Step 0: Forward rate = reverse rate
+[["平衡", "正反应"], ["平衡", "逆反应"]],
+# Step 1: k_f·[A]_eq = k_r·[B]_eq
+[["k_f", "k_r", "eq"], ["k_f·[A]_eq=k_r·[B]_eq"]],
+# Step 2: K = [B]/[A] = k_f/k_r
+[["K=[B]/[A]"], ["K=k_f/k_r"], ["k_f/k_r"]],
+# Step 3: Arrhenius equation
+[["Arrhenius", "e^(-Ea/RT)"], ["Arrhenius", "k=A·e"]],
+# Step 4: Activation energies
+[["活化能", "Ea,f"], ["活化能", "Ea,r"]],
+# Step 5: ΔG° = Ea,f - Ea,r
+[["ΔG°=Ea,f-Ea,r"], ["ΔG°", "Ea,f-Ea,r"]],
+# Step 6: K = e^(-ΔG°/RT)
+[["e^(-ΔG°/RT)"], ["K=k_f/k_r=e^"]],
+# Step 7: Prefactor ratio in ΔG°
+[["指前因子", "ΔG°"], ["指前因子", "包含"]],
+],
+"huckel_benzene": [
+# Step 0: Build 6×6 secular matrix
+[["久期矩阵", "α"], ["6×6", "α"]],
+# Step 1: Circulant matrix
+[["循环矩阵", "环状"], ["循环矩阵", "苯"]],
+# Step 2: DFT eigenvalues
+[["DFT", "ε_j"], ["DFT", "cos(2πj/6)"]],
+# Step 3: j=0 gives α+2β
+[["j=0", "α+2β"], ["j=0", "2β"]],
+# Step 4: j=1,5 gives α+β (doubly degenerate)
+[["j=1,5", "α+β"], ["j=1,5", "简并"]],
+# Step 5: j=2,4 gives α-β (doubly degenerate)
+[["j=2,4", "α-β"], ["j=2,4", "简并"]],
+# Step 6: j=3 gives α-2β
+[["j=3", "α-2β"]],
+# Step 7: Fill 6 π electrons (not matched by student, implicit)
+[["E_total", "6α+8β"], ["电子", "6α+8β"]],
+# Step 8: Delocalization energy = 2β
+[["离域能", "2β"], ["离域能", "6α+8β"]],
+],
+}
+
+
 @dataclass
 class ProofStep:
     """A single step in a student's proof."""
@@ -1581,420 +1993,9 @@ class ProofAssistant:
         Returns a list where index i contains the keyword groups for step i.
         Each group is a list of keywords that must ALL be present.
         A step matches if ANY group is fully satisfied.
-
-        Note: keywords are normalized the same way as student input
-        (superscripts → ASCII, math operators stripped) before matching.
         """
-        patterns: dict[str, list[list[list[str]]]] = {
-            "identity_unique": [
-                # Step 0: e·f = f (e is identity)
-                [["e·f=f", "e=f"], ["ef=f", "单位元"], ["ef=f", "f"]],
-                # Step 1: e·f = e (f is identity)
-                [["e·f=e", "f=e"], ["ef=e", "单位元"], ["ef=e", "f"]],
-                # Step 2: e = f (transitivity)
-                [["e=f"], ["传递"]],
-            ],
-            "inverse_unique": [
-                # Step 0: b = b·e
-                [["b=b·e", "b=be"], ["b=be", "单位元"], ["b=be", "e"]],
-                # Step 1: e = a·c
-                [["e=a·c", "e=ac"], ["a·c=e", "ac=e", "逆元"], ["e=ac", "逆元"], ["e=ac", "c"]],
-                # Step 2: b·e = b·(a·c) (substitution)
-                [["b·(a·c)", "b(ac)", "代入"], ["b(ac)", "代入"], ["b·e=b·(a·c)", "代入"], ["be=b(ac)", "代入"]],
-                # Step 3: b·(a·c) = (b·a)·c (associativity)
-                [["(b·a)·c", "(ba)c", "结合"], ["(ba)c", "结合"], ["b·(a·c)=(b·a)·c", "结合"], ["b(ac)=(ba)c", "结合"]],
-                # Step 4: (b·a)·c = e·c (b·a = e)
-                [["e·c", "ec", "b·a=e", "ba=e", "逆元"], ["ec", "ba=e", "逆元"], ["ec", "ba=e"], ["(ba)c=ec", "逆元"]],
-                # Step 5: e·c = c (identity)
-                [["e·c=c", "ec=c", "单位元"], ["ec=c", "单位元"], ["ec=c"]],
-                # Step 6: b = c (transitivity)
-                [["b=c"], ["传递"]],
-            ],
-            "cancellation_law": [
-                # Step 0: Left-multiply by a⁻¹
-                [["a⁻¹", "逆元", "左乘"], ["a-1", "左乘"], ["a⁻¹", "左乘"], ["a-1", "逆元"]],
-                # Step 1: Associativity (a⁻¹·a)·b = (a⁻¹·a)·c
-                [["结合", "(a⁻¹·a)"], ["结合", "(a-1a)"], ["结合", "a⁻¹"]],
-                # Step 2: a⁻¹·a = e
-                [["=e", "逆元"], ["a⁻¹·a=e", "逆元"], ["a-1a=e"]],
-                # Step 3: e·b = e·c
-                [["e·b", "e·c", "eb", "ec"], ["eb=ec"], ["e·b=e·c"]],
-                # Step 4: b = c
-                [["b=c"]],
-            ],
-            "trivial_subgroup": [
-                # Step 0: Closure e·e = e
-                [["e·e=e", "封闭"], ["ee=e", "封闭"], ["e·e=e", "封闭"]],
-                # Step 1: Identity e ∈ {e}
-                [["单位元", "∈"], ["单位元", "e"]],
-                # Step 2: Inverse e⁻¹ = e
-                [["e⁻¹=e", "逆元"], ["e-1=e", "逆元"], ["逆元", "e"]],
-                # Step 3: Three conditions satisfied
-                [["子群", "条件"], ["三", "满足"], ["子群", "满足"]],
-            ],
-            "abelian_subgroup_of_squares": [
-                # Step 0: Closure (ab)² = a²b²
-                [["(ab)²", "封闭", "交换"], ["(ab)2", "交换"], ["a²·b²", "交换"], ["a2b2", "交换"], ["(ab)²=a²·b²", "交换"]],
-                # Step 1: Identity e = e²
-                [["e=e²", "e=e2", "单位元"], ["e=e2", "单位元"], ["e=e²"]],
-                # Step 2: Inverse (g²)⁻¹ = (g⁻¹)²
-                [["(g⁻¹)²", "逆元"], ["(g-1)2", "逆元"], ["(g²)⁻¹", "逆元"], ["(g2)-1", "逆元"]],
-                # Step 3: Three conditions
-                [["子群", "条件"], ["三", "满足"], ["子群", "满足"]],
-            ],
-            # ---- High School ----
-            "function_monotonicity": [
-                [["f(x2)-f(x1)", "差"], ["x2²-x1²", "差"], ["f(x2)-f(x1)=x2²-x1²"], ["f(x2)-f(x1)"]],
-                [["因式分解", "x2-x1", "x2+x1"], ["(x2-x1)(x2+x1)", "因式"], ["x2²-x1²=(x2-x1)(x2+x1)"]],
-                [["x2>x1", "x2-x1>0"], ["x2-x1>0"]],
-                [["x2+x1>0", "非负"], ["x1≥0", "x2+x1"], ["x2+x1≥0"], ["x2+x1>0"]],
-                [["正", "相乘"], ["f(x2)-f(x1)>0"], ["两个正", "正"], ["f(x2)>f(x1)"]],
-            ],
-            "am_gm_inequality": [
-                [["(√a-√b)²≥0", "构造"], ["(√a-√b)²", "非负"], ["(√a-√b)²≥0"], ["(sqrta-sqrtb)²"]],
-                [["展开", "(√a)²", "2√(ab)", "(√b)²"], ["(√a)²-2√(ab)+(√b)²≥0"], ["展开"]],
-                [["a-2√(ab)+b≥0", "化简"], ["a-2√(ab)+b≥0"]],
-                [["a+b≥2√(ab)", "移项"], ["a+b≥2√(ab)"]],
-                [["等号", "a=b", "√a=√b"], ["a=b"], ["√a=√b"]],
-            ],
-            "arithmetic_sequence_sum": [
-                [["sn=a1+a2", "写出"], ["sn=a1+a2"]],
-                [["倒序", "sn=an+a(n-1)"], ["倒序", "sn"]],
-                [["2sn", "相加"], ["2sn=(a1+an)"], ["相加", "2sn"]],
-                [["ak+a(n+1-k)=a1+an", "等差"], ["首尾", "相等"], ["配对"]],
-                [["n(a1+an)", "n项"], ["2sn=n(a1+an)"], ["n(a1+an)/2"]],
-            ],
-            "cos_double_angle": [
-                [["cos2a=cos²a-sin²a", "令"], ["cos(2a)=cos²a-sin²a", "β=α"], ["cos2a=cos²a-sin²a"]],
-                [["sin²a+cos²a=1", "消去"], ["毕达哥拉斯", "消去"], ["sin²a+cos²a=1"]],
-                [["sin²a=1-cos²a"], ["sin²a=1-cos²a"]],
-                [["代入", "cos²a-(1-cos²a)"], ["代入", "1-cos²a"]],
-                [["2cos²a-1", "化简"], ["cos2a=2cos²a-1"]],
-            ],
-            # ---- Middle School ----
-            "pythagorean_theorem": [
-                [["作", "cd", "垂", "高"], ["辅助线", "高"], ["cd⊥ab"]],
-                [["相似", "b²=pc", "射影"], ["△acd∽△abc"], ["b²=pc"]],
-                [["相似", "a²=qc", "射影"], ["△bcd∽△abc"], ["a²=qc"]],
-                [["相加", "a²+b²=(p+q)c"], ["两式相加"]],
-                [["p+q=c", "a²+b²=c²"], ["p+q=c"]],
-            ],
-            "triangle_angle_sum": [
-                [["平行", "de∥bc", "辅助"], ["作", "平行"]],
-                [["内错角", "∠dab=∠b"], ["∠dab=∠b", "内错"]],
-                [["内错角", "∠eac=∠c"], ["∠eac=∠c", "内错"]],
-                [["平角", "180"], ["∠dab+∠a+∠eac=180"], ["平角", "180°"]],
-                [["代入", "∠b+∠a+∠c=180"], ["∠a+∠b+∠c=180"]],
-            ],
-            "quadratic_formula": [
-                [["除以a", "x²+(b/a)x"], ["两边除以a"]],
-                [["配方", "(b/2a)²"], ["配", "(b/2a)²"]],
-                [["完全平方", "(x+b/2a)²", "(b²-4ac)/4a²"], ["(x+b/2a)²"]],
-                [["开平方", "±√(b²-4ac)/2a"], ["开平方"]],
-                [["移项", "x=(-b±√(b²-4ac))/2a"], ["x=(-b±√(b²-4ac))"]],
-            ],
-            "congruent_sss": [
-                [["叠合", "ef与bc重合", "异侧"], ["放置", "重合"]],
-                [["连接ad"], ["连ad"], ["辅助线ad"]],
-                [["等腰", "ab=db", "∠bad=∠bda", "底角"], ["ab=db", "等腰"], ["△abd", "等腰"]],
-                [["等腰", "ac=dc", "∠cad=∠cda", "底角"], ["ac=dc", "等腰"], ["△acd", "等腰"]],
-                [["相加", "∠bac=∠bdc"], ["∠bac", "∠bdc"]],
-                [["sas", "全等", "△abc≅△dbc"], ["sas"], ["△abc≅△def"]],
-            ],
-            # ---- Elementary ----
-            "commutative_addition": [
-                [["计数", "a+b", "先数"], ["a+b", "计数"]],
-                [["b+a", "先数"], ["b+a", "计数"]],
-                [["总数", "相同"], ["一样多"], ["相同"]],
-                [["a+b=b+a"], ["a+b=b+a"]],
-            ],
-            "fraction_equivalence": [
-                [["a/b", "分成b份", "取a份"], ["分成b份", "取a份"]],
-                [["(a×k)/(b×k)", "b×k份", "a×k份"], ["b×k", "a×k"]],
-                [["每b份", "一组", "k组"], ["分组", "k组"]],
-                [["等价", "分成b份", "取a份"], ["等价", "b份"]],
-                [["a/b=(a×k)/(b×k)"], ["a/b=(a×k)/(b×k)"]],
-            ],
-            "distributive_law": [
-                [["(b+c)个a", "连加"], ["(b+c)个a"]],
-                [["拆", "b个a", "c个a"], ["b个a", "c个a"]],
-                [["b个a=a×b"], ["a×b"]],
-                [["c个a=a×c"], ["a×c"]],
-                [["a×(b+c)=a×b+a×c"], ["a×(b+c)=a×b+a×c"]],
-            ],
-            # ---- Calculus ----
-            "power_rule": [
-                # Step 0: f'(x) = lim [(x+h)ⁿ - xⁿ] / h
-                [["极限", "f'(x)"], ["极限定义"]],
-                # Step 1: Expand (x+h)ⁿ via binomial theorem
-                [["展开", "C(n,k)"], ["二项式定理", "展开"]],
-                # Step 2: (x+h)ⁿ - xⁿ = n·xⁿ⁻¹·h + O(h²)
-                [["O(h²"], ["n·xⁿ⁻¹", "h"], ["取", "k"]],
-                # Step 3: Divide by h
-                [["除以", "h"], ["除法"]],
-                # Step 4: Take limit h→0
-                [["取极限", "n·xⁿ⁻¹"], ["取极限"]],
-            ],
-            "ftc_part1": [
-                # Step 0: F'(x) = lim [F(x+h) - F(x)] / h
-                [["导数", "F'(x)"], ["导数定义"]],
-                # Step 1: F(x+h) - F(x) = ∫ₓ^{x+h} f(t) dt
-                [["积分", "F(x+h)"], ["积分性质"]],
-                # Step 2: MVT gives ∫ₓ^{x+h} f(t) dt = f(c)·h
-                [["中值定理", "f(c)"], ["中值定理", "积分"]],
-                # Step 3: [F(x+h) - F(x)] / h = f(c)
-                [["f(c)", "除"], ["/h", "f(c)"], ["除法", "f(c)"]],
-                # Step 4: h→0, c→x, f(c)→f(x)
-                [["连续", "c→x"], ["连续性", "f(c)"]],
-                # Step 5: F'(x) = f(x)
-                [["F'(x)=f(x)"], ["所以", "F'(x)"]],
-            ],
-            "chain_rule": [
-                # Step 0: h'(x) = lim [f(g(x+Δx)) - f(g(x))] / Δx
-                [["导数", "h'(x)"], ["导数定义"]],
-                # Step 1: Let Δg = g(x+Δx) - g(x)
-                [["中间变量", "Δg"], ["中间变量"]],
-                # Step 2: Introduce Δg factor
-                [["引入", "Δg"], ["Δg/Δx"]],
-                # Step 3: Δx→0 ⟹ Δg→0, first term → f'(g(x))
-                [["可导", "f'(g(x))"], ["连续", "f'(g(x))"], ["Δg→0"]],
-                # Step 4: Second term Δg/Δx → g'(x)
-                [["g'(x)", "h'(x)"], ["f'(g(x))", "g'(x)"]],
-                # Step 5: h'(x) = f'(g(x))·g'(x)
-                [["h'(x)=f'(g(x))"], ["所以", "h'(x)"]],
-            ],
-            # ---- Linear Algebra ----
-            "rank_nullity": [
-                # Step 0: ker(T) basis, nullity = k
-                [["ker", "基"], ["nullity", "k"]],
-                # Step 1: Extend ker basis to V basis
-                [["扩充", "基"], ["基扩充"]],
-                # Step 2: Prove T(wᵢ) are basis for Im(T)
-                [["线性无关", "T(w"], ["T(w₁"], ["T(w"]],
-                # Step 3: Linear independence argument
-                [["线性无关", "ker"]],
-                # Step 4: cᵢ = 0 by linear independence
-                [["线性无关性", "cᵢ=0"], ["线性无关", "cᵢ=0"], ["cᵢ=0"]],
-                # Step 5: Spanning argument
-                [["生成", "T(v)"], ["生成", "bⱼ"]],
-                # Step 6: rank = n - k
-                [["rank", "n-k"], ["rank", "nullity"]],
-            ],
-            "dim_invariance": [
-                # Step 0: B₁ generates, B₂ independent ⟹ m ≤ n
-                [["替换定理", "m≤n"], ["替换定理", "生成"]],
-                # Step 1: B₂ generates, B₁ independent ⟹ n ≤ m
-                [["替换定理", "n≤m"], ["替换定理", "n≤m"]],
-                # Step 2: n = m
-                [["n=m"], ["双向不等式"]],
-            ],
-            "independence_implies_unique": [
-                # Step 0: Subtract two representations
-                [["相减", "vᵢ"], ["相减", "=0"]],
-                # Step 1: Linear independence ⟹ aᵢ - bᵢ = 0
-                [["线性无关", "aᵢ-bᵢ=0"], ["线性无关性", "aᵢ"]],
-                # Step 2: aᵢ = bᵢ
-                [["aᵢ=bᵢ"], ["结论", "aᵢ"]],
-            ],
-            # ---- Discrete Math ----
-            "handshake_lemma": [
-                # Step 0: Each edge contributes to two endpoints
-                [["贡献", "deg"], ["双重计数", "deg"]],
-                # Step 1: Each edge contributes 2
-                [["贡献", "2"], ["度数之和", "2"]],
-                # Step 2: Σ deg(v) = 2|E|
-                [["Σdeg", "2|E|"], ["结论", "deg"]],
-            ],
-            "tree_n_minus_1_edges": [
-                # Step 0: Induction on n
-                [["归纳", "顶点"]],
-                # Step 1: Base case n=1
-                [["n=1", "基础"], ["单顶点", "0=1-1"]],
-                # Step 2: Inductive hypothesis
-                [["假设", "k+1"], ["归纳假设", "k+1"]],
-                # Step 3: Tree has a leaf node
-                [["叶子", "度数"], ["叶子", "无圈"]],
-                # Step 4: Delete leaf
-                [["删除", "叶子"], ["删除", "树"]],
-                # Step 5: Inductive step
-                [["归纳假设", "k-1"], ["k-1条边"]],
-                # Step 6: k edges = (k+1)-1
-                [["k条边", "(k+1)-1"], ["结论", "k条边"]],
-            ],
-            "bfs_shortest_path": [
-                # Step 0: BFS layer expansion
-                [["BFS", "按层"], ["按层", "扩展"]],
-                # Step 1: d(v) vs δ(v)
-                [["d(v)", "δ(v)"], ["层数", "最短距离"]],
-                # Step 2: Induction on d(v)
-                [["归纳", "⟹δ(v)"], ["对d(v)归纳"]],
-                # Step 3: Base case
-                [["基础", "d(s)"], ["d(s)=0"]],
-                # Step 4: Inductive step setup (not matched by student, implicit)
-                [["设d(v)=k", "访问"], ["第k层被访问"]],
-                # Step 5: Upper bound δ(v) ≤ k
-                [["上界", "δ(v)"], ["上界", "k-1"]],
-                # Step 6: Lower bound δ(v) ≥ k
-                [["下界", "矛盾"], ["下界", "δ(v)"]],
-                # Step 7: d(v) = δ(v)
-                [["d(v)=δ(v)"], ["结论", "最短路径"]],
-            ],
-            # ---- Number Theory ----
-            "euclid_infinite_primes": [
-                # Step 0: Construct N = p₁×...×p_n + 1
-                [["构造", "p₁"], ["构造", "p_n+1"]],
-                # Step 1: N > 1, has prime factor q
-                [["素因子", "q"], ["至少有一个素因子"]],
-                # Step 2: If q in list, q | (p₁×...×p_n)
-                [["素数", "q|"], ["列表", "q|"]],
-                # Step 3: q|N and q|(product) ⟹ q|1, contradiction
-                [["矛盾", "q|N"], ["q|N", "q|1"]],
-                # Step 4: Prime q divides 1, contradiction
-                [["矛盾", "q|1"], ["矛盾", "整除"]],
-                # Step 5: Contradiction, primes infinite
-                [["矛盾", "无穷"], ["矛盾", "素数无穷"]],
-            ],
-            "euclid_lemma": [
-                # Step 0: Assume p ∤ a
-                [["假设", "p∤a"], ["反证", "p∤"]],
-                # Step 1: gcd(p,a) = 1
-                [["素数", "gcd"], ["gcd(p,a)=1"]],
-                # Step 2: Bezout: px + ay = 1
-                [["Bezout", "px+ay=1"], ["Bezout", "x,y"]],
-                # Step 3: Multiply by b
-                [["乘以b", "pbx"], ["两边乘以"]],
-                # Step 4: p|pbx and p|aby
-                [["p|pbx"], ["p|pbx", "p|aby"]],
-                # Step 5: p|(pbx+aby) = b (not matched by student, implicit)
-                [["p|(pbx+aby)=b"], ["所以", "p|("]],
-                # Step 6: p|b
-                [["p|b"], ["结论", "p|b"]],
-            ],
-            "fermat_little_theorem": [
-                # Step 0: Prove gcd(a,p)=1 ⟹ a^{p-1} ≡ 1
-                [["gcd", "a^{p-1}"], ["先证", "gcd"]],
-                # Step 1: Consider S = {1,...,p-1}, multiply by a
-                [["集合", "乘以a"], ["集合", "aS"]],
-                # Step 2: aS = {a, 2a, ..., (p-1)a}
-                [["乘以a", "aS"], ["aS={a"]],
-                # Step 3: Elements distinct (proof by contradiction)
-                [["ia≡ja", "矛盾"], ["互不相同", "矛盾"]],
-                # Step 4: aS is a permutation
-                [["排列", "aS"], ["排列", "{1"]],
-                # Step 5: Products equal
-                [["乘积", "1·2"], ["乘积相等", "a·2a"]],
-                # Step 6: (p-1)! ≡ a^{p-1}·(p-1)!
-                [["a^{p-1}", "(p-1)!"], ["(p-1)!≡a^{p-1}"]],
-                # Step 7: Cancel (p-1)!, get a^{p-1} ≡ 1
-                [["消去", "a^{p-1}"], ["消去", "(p-1)!"]],
-                # Step 8: Multiply by a: a^p ≡ a
-                [["乘以a", "a^p"], ["a^p≡a"]],
-            ],
-            # ---- Physics (math applied to nature) ----
-            "kinematic_equations": [
-                # Step 0: a = dv/dt = const
-                [["加速度", "dv/dt"], ["加速度定义"]],
-                # Step 1: v(t) = ∫a dt = at + C
-                [["积分", "at+C"], ["积分", "v(t)=at"]],
-                # Step 2: v(t) = v₀ + at
-                [["v₀+at"], ["所以", "v₀+at"]],
-                # Step 3: v = dx/dt
-                [["速度", "dx/dt"], ["dx/dt"]],
-                # Step 4: x(t) = ∫v(t) dt
-                [["积分", "v₀t"], ["积分", "½at²"]],
-                # Step 5: C' = x₀
-                [["x(0)=x₀"], ["x₀", "C'"]],
-                # Step 6: x(t) = x₀ + v₀t + ½at²
-                [["x₀+v₀t+½at²"], ["所以", "x(t)"]],
-            ],
-            "work_energy_theorem": [
-                # Step 0: F = ma = m·dv/dt
-                [["牛顿", "dv/dt"], ["牛顿", "ma"]],
-                # Step 1: W = ∫F dx
-                [["功", "∫F"], ["功", "∫m"]],
-                # Step 2: Chain rule dv/dt = v·dv/dx
-                [["链式法则", "dv/dx"], ["链式", "v·(dv/dx)"]],
-                # Step 3: W = ∫mv dv
-                [["代入", "∫mv"], ["代入", "mv"]],
-                # Step 4: W = ½mv₂² - ½mv₁²
-                [["积分", "½mv"], ["积分", "mv₂"]],
-                # Step 5: ΔKE = W_net
-                [["动能", "W_net"], ["动能变化量"], ["结论", "动能"]],
-            ],
-            "shm_equation": [
-                # Step 0: m·d²x/dt² = -kx
-                [["牛顿", "d²x/dt²"], ["牛顿", "kx"]],
-                # Step 1: d²x/dt² + (k/m)x = 0
-                [["改写", "d²x/dt²"], ["改写", "(k/m)"]],
-                # Step 2: ω² = k/m
-                [["ω²=k/m"], ["令ω"]],
-                # Step 3: Characteristic equation r² + ω² = 0
-                [["特征方程", "r²+ω²"], ["特征方程", "iω"]],
-                # Step 4: General solution
-                [["通解", "cos(ωt)"], ["通解", "sin(ωt)"]],
-                # Step 5: Period T = 2π/ω
-                [["周期", "2π/ω"], ["周期", "2π√(m/k)"]],
-            ],
-            # ---- Chemistry (math applied to molecules) ----
-            "half_life_first_order": [
-                # Step 0: dC/C = -k dt
-                [["分离变量", "dC/C"], ["分离变量", "-kdt"]],
-                # Step 1: Integrate (not matched by student, implicit)
-                [["积分", "∫{C₀}^{C}"], ["积分", "∫₀"]],
-                # Step 2: ln(C/C₀) = -kt, C(t) = C₀·e^(-kt)
-                [["ln(C/C₀)=-kt"], ["C(t)=C₀·e^(-kt)"], ["ln", "C₀e"]],
-                # Step 3: C(t₁/₂) = C₀/2
-                [["半衰期", "C₀/2"], ["定义", "t₁/₂"]],
-                # Step 4: C₀·e^(-k·t₁/₂) = C₀/2
-                [["C₀·e^(-k", "C₀/2"], ["代入", "C₀e"]],
-                # Step 5: e^(-k·t₁/₂) = 1/2
-                [["e^(-k·t₁/₂)=1/2"], ["e^(-k", "1/2"]],
-                # Step 6: -k·t₁/₂ = ln(1/2) = -ln2 (not matched, implicit)
-                [["-k·t₁/₂=ln(1/2)"], ["ln2"]],
-                # Step 7: t₁/₂ = ln2/k
-                [["ln2/k"], ["ln2", "与初始浓度无关"]],
-            ],
-            "equilibrium_constant": [
-                # Step 0: Forward rate = reverse rate
-                [["平衡", "正反应"], ["平衡", "逆反应"]],
-                # Step 1: k_f·[A]_eq = k_r·[B]_eq
-                [["k_f", "k_r", "eq"], ["k_f·[A]_eq=k_r·[B]_eq"]],
-                # Step 2: K = [B]/[A] = k_f/k_r
-                [["K=[B]/[A]"], ["K=k_f/k_r"], ["k_f/k_r"]],
-                # Step 3: Arrhenius equation
-                [["Arrhenius", "e^(-Ea/RT)"], ["Arrhenius", "k=A·e"]],
-                # Step 4: Activation energies
-                [["活化能", "Ea,f"], ["活化能", "Ea,r"]],
-                # Step 5: ΔG° = Ea,f - Ea,r
-                [["ΔG°=Ea,f-Ea,r"], ["ΔG°", "Ea,f-Ea,r"]],
-                # Step 6: K = e^(-ΔG°/RT)
-                [["e^(-ΔG°/RT)"], ["K=k_f/k_r=e^"]],
-                # Step 7: Prefactor ratio in ΔG°
-                [["指前因子", "ΔG°"], ["指前因子", "包含"]],
-            ],
-            "huckel_benzene": [
-                # Step 0: Build 6×6 secular matrix
-                [["久期矩阵", "α"], ["6×6", "α"]],
-                # Step 1: Circulant matrix
-                [["循环矩阵", "环状"], ["循环矩阵", "苯"]],
-                # Step 2: DFT eigenvalues
-                [["DFT", "ε_j"], ["DFT", "cos(2πj/6)"]],
-                # Step 3: j=0 gives α+2β
-                [["j=0", "α+2β"], ["j=0", "2β"]],
-                # Step 4: j=1,5 gives α+β (doubly degenerate)
-                [["j=1,5", "α+β"], ["j=1,5", "简并"]],
-                # Step 5: j=2,4 gives α-β (doubly degenerate)
-                [["j=2,4", "α-β"], ["j=2,4", "简并"]],
-                # Step 6: j=3 gives α-2β
-                [["j=3", "α-2β"]],
-                # Step 7: Fill 6 π electrons (not matched by student, implicit)
-                [["E_total", "6α+8β"], ["电子", "6α+8β"]],
-                # Step 8: Delocalization energy = 2β
-                [["离域能", "2β"], ["离域能", "6α+8β"]],
-            ],
-        }
+        return _THEOREM_KEYWORD_PATTERNS.get(theorem_name, [[[]]])
 
-        return patterns.get(theorem_name, [[[]]])
 
     def get_hint(self, theorem_name: str, current_step: int) -> str:
         """Get a Socratic hint for the next step in a proof.

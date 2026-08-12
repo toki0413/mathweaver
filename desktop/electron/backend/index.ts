@@ -45,6 +45,7 @@ class Backend {
   private forge: CounterExampleForge
   private dag: ConceptDAG
   private initialized = false
+  private dbPath: string | undefined
 
   constructor() {
     this.forge = new CounterExampleForge()
@@ -55,16 +56,17 @@ class Backend {
    * Initialize the backend with LLM configuration.
    * Called when the app starts or when LLM settings change.
    */
-  init(config?: Partial<LLMConfig>): void {
+  init(config?: Partial<LLMConfig>, dbPath?: string): void {
     if (config) {
       this.llmConfig = { ...this.llmConfig, ...config }
     }
+    this.dbPath = dbPath ?? this.dbPath
     this.llmClient = createLLMClient(this.llmConfig)
     this.orchestrator = new Orchestrator({
       llmClient: this.llmClient,
       dag: this.dag,
       forge: this.forge,
-      dbPath: ':memory:',
+      dbPath: dbPath ?? ':memory:',
     })
     this.initialized = true
     logger.info('Backend initialized', {
@@ -82,7 +84,7 @@ class Backend {
     // Re-create the LLM client
     this.llmClient = createLLMClient(this.llmConfig)
     // Re-initialize the orchestrator with the new client
-    this.init()
+    this.init(undefined, this.dbPath)
   }
 
   getLLMConfig(): LLMConfig {

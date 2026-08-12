@@ -1,16 +1,10 @@
 import { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { useStore } from '../stores/sessionStore'
+import { useStore, type ChatMessage } from '../stores/sessionStore'
 import { MathText } from './MathText'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface ChatMessage {
-  role: 'user' | 'system'
-  content: string
-  phase?: string
-}
 
 interface ChatPanelProps {
   /** Called with the quoted message text when the user clicks "引用". */

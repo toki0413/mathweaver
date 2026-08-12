@@ -410,4 +410,137 @@ describe('ProofPanel', () => {
     // Socratic hint is shown.
     expect(screen.getByText('苏格拉底提示')).toBeInTheDocument()
   })
+
+  it('inserts an implicit step into the proof when its 插入 button is clicked', () => {
+    resetStore({
+      proofState: {
+        theorems: ['lagrange_theorem'],
+        selectedTheorem: 'lagrange_theorem',
+        currentResult: {
+          theorem_name: 'lagrange_theorem',
+          steps: [
+            {
+              step_number: 1,
+              claim: '第一步',
+              justification: 'because',
+              is_valid: true,
+              feedback: 'good',
+              matched_expected: '',
+              implicit_steps: ['隐含的一步'],
+            },
+          ],
+          is_complete: false,
+          missing_steps: [],
+          socratic_hint: '',
+          overall_feedback: '继续',
+          progress: '1/1',
+        },
+      },
+    })
+
+    const { container } = render(<ProofPanel />)
+    expect(screen.getByText('隐含覆盖 1 步')).toBeInTheDocument()
+
+    // The initial step textarea is empty; after inserting the implicit step a
+    // second textarea appears pre-filled with the implicit text.
+    fireEvent.click(screen.getByRole('button', { name: '插入' }))
+    const textareas = Array.from(
+      container.querySelectorAll('.ddps-step-textarea'),
+    ) as HTMLTextAreaElement[]
+    expect(textareas).toHaveLength(2)
+    expect(textareas[1].value).toBe('隐含的一步')
+  })
+
+  it('inserts a missing step into the proof when it is clicked', () => {
+    resetStore({
+      proofState: {
+        theorems: ['lagrange_theorem'],
+        selectedTheorem: 'lagrange_theorem',
+        currentResult: {
+          theorem_name: 'lagrange_theorem',
+          steps: [],
+          is_complete: false,
+          missing_steps: ['缺少的一步'],
+          socratic_hint: '',
+          overall_feedback: '继续',
+          progress: '0/3',
+        },
+      },
+    })
+
+    const { container } = render(<ProofPanel />)
+    fireEvent.click(screen.getByText('缺少的一步'))
+    const textareas = Array.from(
+      container.querySelectorAll('.ddps-step-textarea'),
+    ) as HTMLTextAreaElement[]
+    // The pre-existing empty step plus the inserted missing one.
+    expect(textareas.length).toBeGreaterThanOrEqual(2)
+    expect(textareas[textareas.length - 1].value).toBe('缺少的一步')
+  })
+
+  it('inserts the socratic hint as a new step via 需要更多提示', () => {
+    resetStore({
+      proofState: {
+        theorems: ['lagrange_theorem'],
+        selectedTheorem: 'lagrange_theorem',
+        currentResult: {
+          theorem_name: 'lagrange_theorem',
+          steps: [],
+          is_complete: false,
+          missing_steps: [],
+          socratic_hint: '想一想逆否命题',
+          overall_feedback: '继续',
+          progress: '0/1',
+        },
+      },
+    })
+
+    const { container } = render(<ProofPanel />)
+    fireEvent.click(screen.getByRole('button', { name: '需要更多提示' }))
+    const textareas = Array.from(
+      container.querySelectorAll('.ddps-step-textarea'),
+    ) as HTMLTextAreaElement[]
+    const last = textareas[textareas.length - 1]
+    expect(last.value).toBe('（需要补充：想一想逆否命题）')
+  })
+
+  it('removes a backward reasoning step via its 删除 button', () => {
+    const { container } = render(<ProofPanel />)
+
+    fireEvent.click(screen.getByRole('tab', { name: '倒推模式' }))
+    const conclusion = document.getElementById('backward-conclusion') as HTMLTextAreaElement
+    fireEvent.change(conclusion, { target: { value: 'C' } })
+    fireEvent.click(screen.getByRole('button', { name: '开始倒推' }))
+
+    // Add a second step, then remove the first.
+    fireEvent.click(screen.getByRole('button', { name: /添加倒推步骤/ }))
+    expect(container.querySelectorAll('.backward-step-textarea')).toHaveLength(2)
+
+    fireEvent.click(screen.getAllByRole('button', { name: '删除' })[0])
+    expect(container.querySelectorAll('.backward-step-textarea')).toHaveLength(1)
+  })
+
+  it('shows the Q.E.D. marker and success styles when the proof is complete', () => {
+    resetStore({
+      proofState: {
+        theorems: ['lagrange_theorem'],
+        selectedTheorem: 'lagrange_theorem',
+        currentResult: {
+          theorem_name: 'lagrange_theorem',
+          steps: [],
+          is_complete: true,
+          missing_steps: [],
+          socratic_hint: '',
+          overall_feedback: '证明完成！',
+          progress: '3/3',
+        },
+      },
+    })
+
+    const { container } = render(<ProofPanel />)
+    expect(container.querySelector('.qed.complete')).not.toBeNull()
+    expect(screen.getByText('证明完成！')).toBeInTheDocument()
+    // The progress bar fill gets the success class when complete.
+    expect(container.querySelector('.progress-bar-fill.success')).not.toBeNull()
+  })
 })

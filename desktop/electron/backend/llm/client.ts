@@ -472,9 +472,11 @@ export class OpenAICompatibleClient implements LLMClient {
     context: string,
     canRetry?: (error: LLMError, attempt: number) => boolean,
   ): Promise<T> {
+    const overallDeadline = 120000 // 2 minutes total max
+    const startTime = Date.now()
     const maxRetries = 3
     const backoffMs = [1000, 2000, 4000]
-    let lastError: unknown
+    let lastError: unknown = new Error('No attempts made')
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -487,6 +489,16 @@ export class OpenAICompatibleClient implements LLMClient {
             delayMs: delay,
           })
           await this.sleep(delay)
+          // Check overall deadline before retrying
+          const elapsed = Date.now() - startTime
+          if (elapsed >= overallDeadline) {
+            log.warn('Overall deadline exceeded, giving up', {
+              context,
+              elapsedMs: elapsed,
+              deadlineMs: overallDeadline,
+            })
+            throw lastError instanceof LLMError ? lastError : classifyFetchError(lastError)
+          }
         }
         return await fn()
       } catch (err) {

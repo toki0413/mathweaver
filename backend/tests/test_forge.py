@@ -365,9 +365,6 @@ def test_generate_l2_invalid_json_falls_to_l4():
 
 def test_generate_l4_text_with_counter_example():
     """L4 path: mock LLM returns text containing "反例" -> success."""
-    mock = MockLLM("这是一个反例：S3 群不满足交换律。")
-    forge = CounterExampleForge(llm_client=mock)
-
     # Provide a valid group table so L1 passes, then L2 gets a valid table
     # (from the mock), and falls to L4.
     # Actually, simpler: no cayley_table in context, L2 gets text (not JSON),
@@ -627,3 +624,62 @@ def test_agent_exception_does_not_crash_orchestrator():
     result = asyncio.run(o.process_student_input("什么是群？"))
     assert "response" in result
     assert result["response"]  # non-empty response
+
+
+# ===========================================================================
+# LLM Exception Degradation Tests
+# ===========================================================================
+
+class _FailingLLM:
+    """Mock LLM that raises on every chat() call.
+
+    Verifies the forge degrades gracefully (returns a failed CounterExampleResult)
+    instead of propagating the exception to the orchestrator.
+    """
+
+    def __init__(self, exc: Exception):
+        self._exc = exc
+        self.call_count = 0
+
+    async def chat(self, system_prompt, user_message, tools=None, temperature=0.7):
+        self.call_count += 1
+        raise self._exc
+
+
+def test_llm_exception_degrades_l2():
+    """When L2's LLM call raises, the forge must return a non-crashing result."""
+    forge = CounterExampleForge(llm_client=_FailingLLM(RuntimeError("boom")))
+    result = _run(forge.generate_counter_example(
+        "所有群都是交换群",
+        context={},
+    ))
+    assert result.success is False
+    assert result.level in (FallbackLevel.L2_LLM_Z3, FallbackLevel.L3_LLM_HEURISTIC, FallbackLevel.L4_LLM_ONLY)
+    assert "失败" in result.explanation or "failure" in result.explanation.lower()
+
+
+def test_llm_exception_does_not_crash_orchestrator():
+    """If the forge's LLM call raises, the orchestrator still returns a response."""
+    import asyncio
+
+    from mathweaver.models.state import AgentRole
+    from mathweaver.orchestrator.engine import Orchestrator
+
+    class FailingForgeAgent:
+        role = AgentRole.COUNTER_EXAMPLE
+        def describe(self):
+            return {"name": "failing_forge", "role": "counter_example"}
+        async def run(self, ctx):
+            raise RuntimeError("Intentional forge crash")
+        def call_tool(self, name, args):
+            pass
+        def register_tool(self, name, func):
+            pass
+
+    o = Orchestrator()
+    o.start_session("stu_forge_crash", "ForgeCrash")
+    o.agents["forge_crash"] = FailingForgeAgent()
+
+    result = asyncio.run(o.process_student_input("我猜所有群都是交换群"))
+    assert "response" in result
+    assert result["response"]

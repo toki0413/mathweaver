@@ -6,6 +6,7 @@ import json
 import logging
 from typing import Any
 
+from ..intent import CONJECTURE_TRIGGER_KEYWORDS, PROOF_TRIGGER_KEYWORDS
 from ..llm.client import extract_content
 from ..models.state import AgentMessage, AgentRole
 from .base import AgentContext, BaseAgent
@@ -79,7 +80,7 @@ class PerceptionAgent(BaseAgent):
                 logger.debug("LLM perception failed, falling back to keywords")
 
         # Proof attempt detection: LLM result takes priority, then keywords
-        proof_keywords = ["证明", "求证", "prove", "proof", "我要证", "验证以下"]
+        proof_keywords = PROOF_TRIGGER_KEYWORDS
         is_proof = llm_input_type == "proof_attempt" or any(kw in text.lower() for kw in proof_keywords)
 
         if is_proof:
@@ -98,10 +99,7 @@ class PerceptionAgent(BaseAgent):
             )
 
         # Conjecture detection: LLM result takes priority, then keywords
-        conjecture_keywords = [
-            "我猜", "猜想", "所有", "任", "每个", "任何", "一定", "必然",
-            "总是", "all", "every", "must", "conjecture",
-        ]
+        conjecture_keywords = CONJECTURE_TRIGGER_KEYWORDS
         is_conjecture = llm_input_type == "conjecture" or any(kw in text.lower() for kw in conjecture_keywords)
         input_type = "conjecture" if is_conjecture else "question"
 

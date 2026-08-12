@@ -36,6 +36,10 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
+# A prerequisite/mastery score at or above this threshold is considered "mastered".
+# Below it, the concept is treated as a gap blocking forward progress.
+PREREQ_MASTERY_THRESHOLD = 0.6
+
 # Supported curriculum levels, ordered by progression.
 # Physics and chemistry come after the math foundations — they ARE math
 # applied to the natural world.
@@ -271,7 +275,7 @@ class ConceptDAG:
         """Return list of unmet prerequisite node IDs."""
         gaps = []
         for prereq in self.get_prerequisites(node_id):
-            if mastery.get(prereq, 0.0) < 0.6:
+            if mastery.get(prereq, 0.0) < PREREQ_MASTERY_THRESHOLD:
                 gaps.append(prereq)
         return gaps
 
@@ -285,9 +289,9 @@ class ConceptDAG:
                 return
             visited.add(nid)
             for prereq in self.get_prerequisites(nid):
-                if mastery.get(prereq, 0.0) < 0.6:
+                if mastery.get(prereq, 0.0) < PREREQ_MASTERY_THRESHOLD:
                     visit(prereq)
-            if mastery.get(nid, 0.0) < 0.6:
+            if mastery.get(nid, 0.0) < PREREQ_MASTERY_THRESHOLD:
                 path.append(nid)
 
         visit(target_node_id)

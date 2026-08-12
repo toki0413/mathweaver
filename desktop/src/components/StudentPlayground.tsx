@@ -2,6 +2,14 @@ import { useState, useMemo, useCallback, useRef } from 'react'
 import type { AgeLevel } from '../utils/ageAdapt'
 import { getEncouragement } from '../utils/ageAdapt'
 import { soundSystem } from '../utils/sound'
+import {
+  areInverses as areInversesUtil,
+  findIdentity,
+  getInverseMap,
+  getPairKey,
+  isTableSymmetric,
+  lookupValue,
+} from '../utils/playgroundMath'
 
 /**
  * StudentPlayground — 学生互动游戏场
@@ -174,7 +182,7 @@ interface BumpGameProps {
   onDiscovery?: (property: string, ageLevel: AgeLevel) => void
 }
 
-function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpGameProps) {
+export function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpGameProps) {
   const [elemA, setElemA] = useState<number | null>(null)
   const [elemB, setElemB] = useState<number | null>(null)
   const [bumpResult, setBumpResult] = useState<{ a: number; b: number; result: number } | null>(
@@ -192,28 +200,12 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
   const [conceptResult, setConceptResult] = useState<'correct' | 'wrong' | null>(null)
 
   const lookup = useCallback(
-    (a: number, b: number): number | null => {
-      const v = table[a]?.[b]
-      if (typeof v !== 'number' || v < 0 || v > size - 1) return null
-      return v
-    },
+    (a: number, b: number): number | null => lookupValue(table, size, a, b),
     [table, size],
   )
 
   // 找单位元
-  const identity = useMemo(() => {
-    for (let e = 0; e < size; e++) {
-      let ok = true
-      for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) {
-          ok = false
-          break
-        }
-      }
-      if (ok) return e
-    }
-    return -1
-  }, [table, size])
+  const identity = useMemo(() => findIdentity(table, size), [table, size])
 
   // 引导任务定义
   const guidedTasks = useMemo(() => {
@@ -312,7 +304,7 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       } else if (guidedTask === 'find_commutative') {
         const ba = lookup(b, a)
         if (ba !== null && ba === result && a !== b) {
-          const key = `${Math.min(a, b)}:${Math.max(a, b)}`
+          const key = getPairKey(a, b)
           if (!discoveredCommutative.has(key)) {
             setDiscoveredCommutative(prev => new Set(prev).add(key))
             if (
@@ -418,7 +410,7 @@ function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }: BumpG
       const ab = lookup(a, b)
       const ba = lookup(b, a)
       if (ab === null || ba === null) return
-      const key = `${Math.min(a, b)}:${Math.max(a, b)}`
+      const key = getPairKey(a, b)
       if (ab === ba && !discoveredCommutative.has(key)) {
         setDiscoveredCommutative(prev => new Set(prev).add(key))
         if (ageLevel === 'kids') {
@@ -738,7 +730,7 @@ interface MatchGameProps {
   onDiscovery?: (property: string, ageLevel: AgeLevel) => void
 }
 
-function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
+export function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set())
   const [matched, setMatched] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<number | null>(null)
@@ -753,41 +745,14 @@ function MatchGame({ table, size, ageLevel, onDiscovery }: MatchGameProps) {
   const [lastMatch, setLastMatch] = useState<{ a: number; b: number; e: number } | null>(null)
 
   // 找单位元
-  const identity = useMemo(() => {
-    for (let e = 0; e < size; e++) {
-      let ok = true
-      for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) {
-          ok = false
-          break
-        }
-      }
-      if (ok) return e
-    }
-    return -1
-  }, [table, size])
+  const identity = useMemo(() => findIdentity(table, size), [table, size])
 
   // 计算逆元映射
-  const inverseMap = useMemo(() => {
-    const map = new Map<number, number>()
-    if (identity === -1) return map
-
-    for (let a = 0; a < size; a++) {
-      for (let b = 0; b < size; b++) {
-        if (table[a]?.[b] === identity && table[b]?.[a] === identity) {
-          map.set(a, b)
-          break
-        }
-      }
-    }
-    return map
-  }, [table, size, identity])
+  const inverseMap = useMemo(() => getInverseMap(table, size, identity), [table, size, identity])
 
   // 检查两个元素是否互为逆元
   const areInverses = useCallback(
-    (a: number, b: number): boolean => {
-      return inverseMap.get(a) === b
-    },
+    (a: number, b: number): boolean => areInversesUtil(inverseMap, a, b),
     [inverseMap],
   )
 
@@ -1085,34 +1050,15 @@ interface ColorViewProps {
   ) => void
 }
 
-function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
+export function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewProps) {
   const [hovered, setHovered] = useState<{ row: number; col: number } | null>(null)
   const [showNumbers, setShowNumbers] = useState(true)
 
   // 检测对称性（交换律）
-  const isSymmetric = useMemo(() => {
-    for (let i = 0; i < size; i++) {
-      for (let j = i + 1; j < size; j++) {
-        if (table[i]?.[j] !== table[j]?.[i]) return false
-      }
-    }
-    return true
-  }, [table, size])
+  const isSymmetric = useMemo(() => isTableSymmetric(table, size), [table, size])
 
   // 找单位元
-  const identity = useMemo(() => {
-    for (let e = 0; e < size; e++) {
-      let ok = true
-      for (let j = 0; j < size; j++) {
-        if (table[e]?.[j] !== j) {
-          ok = false
-          break
-        }
-      }
-      if (ok) return e
-    }
-    return -1
-  }, [table, size])
+  const identity = useMemo(() => findIdentity(table, size), [table, size])
 
   return (
     <div className="sp-color-root">

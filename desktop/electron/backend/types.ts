@@ -305,23 +305,6 @@ export interface TeachingDecision {
 }
 
 // ---------------------------------------------------------------------------
-// Counter-Example Forge Results
-// ---------------------------------------------------------------------------
-
-export enum VerificationLevel {
-  BRUTE_FORCE = 'brute_force',
-  Z3 = 'z3',
-}
-
-export interface CounterExampleResult {
-  success: boolean
-  counter_example: Record<string, unknown> | null
-  explanation: string
-  z3_model: string | null
-  level: VerificationLevel
-}
-
-// ---------------------------------------------------------------------------
 // LLM Configuration
 // ---------------------------------------------------------------------------
 

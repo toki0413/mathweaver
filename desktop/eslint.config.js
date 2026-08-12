@@ -27,6 +27,7 @@ export default tseslint.config(
       'electron/preload/index.d.ts',
       'src/types/electron.d.ts',
       'test/mock-api.js',
+      'test/real-api.js', // browser-side E2E bridge (loaded by real-index.html)
     ],
   },
 

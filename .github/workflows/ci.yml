@@ -45,8 +45,16 @@ jobs:
       - name: Lint with ruff
         run: ruff check .
 
-      - name: Run tests
-        run: pytest tests/ -v
+      - name: Run tests with coverage gate
+        # `--cov` enforces the `fail_under = 75` gate in pyproject.toml.
+        run: pytest tests/ -v --cov
+
+      - name: Verify OpenAPI contract is current
+        # Regenerate the contract artifact and fail if it differs from the
+        # committed openapi.json (single source of truth for the API contract).
+        run: |
+          python scripts/export_openapi.py
+          git diff --exit-code openapi.json
 
   # ---------------------------------------------------------------------------
   # Desktop — Electron (typecheck + lint + unit test + coverage + build)
@@ -136,3 +144,56 @@ jobs:
           name: accessibility-report
           path: desktop/playwright-report/
           retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Desktop E2E (real backend) — full frontend -> HTTP -> FastAPI chain
+  # ---------------------------------------------------------------------------
+  desktop-e2e-real:
+    name: Desktop E2E (real backend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend dependencies
+        run: |
+          cd ../backend
+          test -f README.md || printf '# MathWeaver Backend\n' > README.md
+          pip install -e ".[dev]"
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run real-backend E2E tests
+        # Boots uvicorn + mock LLM and the renderer, exercising the genuine
+        # frontend -> HTTP -> FastAPI -> Orchestrator chain.
+        run: npx playwright test --config playwright.real.config.ts
+
+      - name: Upload real E2E results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-real
+          path: desktop/test-results/
+          retention-days: 7

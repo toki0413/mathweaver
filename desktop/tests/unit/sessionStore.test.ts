@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { useStore } from '@/stores/sessionStore'
+import { useStore, initBackendUrl } from '@/stores/sessionStore'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,6 +61,13 @@ type MockApi = {
   invoke: ReturnType<typeof vi.fn>
   saveSession: ReturnType<typeof vi.fn>
   loadSession: ReturnType<typeof vi.fn>
+  getLLMConfig: ReturnType<typeof vi.fn>
+  setLLMConfig: ReturnType<typeof vi.fn>
+  getLLMPresets: ReturnType<typeof vi.fn>
+  testLLMConnection: ReturnType<typeof vi.fn>
+  isOnboardingComplete: ReturnType<typeof vi.fn>
+  setOnboardingComplete: ReturnType<typeof vi.fn>
+  generateContent: ReturnType<typeof vi.fn>
 }
 
 /**
@@ -81,6 +88,13 @@ function setupMockApi(overrides: Partial<MockApi> = {}): MockApi {
     invoke: vi.fn(),
     saveSession: vi.fn(),
     loadSession: vi.fn(),
+    getLLMConfig: vi.fn(),
+    setLLMConfig: vi.fn(),
+    getLLMPresets: vi.fn(),
+    testLLMConnection: vi.fn(),
+    isOnboardingComplete: vi.fn(),
+    setOnboardingComplete: vi.fn(),
+    generateContent: vi.fn(),
     ...overrides,
   }
   ;(window as unknown as { api: MockApi }).api = api
@@ -100,6 +114,10 @@ describe('sessionStore', () => {
     // Stub fetch so the conjecture HTTP fallback does not attempt a real
     // network call inside jsdom.
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: vi.fn() }))
+    // Many tests exercise error paths where the store logs to console.error
+    // by design. Silence it so expected failures do not pollute the runner
+    // output. Restored by vi.restoreAllMocks() in afterEach.
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -556,6 +574,32 @@ describe('sessionStore', () => {
       expect(cs.loading).toBe(false)
     })
 
+    it('falls back to the HTTP fetch path when invoke returns nothing', async () => {
+      api.invoke.mockResolvedValue(null)
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ verdict: 'refuted', counter_example: 'S3' }),
+        }),
+      )
+
+      await useStore.getState().submitConjecture('via http')
+
+      const entry = useStore.getState().conjectureState.entries[0]
+      expect(entry.verdict).toBe('refuted')
+      expect(entry.counter_example).toBe('S3')
+    })
+
+    it('ignores a non-ok HTTP fallback response', async () => {
+      api.invoke.mockResolvedValue(null)
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: vi.fn() }))
+
+      await useStore.getState().submitConjecture('no http')
+
+      expect(useStore.getState().conjectureState.entries[0].verdict).toBe('undecidable')
+    })
+
     it('sets loading to true during submission then false after', async () => {
       api.invoke.mockResolvedValue({ verdict: 'confirmed' })
 
@@ -803,6 +847,403 @@ describe('sessionStore', () => {
       await useStore.getState().submitGrillAnswer('q1', 'ans')
 
       expect(useStore.getState().error?.headline).toBe('答案提交失败')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // fetchDagNodes
+  // -------------------------------------------------------------------------
+
+  describe('fetchDagNodes', () => {
+    it('populates dagNodes from the backend response', async () => {
+      api.getDag.mockResolvedValue({
+        nodes: [
+          { id: 'a', name: 'A' },
+          { id: 'b', name: 'B' },
+        ],
+      })
+
+      await useStore.getState().fetchDagNodes()
+
+      expect(useStore.getState().dagNodes).toHaveLength(2)
+      expect(useStore.getState().dagNodes[0].id).toBe('a')
+    })
+
+    it('sets dagNodes to [] when the response has no nodes key', async () => {
+      api.getDag.mockResolvedValue({ other: 'data' })
+
+      await useStore.getState().fetchDagNodes()
+
+      expect(useStore.getState().dagNodes).toEqual([])
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.getDag.mockRejectedValue(new Error('dag fail'))
+
+      await useStore.getState().fetchDagNodes()
+
+      expect(useStore.getState().error?.headline).toBe('无法加载概念图谱')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // saveSession / loadSession
+  // -------------------------------------------------------------------------
+
+  describe('saveSession', () => {
+    it('serializes the session and returns the saved path', async () => {
+      useStore.setState({
+        sessionId: 'sess-1',
+        targetNode: 'group_theory',
+        chat: [{ role: 'user', content: 'hi' }],
+      })
+      api.saveSession.mockResolvedValue('/tmp/session.json')
+
+      const path = await useStore.getState().saveSession()
+
+      expect(path).toBe('/tmp/session.json')
+      expect(api.saveSession).toHaveBeenCalledOnce()
+      const payload = api.saveSession.mock.calls[0][0] as string
+      const parsed = JSON.parse(payload)
+      expect(parsed.studentId).toBe('sess-1')
+      expect(parsed.targetNode).toBe('group_theory')
+    })
+
+    it('returns null and sets an error when the API throws', async () => {
+      api.saveSession.mockRejectedValue(new Error('disk full'))
+
+      const path = await useStore.getState().saveSession()
+
+      expect(path).toBeNull()
+      expect(useStore.getState().error?.headline).toBe('保存会话失败')
+    })
+  })
+
+  describe('loadSession', () => {
+    it('restores session fields from serialized content', async () => {
+      api.loadSession.mockResolvedValue(
+        JSON.stringify({
+          studentId: 'sess-x',
+          targetNode: 'calculus',
+          chat: [{ role: 'system', content: 'welcome' }],
+          fourFields: null,
+          phaseTrace: ['perceive'],
+        }),
+      )
+
+      const ok = await useStore.getState().loadSession()
+
+      expect(ok).toBe(true)
+      const state = useStore.getState()
+      expect(state.sessionId).toBe('sess-x')
+      expect(state.targetNode).toBe('calculus')
+      expect(state.chat[0].content).toBe('welcome')
+    })
+
+    it('returns false when there is no saved content', async () => {
+      api.loadSession.mockResolvedValue(null)
+
+      expect(await useStore.getState().loadSession()).toBe(false)
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.loadSession.mockRejectedValue(new Error('read error'))
+
+      expect(await useStore.getState().loadSession()).toBe(false)
+      expect(useStore.getState().error?.headline).toBe('加载会话失败')
+    })
+
+    it('sets an error when the content fails to parse', async () => {
+      api.loadSession.mockResolvedValue('not-json-{{')
+
+      expect(await useStore.getState().loadSession()).toBe(false)
+      expect(useStore.getState().error?.headline).toBe('会话数据损坏')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // submitProof / setSelectedTheorem
+  // -------------------------------------------------------------------------
+
+  describe('submitProof', () => {
+    it('stores the proof result on success', async () => {
+      api.submitProof.mockResolvedValue({ theorem_name: 'Lagrange', is_complete: true })
+
+      await useStore.getState().submitProof('lagrange', ['step 1'], 'group_theory')
+
+      const ps = useStore.getState().proofState
+      expect(ps.currentResult).toEqual({ theorem_name: 'Lagrange', is_complete: true })
+      expect(useStore.getState().loading).toBe(false)
+      expect(api.submitProof).toHaveBeenCalledWith('lagrange', ['step 1'], 'group_theory')
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.submitProof.mockRejectedValue(new Error('bad proof'))
+
+      await useStore.getState().submitProof('x', [])
+
+      expect(useStore.getState().error?.headline).toBe('证明验证失败')
+    })
+  })
+
+  describe('setSelectedTheorem', () => {
+    it('updates the selected theorem without touching other fields', async () => {
+      useStore.setState({
+        proofState: { theorems: ['a', 'b'], currentResult: null, selectedTheorem: 'a' },
+      })
+
+      useStore.getState().setSelectedTheorem('b')
+
+      const ps = useStore.getState().proofState
+      expect(ps.selectedTheorem).toBe('b')
+      expect(ps.theorems).toEqual(['a', 'b'])
+    })
+
+    it('accepts null to clear the selection', () => {
+      useStore.getState().setSelectedTheorem(null)
+      expect(useStore.getState().proofState.selectedTheorem).toBeNull()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // LLM config / presets / connection
+  // -------------------------------------------------------------------------
+
+  describe('fetchLLMConfig', () => {
+    it('stores the returned config', async () => {
+      api.getLLMConfig.mockResolvedValue({ provider: 'deepseek', model: 'deepseek-chat' })
+
+      await useStore.getState().fetchLLMConfig()
+
+      expect(useStore.getState().llmConfig).toEqual({
+        provider: 'deepseek',
+        model: 'deepseek-chat',
+      })
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.getLLMConfig.mockRejectedValue(new Error('cfg fail'))
+
+      await useStore.getState().fetchLLMConfig()
+
+      expect(useStore.getState().error?.headline).toBe('LLM 配置加载失败')
+    })
+  })
+
+  describe('saveLLMConfig', () => {
+    it('stores the updated config from the response', async () => {
+      api.setLLMConfig.mockResolvedValue({
+        success: true,
+        config: { provider: 'ollama', model: 'llama3' },
+      })
+
+      await useStore.getState().saveLLMConfig({ provider: 'ollama' })
+
+      expect(useStore.getState().llmConfig?.model).toBe('llama3')
+      expect(api.setLLMConfig).toHaveBeenCalledWith({ provider: 'ollama' })
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.setLLMConfig.mockRejectedValue(new Error('save fail'))
+
+      await useStore.getState().saveLLMConfig({})
+
+      expect(useStore.getState().error?.headline).toBe('LLM 配置保存失败')
+    })
+  })
+
+  describe('fetchLLMPresets', () => {
+    it('stores the returned presets', async () => {
+      api.getLLMPresets.mockResolvedValue([{ id: 'deepseek', label: 'DeepSeek' }])
+
+      await useStore.getState().fetchLLMPresets()
+
+      expect(useStore.getState().llmPresets).toHaveLength(1)
+      expect(useStore.getState().llmPresets[0].id).toBe('deepseek')
+    })
+
+    it('sets an error when the API throws', async () => {
+      api.getLLMPresets.mockRejectedValue(new Error('presets fail'))
+
+      await useStore.getState().fetchLLMPresets()
+
+      expect(useStore.getState().error?.headline).toBe('LLM 预设加载失败')
+    })
+  })
+
+  describe('testLLMConnection', () => {
+    it('returns the backend result', async () => {
+      api.testLLMConnection.mockResolvedValue({ ok: true, message: 'connected', latencyMs: 200 })
+
+      const result = await useStore.getState().testLLMConnection()
+
+      expect(result).toEqual({ ok: true, message: 'connected', latencyMs: 200 })
+    })
+
+    it('returns a failure when the API returns nothing', async () => {
+      api.testLLMConnection.mockResolvedValue(null)
+
+      const result = await useStore.getState().testLLMConnection()
+
+      expect(result.ok).toBe(false)
+      expect(result.message).toBe('无响应')
+    })
+
+    it('returns a failure message when the API throws', async () => {
+      api.testLLMConnection.mockRejectedValue(new Error('timeout'))
+
+      const result = await useStore.getState().testLLMConnection()
+
+      expect(result.ok).toBe(false)
+      expect(result.message).toContain('timeout')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // Onboarding
+  // -------------------------------------------------------------------------
+
+  describe('checkOnboarding / completeOnboarding', () => {
+    it('checkOnboarding sets onboardingCompleted to true', async () => {
+      api.isOnboardingComplete.mockResolvedValue(true)
+
+      await useStore.getState().checkOnboarding()
+
+      expect(useStore.getState().onboardingCompleted).toBe(true)
+    })
+
+    it('checkOnboarding defaults to false when status is null', async () => {
+      api.isOnboardingComplete.mockResolvedValue(null)
+
+      await useStore.getState().checkOnboarding()
+
+      expect(useStore.getState().onboardingCompleted).toBe(false)
+    })
+
+    it('checkOnboarding leaves state unchanged when the API throws', async () => {
+      api.isOnboardingComplete.mockRejectedValue(new Error('status fail'))
+
+      await useStore.getState().checkOnboarding()
+
+      expect(useStore.getState().onboardingCompleted).toBe(false)
+    })
+
+    it('completeOnboarding marks the flow complete', async () => {
+      api.setOnboardingComplete.mockResolvedValue(undefined)
+
+      await useStore.getState().completeOnboarding()
+
+      expect(useStore.getState().onboardingCompleted).toBe(true)
+      expect(api.setOnboardingComplete).toHaveBeenCalledWith(true)
+    })
+
+    it('completeOnboarding sets an error when the API throws', async () => {
+      api.setOnboardingComplete.mockRejectedValue(new Error('persist fail'))
+
+      await useStore.getState().completeOnboarding()
+
+      expect(useStore.getState().error?.headline).toBe('引导流程完成失败')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // generateContent (dynamic content)
+  // -------------------------------------------------------------------------
+
+  describe('generateContent', () => {
+    it('appends an exercise to dynamicContent', async () => {
+      api.generateContent.mockResolvedValue({ type: 'exercise', title: 'E1' })
+
+      await useStore.getState().generateContent({
+        type: 'exercise',
+        topic: '群论',
+        ageLevel: 'teens',
+        difficulty: 0.5,
+      })
+
+      const dc = useStore.getState().dynamicContent
+      expect(dc.exercises).toHaveLength(1)
+      expect(dc.exercises[0].title).toBe('E1')
+      expect(dc.loading).toBe(false)
+      expect(dc.lastGenerated).not.toBeNull()
+    })
+
+    it('appends a story to dynamicContent', async () => {
+      api.generateContent.mockResolvedValue({ type: 'story', title: 'S1' })
+
+      await useStore.getState().generateContent({
+        type: 'story',
+        topic: '群论',
+        ageLevel: 'kids',
+        difficulty: 0.3,
+      })
+
+      expect(useStore.getState().dynamicContent.stories).toHaveLength(1)
+    })
+
+    it('appends a challenge to dynamicContent', async () => {
+      api.generateContent.mockResolvedValue({ type: 'challenge', title: 'C1' })
+
+      await useStore.getState().generateContent({
+        type: 'challenge',
+        topic: '群论',
+        ageLevel: 'teens',
+        difficulty: 0.8,
+      })
+
+      expect(useStore.getState().dynamicContent.challenges).toHaveLength(1)
+    })
+
+    it('sets loading and an error when the API throws', async () => {
+      api.generateContent.mockRejectedValue(new Error('gen fail'))
+
+      await useStore.getState().generateContent({
+        type: 'exercise',
+        topic: '群论',
+        ageLevel: 'teens',
+        difficulty: 0.5,
+      })
+
+      const dc = useStore.getState().dynamicContent
+      expect(dc.loading).toBe(false)
+      expect(useStore.getState().error?.headline).toBe('内容生成失败')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // initBackendUrl
+  // -------------------------------------------------------------------------
+
+  describe('initBackendUrl', () => {
+    it('resolves the backend URL through the bridge when available', async () => {
+      const getBackendUrl = vi.fn().mockResolvedValue('http://localhost:8010')
+      ;(window as unknown as { api: { getBackendUrl: () => Promise<string> } }).api = {
+        getBackendUrl,
+      }
+
+      await initBackendUrl()
+
+      expect(getBackendUrl).toHaveBeenCalledOnce()
+    })
+
+    it('is a safe no-op when the bridge is unavailable', async () => {
+      ;(window as unknown as { api: unknown }).api = undefined
+
+      await expect(initBackendUrl()).resolves.toBeUndefined()
+    })
+
+    it('is a safe no-op when the bridge has no getBackendUrl', async () => {
+      ;(window as unknown as { api: { getBackendUrl?: never } }).api = {}
+
+      await expect(initBackendUrl()).resolves.toBeUndefined()
+    })
+
+    it('swallows errors from the backend URL resolution', async () => {
+      ;(window as unknown as { api: { getBackendUrl: () => Promise<string> } }).api = {
+        getBackendUrl: vi.fn().mockRejectedValue(new Error('boom')),
+      }
+
+      await expect(initBackendUrl()).resolves.toBeUndefined()
     })
   })
 })

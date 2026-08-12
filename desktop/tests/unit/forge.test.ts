@@ -3,6 +3,7 @@ import {
   verifyGroupAxiomsCayley,
   checkCommutativityCayley,
   checkAssociativityCayley,
+  verifyAssociativity,
   mkForgeResult,
   FallbackLevel,
 } from '../../electron/backend/forge/forge'
@@ -169,6 +170,55 @@ describe('checkAssociativityCayley', () => {
     expect(counterEx).toContain('but')
     // Counter-example should mention specific elements
     expect(counterEx).toMatch(/\d/)
+  })
+
+  it('rejects out-of-range values without crashing', () => {
+    const badTable: number[][] = [
+      [0, 1, 5],
+      [1, 2, 0],
+      [2, 0, 1],
+    ]
+    const [isAssoc, counterEx] = checkAssociativityCayley(badTable)
+    expect(isAssoc).toBe(false)
+    expect(counterEx).toContain('out of range')
+  })
+
+  it('rejects empty rows without crashing', () => {
+    const badTable: number[][] = [[], []]
+    const [isAssoc, counterEx] = checkAssociativityCayley(badTable)
+    expect(isAssoc).toBe(false)
+    expect(counterEx).toContain('Invalid Cayley table')
+  })
+
+  it('rejects oversized tables', () => {
+    const big = Array.from({ length: 15 }, () => Array.from({ length: 15 }, () => 0))
+    const [isAssoc, counterEx] = checkAssociativityCayley(big)
+    expect(isAssoc).toBe(false)
+    expect(counterEx).toContain('too large')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// verifyAssociativity
+// ---------------------------------------------------------------------------
+
+describe('verifyAssociativity', () => {
+  it('returns safe result for out-of-range table instead of crashing', () => {
+    const badTable: number[][] = [
+      [0, 1, 5],
+      [1, 2, 0],
+      [2, 0, 1],
+    ]
+    const result = verifyAssociativity(badTable)
+    expect(result.success).toBe(false)
+    expect(result.explanation).toContain('Invalid Cayley table')
+  })
+
+  it('returns safe result for empty rows', () => {
+    const badTable: number[][] = [[], []]
+    const result = verifyAssociativity(badTable)
+    expect(result.success).toBe(false)
+    expect(result.explanation).toContain('Invalid Cayley table')
   })
 })
 

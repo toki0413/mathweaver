@@ -20,6 +20,8 @@ export const CURRICULUM_LEVELS: CurriculumLevel[] = [
   { value: 'high_school', label: '高中' },
   { value: 'middle_school', label: '初中' },
   { value: 'elementary', label: '小学' },
+  { value: 'physics', label: '物理（数学的延伸）' },
+  { value: 'chemistry', label: '化学（数学的延伸）' },
 ]
 
 /**
