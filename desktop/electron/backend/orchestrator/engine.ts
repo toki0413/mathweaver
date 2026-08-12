@@ -688,6 +688,127 @@ const PROOF_TEMPLATES: Record<string, ProofTemplate> = {
 }
 
 // ---------------------------------------------------------------------------
+// DecisionEffectivenessTracker
+// ---------------------------------------------------------------------------
+
+interface ActionStat {
+  count: number
+  positive: number
+  totalEffectiveness: number
+}
+
+/**
+ * DecisionEffectivenessTracker — 教学决策效果追踪器。
+ *
+ * 让 meta-agent 的参数学习闭环拥有「真实」数据，而非硬编码占位。
+ *
+ * 工作方式：
+ * - 每个回合结束时 `recordDecision(action)` 记录一次教学决策；
+ * - 下一回合开始时 `observeInput(...)` 依据可观测的学生信号评估上一回合
+ *   决策是否「有效」，并把结果归因到对应的 action；
+ * - 汇总为 meta-agent 需要的 feedback（action_stats）与 metrics
+ *   （success_rate / avg_latency_ms）。
+ *
+ * 有效性是诚实代理（honest proxy），并非推测的绝对值：
+ * - 学生提交了凯莱表（发生了实质学习产出）→ +1
+ * - 认知负荷较上一回合下降 → +1
+ * - 无回溯（探索更顺畅）→ +0.5
+ * - 认知负荷上升且出现回溯（决策未奏效）→ -1
+ */
+class DecisionEffectivenessTracker {
+  private actionStats: Record<string, ActionStat> = {}
+  private previousAction: string | null = null
+  private previousLoad = 0.4
+  private previousStrokes = 0
+  private totalTurns = 0
+  private positiveTurns = 0
+  private latencySum = 0
+  private latencyCount = 0
+
+  /** 记录本回合做出的教学决策（每回合恰好一次）。 */
+  recordDecision(action: string): void {
+    this.previousAction = action
+    if (!this.actionStats[action]) {
+      this.actionStats[action] = { count: 0, positive: 0, totalEffectiveness: 0 }
+    }
+    this.actionStats[action].count += 1
+  }
+
+  /** 新会话开始时清空历史统计。 */
+  reset(): void {
+    this.actionStats = {}
+    this.previousAction = null
+    this.previousLoad = 0.4
+    this.previousStrokes = 0
+    this.totalTurns = 0
+    this.positiveTurns = 0
+    this.latencySum = 0
+    this.latencyCount = 0
+  }
+
+  /** 下一回合开始时调用：评估上一回合决策的有效性并汇总指标。 */
+  observeInput(studentInput: string, rtMs: number, metadata: Record<string, unknown>): void {
+    const load =
+      typeof metadata['cognitive_load'] === 'number'
+        ? Math.max(0, Math.min(1, metadata['cognitive_load']))
+        : this.previousLoad
+    const backtrack = metadata['backtrack_count'] as number | undefined
+    const sentTable = this.isCayleyTable(studentInput)
+    const strokes = metadata['whiteboard_strokes'] as number | undefined
+    const drewMore = typeof strokes === 'number' && strokes > this.previousStrokes
+
+    let eff = 0
+    if (sentTable) eff += 1
+    if (drewMore) eff += 0.5 // visual exploration on the whiteboard = active learning
+    if (load < this.previousLoad - 0.05) eff += 1
+    if (typeof backtrack === 'number' && backtrack === 0 && this.previousAction) eff += 0.5
+    if (load > this.previousLoad + 0.1 && (backtrack ?? 0) > 0) eff -= 1
+
+    if (this.previousAction && this.actionStats[this.previousAction]) {
+      const stat = this.actionStats[this.previousAction]
+      stat.totalEffectiveness += eff
+      if (eff > 0) stat.positive += 1
+    }
+
+    this.totalTurns += 1
+    if (eff > 0) this.positiveTurns += 1
+    this.latencySum += rtMs
+    this.latencyCount += 1
+    this.previousLoad = load
+    if (typeof strokes === 'number') this.previousStrokes = strokes
+  }
+
+  private isCayleyTable(input: string): boolean {
+    const t = input.trim()
+    return t.startsWith('[') && t.endsWith(']')
+  }
+
+  /** 汇总为 meta-agent 需要的 feedback 结构。 */
+  getFeedback(): {
+    evaluated: number
+    action_stats: Record<string, Record<string, number>>
+  } {
+    const actionStats: Record<string, Record<string, number>> = {}
+    for (const [action, s] of Object.entries(this.actionStats)) {
+      actionStats[action] = {
+        count: s.count,
+        avg_effectiveness: s.count > 0 ? s.totalEffectiveness / s.count : 0,
+        positive_rate: s.count > 0 ? s.positive / s.count : 0,
+      }
+    }
+    return { evaluated: this.totalTurns, action_stats: actionStats }
+  }
+
+  /** 汇总为 meta-agent 需要的 metrics 结构。 */
+  getMetrics(): { success_rate: number; avg_latency_ms: number } {
+    return {
+      success_rate: this.totalTurns > 0 ? this.positiveTurns / this.totalTurns : 0,
+      avg_latency_ms: this.latencyCount > 0 ? Math.round(this.latencySum / this.latencyCount) : 0,
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
 
@@ -695,6 +816,9 @@ export class Orchestrator {
   /** The central orchestrator implementing four-field coupling. */
 
   curriculumLevel: string
+  /** Age band of the current student ('kids' | 'tweens' | 'teens'), passed to
+   *  agents so they adapt explanation language (magical vs formal terms). */
+  ageLevel: string = 'kids'
   dag: ConceptDAG
   forge: CounterExampleForge
   llmClient: LLMClient | null
@@ -707,6 +831,8 @@ export class Orchestrator {
   paramLearner: ParameterLearner
   grillSession: SimpleGrillSession | null
   agents: Record<string, BaseAgent>
+  /** 教学决策效果追踪器，为 meta-agent 提供真实反馈数据 */
+  private effectivenessTracker = new DecisionEffectivenessTracker()
   private sessionStart: Date | null = null
   private store: StateStore | null
   /** 串行化锁，防止并发 processStudentInput 竞态 */
@@ -775,6 +901,7 @@ export class Orchestrator {
     this.phase = SessionPhase.PERCEIVE
     this.messageHistory = []
     this.grillSession = null
+    this.effectivenessTracker.reset()
     this.sessionStart = new Date()
 
     // Set initial knowledge field
@@ -1071,6 +1198,35 @@ export class Orchestrator {
         Math.max(this.state.cognitive.baseline_rt_ms * 0.3, 1.0)
     }
 
+    // Merge real epistemic/interaction signals captured on the frontend
+    // (eye-tracking cognitive load, table edit backtracks) into the state so
+    // makeDecision() consumes actual student behavior, not simulated defaults.
+    if (typeof metadata['cognitive_load'] === 'number') {
+      this.state.cognitive.cognitive_load = Math.max(0, Math.min(1, metadata['cognitive_load']))
+    }
+    if (typeof metadata['backtrack_count'] === 'number') {
+      this.state.cognitive.backtrack_count = metadata['backtrack_count']
+    }
+    if (typeof metadata['trial_sequence_length'] === 'number') {
+      this.state.cognitive.trial_sequence_length = metadata['trial_sequence_length']
+    }
+
+    // Whiteboard (visual exploration) engagement: drawing means active learning.
+    // Nudge flow slightly positive so makeDecision() reflects real engagement.
+    if (metadata['whiteboard_active'] === true) {
+      this.state.emotional.flow_score = Math.min(1, this.state.emotional.flow_score + 0.06)
+    }
+
+    // Age adaptation: remember the student's age band so downstream agents can
+    // adapt their explanation language (magical / transitional / formal).
+    if (typeof metadata['age_level'] === 'string' && metadata['age_level'].length > 0) {
+      this.ageLevel = metadata['age_level']
+    }
+
+    // Evaluate the previous turn's teaching decision using this turn's signals,
+    // so the meta-agent can learn from real outcomes (not hardcoded numbers).
+    this.effectivenessTracker.observeInput(studentInput, rtMs, metadata)
+
     // --- Curriculum switch detection ---
     const switched = this.detectCurriculumSwitch(studentInput)
     if (switched) {
@@ -1248,6 +1404,7 @@ export class Orchestrator {
           prior_results: priorResults,
           metadata: {
             response_time_ms: rtMs,
+            age_level: this.ageLevel,
             pedagogical_decision: {
               action: decision.action,
               reason: decision.reason,
@@ -1319,7 +1476,7 @@ export class Orchestrator {
         student_input: studentInput,
         four_field_state: this.state,
         prior_results: priorResults,
-        metadata: { response_time_ms: rtMs },
+        metadata: { response_time_ms: rtMs, age_level: this.ageLevel },
       }
 
       // Run the agent
@@ -1361,6 +1518,7 @@ export class Orchestrator {
         prior_results: priorResults,
         metadata: {
           response_time_ms: rtMs,
+          age_level: this.ageLevel,
           pedagogical_decision: {
             action: decision.action,
             reason: decision.reason,
@@ -1397,13 +1555,17 @@ export class Orchestrator {
     try {
       const metaAgent = this.agents['meta']
       if (metaAgent) {
+        // Record the final pedagogical decision of this turn so the next turn's
+        // outcome can be attributed to it.
+        this.effectivenessTracker.recordDecision(decision.action)
         const metaCtx: AgentContext = {
           student_input: studentInput,
           four_field_state: this.state,
           prior_results: {},
           metadata: {
-            feedback: { evaluated: this.messageHistory.length, action_stats: {} },
-            metrics: { success_rate: 1, avg_latency_ms: 0 },
+            age_level: this.ageLevel,
+            feedback: this.effectivenessTracker.getFeedback(),
+            metrics: this.effectivenessTracker.getMetrics(),
           },
         }
         const metaMsg = await metaAgent.run(metaCtx)

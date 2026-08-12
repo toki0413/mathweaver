@@ -96,8 +96,8 @@ const OVERLAY_CSS = `
   border-color: var(--muted, #8a8884);
 }
 .sco-close:active {
-  color: var(--accent, #c678dd);
-  border-color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
+  border-color: var(--accent, #c4392f);
 }
 .sco-body {
   flex: 1;
@@ -127,7 +127,7 @@ const OVERLAY_CSS = `
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
   margin-bottom: 6px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border, #3a3a3a);

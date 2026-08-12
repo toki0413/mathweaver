@@ -114,7 +114,7 @@ const PALETTE_CSS = `
   user-select: none;
 }
 .cmd-palette-item-selected {
-  background: rgba(198, 120, 221, 0.18);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .cmd-palette-item-icon {
   width: 20px;
@@ -122,7 +122,7 @@ const PALETTE_CSS = `
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
 }
 .cmd-palette-item-label {
   flex: 1;

@@ -218,6 +218,10 @@ class Backend {
     this.ensureReady()
     return await this.orchestrator!.processStudentInput(req.student_input, {
       response_time_ms: req.response_time_ms ?? 5000,
+      age_level: req.age_level,
+      cognitive_load: req.cognitive_load,
+      backtrack_count: req.backtrack_count,
+      trial_sequence_length: req.trial_sequence_length,
     })
   }
 

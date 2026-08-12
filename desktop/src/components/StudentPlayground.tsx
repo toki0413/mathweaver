@@ -215,7 +215,7 @@ export function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }
         {
           id: 'find_identity' as GuidedTask,
           label: '找老大',
-          icon: 'â',
+          icon: '★',
           desc: '找一个球，碰谁都不变的！',
         },
         {
@@ -237,7 +237,7 @@ export function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }
         {
           id: 'find_identity' as GuidedTask,
           label: '找单位元',
-          icon: 'â',
+          icon: '★',
           desc: '找 e 使 e∗a = a 对所有 a 成立',
         },
         {
@@ -259,7 +259,7 @@ export function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }
       {
         id: 'find_identity' as GuidedTask,
         label: 'Find Identity',
-        icon: 'â',
+        icon: '★',
         desc: 'Find e such that e∗a = a',
       },
       {
@@ -594,7 +594,7 @@ export function BumpGame({ table, size, ageLevel, onHighlightCell, onDiscovery }
                 : 'Select two elements to compute'
             : guidedTask === 'find_identity'
               ? ageLevel === 'kids'
-                ? 'â 哪个球碰了别人不变？试试看！'
+                ? '★ 哪个球碰了别人不变？试试看！'
                 : '找 e 使 e∗a = a，逐个测试！'
               : guidedTask === 'find_inverses'
                 ? ageLevel === 'kids'
@@ -1152,9 +1152,9 @@ export function ColorView({ table, size, ageLevel, onHighlightCell }: ColorViewP
         {identity !== -1 && (
           <div className="sp-pattern-badge identity">
             {ageLevel === 'kids'
-              ? `â 老大是 ${identity}（看那一行一列的彩虹色）`
+              ? `★ 老大是 ${identity}（看那一行一列的彩虹色）`
               : ageLevel === 'tweens'
-                ? `â 单位元 = ${identity}`
+                ? `★ 单位元 = ${identity}`
                 : `Identity: ${identity}`}
           </div>
         )}

@@ -28,6 +28,12 @@ interface MathWeaverAPI {
   sendInput(req: {
     student_input: string
     response_time_ms?: number
+    age_level?: string
+    cognitive_load?: number
+    backtrack_count?: number
+    trial_sequence_length?: number
+    whiteboard_strokes?: number
+    whiteboard_active?: boolean
   }): Promise<Record<string, unknown> | null>
 
   // Forge

@@ -108,6 +108,9 @@ export class CollaborationAgent extends BaseAgent {
     const action = (decision['action'] as string) ?? 'continue'
     const hintLevel = (decision['hint_level'] as number) ?? 0
 
+    // Age adaptation: the student's age band drives explanation language.
+    const ageLevel = (ctx.metadata['age_level'] as string) ?? 'kids'
+
     // --- Proof mode: student submitted a proof attempt ---
     const proofData = ctx.metadata['proof_result'] as Record<string, unknown> | undefined
     if (proofData) {
@@ -226,7 +229,7 @@ export class CollaborationAgent extends BaseAgent {
         action,
         hintLevel,
       )
-      const socraticPrompt = this.socraticSystemPrompt(action, hintLevel)
+      const socraticPrompt = this.socraticSystemPrompt(action, hintLevel, ageLevel)
       const resp = await this.llmClient.chat(socraticPrompt, contextSummary)
       const content = resp.content.replace('[DELIVER]', '').trim()
       return createAgentMessage(this.role, content, {
@@ -256,6 +259,7 @@ export class CollaborationAgent extends BaseAgent {
       ctx.student_input,
       action,
       hintLevel,
+      ageLevel,
     )
 
     return createAgentMessage(this.role, content, {
@@ -265,15 +269,22 @@ export class CollaborationAgent extends BaseAgent {
         socratic_style: true,
         pedagogical_action: action,
         hint_level: hintLevel,
+        age_level: ageLevel,
       },
     })
   }
 
   /** Build a Socratic system prompt adapted to the pedagogical decision. */
-  private socraticSystemPrompt(action: string, hintLevel: number): string {
+  private socraticSystemPrompt(action: string, hintLevel: number, ageLevel: string): string {
     const base =
       '你是一位走在学生身旁的导师。你不替学生走路，而是在关键处伸出手。\n' +
       '核心信条：永远不要直接说出答案。问一个问题，让学生自己迈出那一步。'
+    const ageStyleMap: Record<string, string> = {
+      kids: '学生是 8-10 岁的孩子。用「魔法家族、隐形斗篷老大、好搭档」这类童话语言，禁用抽象术语。',
+      tweens: '学生是 11-13 岁。用半学术语言，可先给直觉再给术语，如「单位元（老大）」。',
+      teens: '学生是 14 岁以上。用完整数学术语，如群、单位元、逆元。',
+    }
+    const ageStyle = ageStyleMap[ageLevel] ?? ageStyleMap['kids']
     const styleMap: Record<string, string> = {
       reduce_abstraction: '学生此刻负荷很重。把语言磨到最简，每次只放一个概念在桌上。',
       emotional_support: '学生可能有些挫败。先认可他走过的路，再轻轻指向下一步。',
@@ -282,7 +293,7 @@ export class CollaborationAgent extends BaseAgent {
       provide_hint: `学生遇到了障碍。给出第 ${hintLevel} 级提示——越来越接近答案，但永远不到达。`,
     }
     const style = styleMap[action] ?? '保持当前的教学节奏。'
-    return `${base}\n${style}\n用 [DELIVER] 标记回应完成。`
+    return `${base}\n${ageStyle}\n${style}\n用 [DELIVER] 标记回应完成。`
   }
 
   private buildContextSummary(
@@ -318,8 +329,17 @@ export class CollaborationAgent extends BaseAgent {
     studentInput: string,
     action: string,
     hintLevel: number,
+    ageLevel: string,
   ): string {
     const parts: string[] = []
+
+    // --- Age-appropriate vocabulary framing (template synthesis) ---
+    const termMap: Record<string, { group: string; identity: string; inverse: string }> = {
+      kids: { group: '魔法家族', identity: '隐形斗篷老大', inverse: '好搭档' },
+      tweens: { group: '群（魔法家族）', identity: '单位元（老大）', inverse: '逆元（好搭档）' },
+      teens: { group: '群', identity: '单位元', inverse: '逆元' },
+    }
+    const terms = termMap[ageLevel] ?? termMap['kids']
 
     // --- Emotional calibration based on pedagogical decision ---
     if (action === 'emotional_support' || emotionalState === 'anxious') {
@@ -352,9 +372,19 @@ export class CollaborationAgent extends BaseAgent {
 
     // --- Next step prompt ---
     if (action === 'advance' && isGroup) {
-      parts.push('\n下一步：试试非交换群的结构，比如 S₃ 的 Cayley 表。')
+      parts.push(
+        ageLevel === 'kids'
+          ? '\n下一步：去发现一个不一样的魔法家族，碰起来顺序可不一样哦！'
+          : ageLevel === 'tweens'
+            ? '\n下一步：试试构造一个非交换群（碰的顺序会改变结果）。'
+            : '\n下一步：试试非交换群的结构，比如 S₃ 的 Cayley 表。',
+      )
     } else if (isStruggling && hintLevel < 3) {
-      parts.push('\n想一想：这个运算表里，哪个元素可能扮演单位元的角色？')
+      parts.push(
+        ageLevel === 'kids'
+          ? `\n想一想：这个表里，哪个元素可能是${terms.identity}？`
+          : `\n想一想：这个运算表里，哪个元素可能扮演${terms.identity}的角色？`,
+      )
     }
 
     return parts.join('\n')

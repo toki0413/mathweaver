@@ -35,6 +35,8 @@ import {
   ModelIcon,
   SettingsIcon,
   KeyboardIcon,
+  SoundOnIcon,
+  SoundOffIcon,
   type IconProps,
 } from './components/Icons'
 
@@ -175,6 +177,8 @@ function makeIdentityTable(n: number): number[][] {
 export default function App() {
   const startSession = useStore(s => s.startSession)
   const sendInput = useStore(s => s.sendInput)
+  const recordTableActivity = useStore(s => s.recordTableActivity)
+  const recordWhiteboardActivity = useStore(s => s.recordWhiteboardActivity)
   const sessionId = useStore(s => s.sessionId)
   const loading = useStore(s => s.loading)
   const fourFields = useStore(s => s.fourFields)
@@ -201,6 +205,9 @@ export default function App() {
     [1, 2, 0],
     [2, 0, 1],
   ])
+  // Tracks which Cayley cells have been edited at least once, so revisiting a
+  // cell is counted as a "backtrack" (cognitive revisiting signal) vs a fresh edit.
+  const editedCellsRef = useRef<Set<string>>(new Set())
   const [textInput, setTextInput] = useState('')
   const [selectedNode, setSelectedNode] = useState('group_definition')
   const [studentId, setStudentId] = useState(`student_${Date.now().toString().slice(-6)}`)
@@ -224,6 +231,16 @@ export default function App() {
   const [verifyTrigger, setVerifyTrigger] = useState(0)
   // --- Age level for adaptive content (kids/tweens/teens) ---
   const [ageLevel, setAgeLevel] = useState<AgeLevel>('kids')
+  // Keep the session store age band in sync so every sendInput carries the
+  // current age to the backend agents (age-adapted explanation language).
+  const storeSetAgeLevel = useStore(s => s.setAgeLevel)
+  const syncAgeLevel = useCallback(
+    (level: AgeLevel) => {
+      setAgeLevel(level)
+      storeSetAgeLevel(level)
+    },
+    [storeSetAgeLevel],
+  )
   // --- Color mode for CayleyTable (student-friendly color visualization) ---
   const [colorMode, setColorMode] = useState(false)
 
@@ -633,18 +650,29 @@ export default function App() {
     setInputStartTime(Date.now())
   }, [textInput, sendInput, inputStartTime, recordActivity])
 
-  const handleTableChange = useCallback((row: number, col: number, value: number) => {
-    setTable(prev => {
-      const next = prev.map(r => [...r])
-      next[row][col] = value
-      return next
-    })
-    soundSystem.play('click')
-  }, [])
+  const handleTableChange = useCallback(
+    (row: number, col: number, value: number) => {
+      setTable(prev => {
+        const next = prev.map(r => [...r])
+        // Only record a state-changing edit (skip no-op self-assignments).
+        if (next[row][col] !== value) {
+          const key = `${row}:${col}`
+          const isBacktrack = editedCellsRef.current.has(key)
+          editedCellsRef.current.add(key)
+          recordTableActivity(isBacktrack ? 'backtrack' : 'edit')
+        }
+        next[row][col] = value
+        return next
+      })
+      soundSystem.play('click')
+    },
+    [recordTableActivity],
+  )
 
   const handleResize = useCallback((n: number) => {
     setTableSize(n)
     setTable(makeIdentityTable(n))
+    editedCellsRef.current.clear()
   }, [])
 
   // --- Command palette command list (defined after handleSendTable) ---
@@ -786,7 +814,7 @@ export default function App() {
         </div>
         <div className="header-right">
           <StreakBadge compact />
-          <AgeSelector level={ageLevel} onChange={setAgeLevel} compact />
+          <AgeSelector level={ageLevel} onChange={syncAgeLevel} compact />
           <span style={{ display: 'inline-block', width: 6 }} />
           <button
             className="icon-btn"
@@ -819,7 +847,9 @@ export default function App() {
             aria-label="音效开关"
             title={soundEnabled ? '关闭音效' : '开启音效'}
           >
-            <span style={{ fontSize: '14px' }}>{soundEnabled ? '' : ''}</span>
+            <span style={{ fontSize: '14px' }}>
+              {soundEnabled ? <SoundOnIcon size={14} /> : <SoundOffIcon size={14} />}
+            </span>
           </button>
           <div className={`backend-status ${backendReady ? 'connected' : 'disconnected'}`}>
             <span className="status-dot" />
@@ -1239,7 +1269,7 @@ export default function App() {
                 {!isKidsMode && (
                   <CollapsibleSection title="草稿板" hint="手绘数学图形" defaultOpen={false}>
                     <p className="desc">自由绘制辅助图形、标注运算表或勾勒证明思路。</p>
-                    <WhiteboardPad height={240} />
+                    <WhiteboardPad height={240} onActivity={recordWhiteboardActivity} />
                   </CollapsibleSection>
                 )}
               </div>
@@ -1626,7 +1656,7 @@ export default function App() {
         onClose={() => setOnboardingOpen(false)}
         onComplete={() => useStore.getState().completeOnboarding()}
         ageLevel={ageLevel}
-        onAgeChange={setAgeLevel}
+        onAgeChange={syncAgeLevel}
         interactiveSteps={MATHWEAVER_COACH_STEPS}
         onFinish={() => {
           const el = document.querySelector('.gdp-root')

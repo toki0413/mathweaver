@@ -569,7 +569,7 @@ function DifficultyGaugeImpl({ current, band, trend, accuracy, size = 180 }: Dif
           const w = barWidth * (thresh - prev)
           const colors = [
             'rgba(152,195,121,0.06)',
-            'rgba(198,120,221,0.06)',
+            'color-mix(in srgb, var(--accent) 6%, transparent)',
             'rgba(229,192,123,0.06)',
             'rgba(224,108,117,0.06)',
           ]

@@ -501,14 +501,14 @@ export function OnboardingOverlay({
                 卡住了？没关系，每个魔法师都会遇到困难！
                 <div className="onboarding-feature-list" style={{ marginTop: '12px' }}>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">?</span>
                     <div>
                       <div className="feat-name">点提示按钮</div>
                       <div className="feat-desc">卡住时点一下，就有线索啦</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">★</span>
                     <div>
                       <div className="feat-name">{t('llm', ageLevel)}帮你</div>
                       <div className="feat-desc">随时问问题，{t('llm', ageLevel)}会陪你</div>
@@ -536,7 +536,7 @@ export function OnboardingOverlay({
                 ，一步步来。
                 <div className="onboarding-feature-list">
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">◆</span>
                     <div>
                       <div className="feat-name">{t('onboarding_cayley', ageLevel)}</div>
                       <div className="feat-desc">
@@ -552,14 +552,14 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">☆</span>
                     <div>
                       <div className="feat-name">{t('conjecture_engine', ageLevel)}</div>
                       <div className="feat-desc">提出猜想，系统自动验证</div>
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">▶</span>
                     <div>
                       <div className="feat-name">{t('manim_anim', ageLevel)}</div>
                       <div className="feat-desc">群运算的可视化动画演示</div>
@@ -651,7 +651,7 @@ export function OnboardingOverlay({
                 {t('groups_to_proofs', ageLevel)}.
                 <div className="onboarding-feature-list">
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">◆</span>
                     <div>
                       <div className="feat-name">{t('onboarding_cayley', ageLevel)}</div>
                       <div className="feat-desc">
@@ -667,7 +667,7 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">☆</span>
                     <div>
                       <div className="feat-name">{t('conjecture_engine', ageLevel)}</div>
                       <div className="feat-desc">
@@ -676,7 +676,7 @@ export function OnboardingOverlay({
                     </div>
                   </div>
                   <div className="onboarding-feature">
-                    <span className="feat-icon"></span>
+                    <span className="feat-icon">▶</span>
                     <div>
                       <div className="feat-name">{t('manim_anim', ageLevel)}</div>
                       <div className="feat-desc">Animated visualizations of group operations</div>

@@ -423,7 +423,7 @@ export function getMissions(level: AgeLevel): GuidedMission[] {
       {
         id: 'discover-1',
         phase: 'discover',
-        title: 'â 第 3 关：找隐形斗篷老大',
+        title: '★ 第 3 关：找隐形斗篷老大',
         story:
           '在魔法密码表里，藏着一个「隐形斗篷老大」。它跟谁碰一碰，谁就不变！比如老大是 0，那 0 碰 1 还是 1，0 碰 2 还是 2。',
         task: '找一找：哪一行跟最上面的数字一模一样？那就是老大！',
@@ -924,7 +924,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   {
     id: 'card-identity',
     conceptKey: 'identity',
-    icon: 'â',
+    icon: '★',
     title: { kids: '隐形斗篷老大', tweens: '单位元 (Identity)', teens: 'Identity Element' },
     body: {
       kids: '老大有一个神奇斗篷：它跟谁碰一碰，谁就不变！比如老大是 0，那 0 碰 1 = 1，0 碰 2 = 2。每个群只有一个老大！',

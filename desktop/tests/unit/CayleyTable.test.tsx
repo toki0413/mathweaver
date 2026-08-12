@@ -110,14 +110,14 @@ describe('CayleyTable — structure & axiom detection', () => {
   it('detects non-associativity and shows the violating triple detail', () => {
     render(<CayleyTable table={NON_ASSOC} size={3} onChange={noop} />)
 
-    expect(screen.getByText('✗ 非结合律')).toBeInTheDocument()
+    expect(screen.getByText('× 非结合律')).toBeInTheDocument()
     expect(screen.getByText(/结合律违反/)).toBeInTheDocument()
   })
 
   it('detects closure violation and shows the out-of-range note', () => {
     render(<CayleyTable table={NOT_CLOSED} size={3} onChange={noop} />)
 
-    expect(screen.getByText('✗ 未闭合')).toBeInTheDocument()
+    expect(screen.getByText('× 未闭合')).toBeInTheDocument()
     expect(screen.getByText(/表格中存在超出范围的值/)).toBeInTheDocument()
   })
 
@@ -157,7 +157,7 @@ describe('CayleyTable — cell editing', () => {
     render(<StatefulCayley initialTable={Z3} size={3} />)
 
     fireEvent.change(cellInput(0, 1), { target: { value: '9' } })
-    expect(screen.getByText('✗ 未闭合')).toBeInTheDocument()
+    expect(screen.getByText('× 未闭合')).toBeInTheDocument()
     expect(screen.getByText(/表格中存在超出范围的值/)).toBeInTheDocument()
   })
 })
@@ -181,14 +181,14 @@ describe('CayleyTable — color mode', () => {
     const onToggle = vi.fn()
     render(<CayleyTable table={Z3} size={3} onChange={noop} onToggleColorMode={onToggle} />)
 
-    const toggle = screen.getByRole('button', { name: '🎨 OFF' })
+    const toggle = screen.getByRole('button', { name: 'OFF' })
     fireEvent.click(toggle)
     expect(onToggle).toHaveBeenCalledTimes(1)
   })
 
   it('does not render the toggle when onToggleColorMode is absent', () => {
     render(<CayleyTable table={Z3} size={3} onChange={noop} />)
-    expect(screen.queryByRole('button', { name: /🎨 OFF/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /OFF/ })).not.toBeInTheDocument()
   })
 })
 
@@ -196,7 +196,7 @@ describe('CayleyTable — axiom badges & highlighting', () => {
   it('toggles the closure badge highlight on click', () => {
     render(<CayleyTable table={NOT_CLOSED} size={3} onChange={noop} />)
 
-    const badge = screen.getByRole('button', { name: '✗ 未闭合' })
+    const badge = screen.getByRole('button', { name: '× 未闭合' })
     fireEvent.click(badge)
     fireEvent.keyDown(badge, { key: 'Enter' })
     expect(badge).toBeInTheDocument()
@@ -205,7 +205,7 @@ describe('CayleyTable — axiom badges & highlighting', () => {
   it('highlights the non-commutative badge and reveals the violation pair', () => {
     render(<CayleyTable table={NON_COMMUTATIVE} size={3} onChange={noop} />)
 
-    const badge = screen.getByRole('button', { name: '✗ 非交换' })
+    const badge = screen.getByRole('button', { name: '× 非交换' })
     fireEvent.click(badge)
     expect(screen.getByText(/交换律违反/)).toBeInTheDocument()
 
@@ -217,7 +217,7 @@ describe('CayleyTable — axiom badges & highlighting', () => {
     render(<CayleyTable table={NOT_CLOSED} size={3} onChange={noop} />)
 
     // Not closed → inverses are undefined, badge reports missing.
-    expect(screen.getByRole('button', { name: '✗ 逆元缺失' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '× 逆元缺失' })).toBeInTheDocument()
   })
 })
 

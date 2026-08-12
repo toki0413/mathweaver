@@ -101,8 +101,14 @@ const api = {
   startSession: (req: { student_id: string; student_name?: string; target_node_id?: string }) =>
     safeInvoke('api:session-start', req),
   getSessionState: () => safeInvoke('api:session-state'),
-  sendInput: (req: { student_input: string; response_time_ms?: number }) =>
-    safeInvoke('api:session-input', req),
+  sendInput: (req: {
+    student_input: string
+    response_time_ms?: number
+    age_level?: string
+    cognitive_load?: number
+    backtrack_count?: number
+    trial_sequence_length?: number
+  }) => safeInvoke('api:session-input', req),
 
   // Forge
   verifyGroup: (table: number[][]) => safeInvoke('api:verify-group', table),

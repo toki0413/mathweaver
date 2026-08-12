@@ -43,11 +43,25 @@ export class ParameterLearner {
   }
   private currentPromptVariant = 'socratic'
 
+  /**
+   * 每个教学动作对应的四域权重侧重（用于把动作效果反馈到权重上）。
+   * 效果好的动作 → 提升对应域权重；效果差 → 降低。其余域按比例回补，保持总和为 1。
+   */
+  private readonly actionFieldMap: Record<string, string[]> = {
+    reduce_abstraction: ['cognitive'],
+    provide_hint: ['interaction'],
+    emotional_support: ['emotional'],
+    advance: ['knowledge'],
+    guided_discovery: ['knowledge', 'interaction'],
+    continue: [],
+  }
+
   evolve(feedback: Record<string, unknown>): ParamVersion {
     this.versionNum += 1
     const evaluated = (feedback['evaluated'] as number) ?? 0
     const actionStats = (feedback['action_stats'] as Record<string, Record<string, number>>) ?? {}
-    // crude effectiveness: average of avg_effectiveness across actions
+
+    // average net effectiveness across actions with data
     let sum = 0
     let count = 0
     for (const action of Object.keys(actionStats)) {
@@ -55,6 +69,36 @@ export class ParameterLearner {
       count += 1
     }
     const effectiveness = count > 0 ? sum / count : evaluated > 0 ? 0.5 : 0
+
+    // Nudge weights toward the fields of actions that worked, away from those
+    // that didn't. Only adjust when there is actual per-action data.
+    if (count > 0) {
+      const delta: Record<string, number> = {
+        cognitive: 0,
+        emotional: 0,
+        knowledge: 0,
+        interaction: 0,
+      }
+      for (const action of Object.keys(actionStats)) {
+        const eff = actionStats[action]?.avg_effectiveness ?? 0
+        const fields = this.actionFieldMap[action] ?? []
+        const share = fields.length > 0 ? eff / fields.length : 0
+        for (const f of fields) delta[f] += share
+      }
+      // Apply a bounded learning-rate step (keeps weights stable between 0.05 and 0.6)
+      const lr = 0.05
+      const next: Record<string, number> = { ...this.currentWeights }
+      for (const f of Object.keys(delta)) {
+        next[f] = Math.max(0.05, Math.min(0.6, next[f] + delta[f] * lr))
+      }
+      // Renormalize so the four weights sum to 1
+      const total = Object.values(next).reduce((a, b) => a + b, 0)
+      if (total > 0) {
+        for (const f of Object.keys(next)) next[f] = next[f] / total
+      }
+      this.currentWeights = next
+    }
+
     return {
       version: this.versionNum,
       weights: { ...this.currentWeights },

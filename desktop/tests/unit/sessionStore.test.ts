@@ -386,6 +386,12 @@ describe('sessionStore', () => {
       expect(api.sendInput).toHaveBeenCalledWith({
         student_input: 'What is a group?',
         response_time_ms: 1500,
+        age_level: 'kids',
+        cognitive_load: undefined,
+        backtrack_count: undefined,
+        trial_sequence_length: undefined,
+        whiteboard_strokes: 0,
+        whiteboard_active: false,
       })
     })
 

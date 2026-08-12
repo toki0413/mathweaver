@@ -731,14 +731,14 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
           style={{
             margin: '8px 0',
             padding: '8px 12px',
-            background: 'rgba(0,0,0,0.15)',
+            background: 'var(--bg2)',
             borderRadius: '6px',
             fontSize: '13px',
             fontFamily: 'var(--mono, monospace)',
-            color: '#c8c8d0',
+            color: 'var(--ink)',
           }}
         >
-          <span style={{ color: '#88bbff', marginRight: '8px' }}>映射:</span>
+          <span style={{ color: 'var(--accent)', marginRight: '8px' }}>映射:</span>
           {permutations[selectedPerm].perm.map((target, src) => (
             <span
               key={src}
@@ -747,13 +747,14 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
                 marginRight: '8px',
                 padding: '2px 6px',
                 borderRadius: '4px',
-                background: target !== src ? 'rgba(229,192,123,0.2)' : 'transparent',
-                color: target !== src ? '#e5c07b' : '#666',
+                background:
+                  target !== src ? 'color-mix(in srgb, var(--warn) 18%, transparent)' : 'transparent',
+                color: target !== src ? 'var(--warn)' : 'var(--muted)',
               }}
             >
               {src}→{target}
               {stepIndex >= 0 && src <= stepIndex && target !== src && (
-                <span style={{ color: '#98c379', marginLeft: '2px' }}> ✓</span>
+                <span style={{ color: 'var(--ok)', marginLeft: '2px' }}> ✓</span>
               )}
             </span>
           ))}
@@ -771,11 +772,12 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
             style={{
               padding: '4px 12px',
               fontSize: '12px',
-              background: stepIndex >= 0 ? 'rgba(152,195,121,0.2)' : 'rgba(0,0,0,0.15)',
-              color: stepIndex >= 0 ? '#98c379' : '#c8c8d0',
+              background:
+                stepIndex >= 0 ? 'color-mix(in srgb, var(--ok) 14%, transparent)' : 'var(--bg2)',
+              color: stepIndex >= 0 ? 'var(--ok)' : 'var(--ink)',
               border: '1px solid',
-              borderColor: stepIndex >= 0 ? '#98c379' : '#3a3a4a',
-              borderRadius: '4px',
+              borderColor: stepIndex >= 0 ? 'var(--ok)' : 'var(--border)',
+              borderRadius: '6px',
               cursor: 'pointer',
             }}
           >
@@ -792,11 +794,13 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
             style={{
               padding: '4px 12px',
               fontSize: '12px',
-              background: autoRotate ? 'rgba(136,187,255,0.2)' : 'rgba(0,0,0,0.15)',
-              color: autoRotate ? '#88bbff' : '#c8c8d0',
+              background: autoRotate
+                ? 'color-mix(in srgb, var(--accent) 14%, transparent)'
+                : 'var(--bg2)',
+              color: autoRotate ? 'var(--accent)' : 'var(--ink)',
               border: '1px solid',
-              borderColor: autoRotate ? '#88bbff' : '#3a3a4a',
-              borderRadius: '4px',
+              borderColor: autoRotate ? 'var(--accent)' : 'var(--border)',
+              borderRadius: '6px',
               cursor: 'pointer',
             }}
           >

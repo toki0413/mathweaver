@@ -349,6 +349,10 @@ export interface StartSessionRequest {
 export interface StudentInputRequest {
   student_input: string
   response_time_ms?: number
+  age_level?: string
+  cognitive_load?: number
+  backtrack_count?: number
+  trial_sequence_length?: number
 }
 
 export interface CayleyTableRequest {

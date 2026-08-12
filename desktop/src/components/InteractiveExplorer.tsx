@@ -417,7 +417,7 @@ const STYLES = `
 }
 .ie-type-btn:hover { color: var(--ink); border-color: var(--muted); }
 .ie-type-btn.active {
-  background: rgba(198, 120, 221, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
@@ -512,14 +512,14 @@ const STYLES = `
   cursor: default;
 }
 .ie-table td.ie-cell:hover {
-  background: rgba(198, 120, 221, 0.2);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--accent);
 }
 .ie-cell-idrow, .ie-cell-idcol {
   background: rgba(152, 195, 121, 0.07);
 }
 .ie-cell-idrow:hover, .ie-cell-idcol:hover {
-  background: rgba(198, 120, 221, 0.2);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .ie-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .ie-section-title {

@@ -295,8 +295,8 @@ describe('GrillPanel', () => {
         active: true,
         currentQuestion: SAMPLE_QUESTION,
       })
-      expect(screen.getByRole('button', { name: '💡 方向提示' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '📝 详细提示' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '方向提示' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '详细提示' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '查看答案' })).toBeInTheDocument()
     })
 
@@ -307,7 +307,7 @@ describe('GrillPanel', () => {
         currentQuestion: SAMPLE_QUESTION,
       })
 
-      await user.click(screen.getByRole('button', { name: '💡 方向提示' }))
+      await user.click(screen.getByRole('button', { name: '方向提示' }))
 
       // L1 label should now be visible
       const l1Labels = screen.getAllByText('L1 提示')
@@ -334,7 +334,7 @@ describe('GrillPanel', () => {
         currentQuestion: SAMPLE_QUESTION,
       })
 
-      await user.click(screen.getByRole('button', { name: '📝 详细提示' }))
+      await user.click(screen.getByRole('button', { name: '详细提示' }))
 
       // L2 hint label should be visible
       expect(screen.getAllByText('L2 提示').length).toBeGreaterThanOrEqual(1)
@@ -375,17 +375,17 @@ describe('GrillPanel', () => {
       })
 
       // Reveal L1
-      await user.click(screen.getByRole('button', { name: '💡 方向提示' }))
+      await user.click(screen.getByRole('button', { name: '方向提示' }))
       // The hint buttons should be replaced by the 收起 button
       expect(screen.getByRole('button', { name: '收起' })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: '📝 详细提示' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '详细提示' })).not.toBeInTheDocument()
 
       // Click 收起
       await user.click(screen.getByRole('button', { name: '收起' }))
 
       // Hint buttons should be back
-      expect(screen.getByRole('button', { name: '💡 方向提示' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '📝 详细提示' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '方向提示' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '详细提示' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '查看答案' })).toBeInTheDocument()
     })
 
@@ -394,8 +394,8 @@ describe('GrillPanel', () => {
         active: true,
         currentQuestion: { ...SAMPLE_QUESTION, recommended_answer: '' },
       })
-      expect(screen.queryByRole('button', { name: '💡 方向提示' })).not.toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: '📝 详细提示' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '方向提示' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '详细提示' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: '查看答案' })).not.toBeInTheDocument()
     })
   })

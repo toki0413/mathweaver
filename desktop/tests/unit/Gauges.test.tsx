@@ -405,10 +405,11 @@ describe('DifficultyGauge', () => {
     const { container } = render(
       <DifficultyGauge current={0.5} band="standard" trend="stable" accuracy={0.7} />,
     )
-    // 4 threshold zones + 1 last zone = 5 zone rects
+    // 4 threshold zones + 1 last zone = 5 zone rects.
+    // Colors are theme-driven: some use rgba(), one uses color-mix().
     const zoneRects = Array.from(container.querySelectorAll('svg rect')).filter(r => {
       const fill = r.getAttribute('fill') || ''
-      return fill.startsWith('rgba(')
+      return fill.startsWith('rgba(') || fill.startsWith('color-mix(')
     })
     expect(zoneRects.length).toBe(5)
   })

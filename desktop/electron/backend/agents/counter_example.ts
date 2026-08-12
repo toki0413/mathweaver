@@ -139,7 +139,7 @@ export class CounterExampleAgent extends BaseAgent {
 
       const isAbelian = isGroup && commResult !== null && !commResult.success
 
-      const content = this.formatResult(axiomsResult, assocResult, commResult, isGroup, isAbelian)
+      const content = this.formatResult(axiomsResult, assocResult, commResult, isGroup, isAbelian, this.ageOf(ctx))
 
       // Propose field updates based on verification
       const fieldUpdates: Record<string, Record<string, unknown>> = {}
@@ -182,15 +182,37 @@ export class CounterExampleAgent extends BaseAgent {
     comm: ForgeResult | null,
     isGroup: boolean,
     isAbelian: boolean,
+    ageLevel: string = 'kids',
   ): string {
+    // Age-adaptive phrasing for the verification verdict.
+    const abelianOk: Record<string, string> = {
+      kids: '四条规则全部通过，而且碰起来的顺序可以随便换——这是一个「合作无间」的魔法家族！',
+      tweens: '四条公理悉数通过，运算还满足交换律——这是一个交换群。',
+      teens: '四条公理悉数通过，运算可交换——这是一个交换群。',
+    }
+    const groupOnlyOk: Record<string, string> = {
+      kids: '四条规则都通过了，但碰起来的顺序会影响结果——顺序很重要哦！反例：',
+      tweens: '群公理成立，但交换律被打破（这不是交换群）。反例：',
+      teens: '群公理成立，但交换律被打破。反例：',
+    }
+    const failed: Record<string, string> = {
+      kids: '有几条规则没通过，魔法家族还不完整。',
+      tweens: '群公理未通过。',
+      teens: '群公理未通过。',
+    }
     if (isGroup && isAbelian) {
-      return '四条公理悉数通过，运算可交换——这是一个交换群。'
+      return abelianOk[ageLevel] ?? abelianOk['kids']
     } else if (isGroup) {
       const ce = comm ? comm.counterExample : 'N/A'
-      return `群公理成立，但交换律被打破。反例：${ce}`
+      return `${groupOnlyOk[ageLevel] ?? groupOnlyOk['kids']}${ce}`
     }
     const explanation = axioms ? axioms.explanation : '未执行验证'
-    return `群公理未通过。${explanation}`
+    return `${failed[ageLevel] ?? failed['kids']}${explanation}`
+  }
+
+  /** Read the current student's age band from context (default kids). */
+  private ageOf(ctx: AgentContext): string {
+    return (ctx.metadata['age_level'] as string) ?? 'kids'
   }
 
   /**
@@ -205,8 +227,25 @@ export class CounterExampleAgent extends BaseAgent {
 
     // Use callTool for whitelist enforcement (3.3)
     const result = this.callTool('test_conjecture', rawText) as ConjectureResult
+    const ageLevel = this.ageOf(ctx)
 
     const verdictMap: Record<string, string> = {
+      kids: {
+        confirmed: '你的发现是对的！',
+        refuted: '这个猜想被推翻了——',
+        undecidable: '暂时还无法判定',
+      },
+      tweens: {
+        confirmed: '猜想成立。',
+        refuted: '猜想被反驳。',
+        undecidable: '无法判定。',
+      },
+      teens: {
+        confirmed: '猜想成立。',
+        refuted: '猜想被反驳。',
+        undecidable: '无法判定。',
+      },
+    }[ageLevel] ?? {
       confirmed: '猜想成立',
       refuted: '猜想被反驳',
       undecidable: '无法判定',

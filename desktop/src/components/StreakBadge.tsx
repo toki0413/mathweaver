@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { FlameIcon } from './Icons'
 
 // ============================================================================
 // StreakBadge — Duolingo-style daily learning streak
@@ -355,15 +356,15 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
           <span
             aria-hidden
             style={{
-              fontSize: compact ? '15px' : '17px',
               lineHeight: 1,
-              display: 'inline-block',
-              // Flame glow via text-shadow, driven by the --warn token.
-              textShadow: '0 0 6px var(--warn), 0 0 12px var(--warn)',
+              display: 'inline-flex',
+              // Flame color driven by the --warn token.
+              color: 'var(--warn)',
+              filter: milestone ? 'drop-shadow(0 0 6px var(--warn))' : undefined,
               animation: milestone ? 'streakPop 0.4s ease-out' : undefined,
             }}
           >
-            
+            <FlameIcon size={compact ? 15 : 17} />
           </span>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
           {!compact && (
@@ -423,8 +424,8 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
               animation: 'streakCelebrateText 3.6s ease-out forwards',
             }}
           >
-            <div style={{ fontSize: '54px', lineHeight: 1, textShadow: '0 0 18px var(--warn)' }}>
-              
+            <div style={{ lineHeight: 1, color: 'var(--warn)', filter: 'drop-shadow(0 0 18px var(--warn))' }}>
+              <FlameIcon size={54} />
             </div>
             <div
               style={{
@@ -469,7 +470,9 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
             animation: 'streakToastIn 0.3s ease-out',
           }}
         >
-          <span style={{ fontSize: '18px', filter: 'grayscale(0.3)' }}></span>
+          <span style={{ color: 'var(--warn)', display: 'inline-flex' }}>
+            <FlameIcon size={18} />
+          </span>
           <span>
             你的 <b style={{ color: 'var(--warn)' }}>{breakLost}</b> 天连续学习中断了，最长记录{' '}
             <b>{bestStreak}</b> 天。今天重新开始吧！

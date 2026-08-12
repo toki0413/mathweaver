@@ -132,8 +132,8 @@ const PALETTE_CSS = `
   border-color: var(--muted, #8a8884);
 }
 .msp-trigger.active {
-  color: var(--accent, #c678dd);
-  border-color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
+  border-color: var(--accent, #c4392f);
 }
 .msp-panel {
   position: absolute;
@@ -173,7 +173,7 @@ const PALETTE_CSS = `
   transition: border-color 0.15s;
 }
 .msp-search-input:focus {
-  border-color: var(--accent, #c678dd);
+  border-color: var(--accent, #c4392f);
 }
 .msp-search-input::placeholder {
   color: var(--muted, #8a8884);
@@ -231,13 +231,13 @@ const PALETTE_CSS = `
   border-color: var(--border, #3a3a3a);
 }
 .msp-sym:active {
-  color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
 }
 .msp-sym.recent {
-  background: rgba(198, 120, 221, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 .msp-sym.recent:hover {
-  background: rgba(198, 120, 221, 0.16);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .msp-status {
   border-top: 1px solid var(--border, #3a3a3a);
@@ -254,7 +254,7 @@ const PALETTE_CSS = `
   gap: 4px;
 }
 .msp-status-latex {
-  color: var(--accent, #c678dd);
+  color: var(--accent, #c4392f);
 }
 .msp-status-desc {
   color: var(--ink, #e8e6e3);

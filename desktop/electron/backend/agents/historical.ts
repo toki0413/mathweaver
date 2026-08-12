@@ -188,11 +188,27 @@ export class HistoricalAgent extends BaseAgent {
         const score = (r['score'] as number) ?? 0
         contextParts.push(`[${r['title']}] (score=${score.toFixed(2)}): ${r['content']}`)
       }
+      // Age-adapt the storyteller's voice so the narrative matches the learner.
+      const ageLevel = (ctx.metadata['age_level'] as string) ?? 'kids'
+      const voiceMap: Record<string, string> = {
+        kids:
+          '学生是 8-10 岁的孩子。讲得像一个睡前故事：多用拟人和比喻，' +
+          '把数学家说成「发现神奇规则的人」，禁用术语，控制在两三句话。',
+        tweens:
+          '学生是 11-13 岁。可以一半讲故事、一半讲道理，用「很久以前有人发现……」开头，' +
+          '可提及概念名字但先给直觉。控制在两三句话。',
+        teens:
+          '学生是 14 岁以上。用准确称谓与史实，讲清楚这个概念的来龙去脉，' +
+          '可以让结构从故事中浮现。控制在两三句话。',
+      }
+      const voice = voiceMap[ageLevel] ?? voiceMap['kids']
       const resp = await this.llmClient.chat(
         '将学生此刻的数学探索，放置在更广阔的历史脉络中。\n' +
           '你手边有检索到的数学史素材。从中选取与学生当前概念最相关的一段，' +
           '用两三句话讲述——不是百科条目，而是故事的一个片段。\n' +
           '让历史人物活起来：他们也曾困惑、也曾犯错、也曾从这个概念旁走过。\n\n' +
+          voice +
+          '\n\n' +
           '设计哲学（新数学运动的教训）：\n' +
           '新数学运动 (1958-1975) 将 Bourbaki 的结构主义方法搬进课堂，' +
           '因忽视认知准备度而失败。你的角色是弥补它切断的历史联系——' +

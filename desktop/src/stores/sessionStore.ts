@@ -25,6 +25,8 @@ interface FourFields {
     response_time_ms: number
     rt_zscore: number
     cognitive_load: number
+    backtrack_count: number
+    trial_sequence_length: number
     state: string
     is_overloaded: boolean
   }
@@ -249,6 +251,7 @@ interface SessionState {
   visualData: VisualData | null
   backendReady: boolean
   dagNodes: DagNodeInfo[]
+  ageLevel: 'kids' | 'tweens' | 'teens'
 
   // Grill
   grillState: GrillState
@@ -280,6 +283,17 @@ interface SessionState {
   fetchDagNodes: () => Promise<void>
   saveSession: () => Promise<string | null>
   loadSession: () => Promise<boolean>
+
+  // Epistemic / cognitive state capture (from eye tracking + table edits)
+  setEpistemicState: (load: number) => void
+  recordTableActivity: (kind: 'edit' | 'backtrack') => void
+
+  // Whiteboard activity (visual exploration channel → perceivable learning signal)
+  whiteboardActivity: { strokeCount: number; active: boolean; lastActivityAt: number }
+  recordWhiteboardActivity: (active: boolean) => void
+
+  // Age adaptation (passed to backend agents so they adapt explanation language)
+  setAgeLevel: (level: 'kids' | 'tweens' | 'teens') => void
 
   // Grill actions
   startGrill: (studentId?: string, curriculumLevel?: string) => Promise<void>
@@ -347,6 +361,8 @@ export const useStore = create<SessionState>()(
       visualData: null,
       backendReady: false,
       dagNodes: [],
+      ageLevel: 'kids',
+      whiteboardActivity: { strokeCount: 0, active: false, lastActivityAt: 0 },
 
       grillState: {
         active: false,
@@ -480,9 +496,23 @@ export const useStore = create<SessionState>()(
         try {
           const api = getAPI()
           if (!api) throw new Error('API not available')
+          const ff = get().fourFields
+          const wb = get().whiteboardActivity
+          // Whiteboard is "active" if the student drew within the last 60s
+          const wbActive = wb.active && Date.now() - wb.lastActivityAt < 60000
           const data = (await api.sendInput({
             student_input: input,
             response_time_ms: responseTimeMs,
+            age_level: get().ageLevel,
+            // Carry the current four-field snapshot to the backend so its
+            // makeDecision() consumes real student state (cognitive load from
+            // eye tracking, backtracks from table edits, etc.).
+            cognitive_load: ff?.cognitive.cognitive_load,
+            backtrack_count: ff?.cognitive.backtrack_count,
+            trial_sequence_length: ff?.cognitive.trial_sequence_length,
+            // Whiteboard (visual exploration) signal
+            whiteboard_strokes: wb.strokeCount,
+            whiteboard_active: wbActive,
           })) as Record<string, unknown> | null
 
           if (!data) throw new Error('No response from backend')
@@ -536,6 +566,72 @@ export const useStore = create<SessionState>()(
       },
 
       clearChat: () => set({ chat: [] }),
+
+      // -------------------------------------------------------------------------
+      // Epistemic / cognitive state capture
+      //
+      // EyeTrackingPanel computes a cognitive-load score (0-100) every ~500ms and
+      // calls setEpistemicState. We normalize it to 0-1 and store it in the
+      // cognitive field so the backend's makeDecision() can react to real load.
+      // -------------------------------------------------------------------------
+
+      setEpistemicState: load => {
+        const clamped = Math.max(0, Math.min(100, load))
+        const normalized = Math.round((clamped / 100) * 100) / 100
+        set(state => {
+          if (!state.fourFields) return {}
+          return {
+            fourFields: {
+              ...state.fourFields,
+              cognitive: {
+                ...state.fourFields.cognitive,
+                cognitive_load: normalized,
+                is_overloaded: normalized > 0.85,
+              },
+            },
+          }
+        })
+      },
+
+      // -------------------------------------------------------------------------
+      // Table interaction capture
+      //
+      // CayleyTable/App call this on every cell edit. 'edit' increments the trial
+      // sequence length; 'backtrack' increments the backtrack counter (a cell
+      // being revisited indicates uncertainty / cognitive revisiting).
+      // -------------------------------------------------------------------------
+
+      recordTableActivity: kind => {
+        set(state => {
+          if (!state.fourFields) return {}
+          const cognitive = state.fourFields.cognitive
+          return {
+            fourFields: {
+              ...state.fourFields,
+              cognitive: {
+                ...cognitive,
+                trial_sequence_length: cognitive.trial_sequence_length + 1,
+                backtrack_count:
+                  kind === 'backtrack' ? cognitive.backtrack_count + 1 : cognitive.backtrack_count,
+              },
+            },
+          }
+        })
+      },
+
+      // WhiteboardPad calls this on every stroke end. Counting strokes makes
+      // "visual exploration" a perceivable learning signal for the backend.
+      recordWhiteboardActivity: active => {
+        set(state => ({
+          whiteboardActivity: {
+            strokeCount: state.whiteboardActivity.strokeCount + 1,
+            active,
+            lastActivityAt: Date.now(),
+          },
+        }))
+      },
+
+      setAgeLevel: level => set({ ageLevel: level }),
 
       // -------------------------------------------------------------------------
       // File operations

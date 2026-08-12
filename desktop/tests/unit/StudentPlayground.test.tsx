@@ -164,17 +164,17 @@ describe('MatchGame', () => {
 describe('ColorView', () => {
   it('shows the commutativity badge for a symmetric table', () => {
     render(<ColorView table={Z3} size={3} ageLevel="tweens" />)
-    expect(screen.getByText('⚖ 满足交换律')).toBeInTheDocument()
+    expect(screen.getByText('· 满足交换律')).toBeInTheDocument()
   })
 
   it('shows the non-commutative badge for S3', () => {
     render(<ColorView table={S3} size={6} ageLevel="tweens" />)
-    expect(screen.getByText('❌ 不满足交换律')).toBeInTheDocument()
+    expect(screen.getByText('× 不满足交换律')).toBeInTheDocument()
   })
 
   it('shows the identity element badge', () => {
     render(<ColorView table={Z3} size={3} ageLevel="tweens" />)
-    expect(screen.getByText('👑 单位元 = 0')).toBeInTheDocument()
+    expect(screen.getByText('★ 单位元 = 0')).toBeInTheDocument()
   })
 
   it('toggles cell numbers on and off', () => {

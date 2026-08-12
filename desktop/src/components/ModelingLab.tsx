@@ -764,9 +764,13 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           display: flex;
           height: 100%;
           gap: 0;
-          background: var(--surface-2, #161620);
+          background: var(--surface-2, #faf6ed);
           border-radius: var(--radius, 8px);
           overflow: hidden;
+          /* 水墨宣纸主题：覆盖组件内部自定义变量，使其与全局主题一致 */
+          --surface-2: var(--bg2, #faf6ed);
+          --surface: var(--bg, #f5f0e6);
+          --text-1: var(--ink, #1a1a1a);
         }
         .ml-canvas-area {
           flex: 1;
@@ -793,42 +797,42 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           align-items: center;
           gap: 8px;
           padding: 8px 16px;
-          border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-          background: var(--surface, #1a1a28);
+          border-bottom: 1px solid var(--border);
+          background: var(--surface);
           flex-shrink: 0;
         }
         .ml-btn {
           padding: 6px 14px;
-          border-radius: 4px;
-          border: 1px solid var(--border, rgba(255,255,255,0.12));
-          background: var(--surface-2, #222230);
-          color: var(--text-1, #e0e0e8);
+          border-radius: 6px;
+          border: 1px solid var(--border);
+          background: var(--surface-2);
+          color: var(--text-1);
           font-size: 13px;
           font-family: var(--font-sans, sans-serif);
           cursor: pointer;
           transition: background 0.15s;
         }
-        .ml-btn:hover { background: var(--surface, #2a2a38); }
-        .ml-btn.active { background: #b85a3a; border-color: #b85a3a; color: #fff; }
+        .ml-btn:hover { background: var(--surface); }
+        .ml-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .ml-sidebar {
           width: 300px;
           flex-shrink: 0;
-          border-left: 1px solid var(--border, rgba(255,255,255,0.08));
-          background: var(--surface, #1a1a28);
+          border-left: 1px solid var(--border);
+          background: var(--surface);
           overflow-y: auto;
           display: flex;
           flex-direction: column;
         }
         .ml-section {
           padding: 14px 16px;
-          border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+          border-bottom: 1px solid var(--border);
         }
         .ml-section-title {
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #9ca3af;
+          color: var(--muted);
           margin: 0 0 10px;
         }
         .ml-model-grid {
@@ -838,20 +842,20 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
         }
         .ml-model-btn {
           padding: 8px;
-          border-radius: 4px;
-          border: 1px solid var(--border, rgba(255,255,255,0.1));
-          background: var(--surface-2, #222230);
-          color: #b0b8c8;
+          border-radius: 6px;
+          border: 1px solid var(--border);
+          background: var(--surface-2);
+          color: var(--muted);
           font-size: 12px;
           cursor: pointer;
           text-align: left;
           transition: all 0.15s;
         }
-        .ml-model-btn:hover { border-color: #d97757; }
+        .ml-model-btn:hover { border-color: var(--accent); }
         .ml-model-btn.active {
-          border-color: #d97757;
-          background: rgba(217, 119, 87, 0.12);
-          color: var(--text-1, #e0e0e8);
+          border-color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 12%, transparent);
+          color: var(--text-1);
         }
         .ml-slider-row {
           margin-bottom: 12px;
@@ -860,12 +864,12 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           display: flex;
           justify-content: space-between;
           font-size: 12px;
-          color: #b0b8c8;
+          color: var(--muted);
           margin-bottom: 4px;
           font-family: var(--font-mono, monospace);
         }
         .ml-slider-val {
-          color: #d97757;
+          color: var(--accent);
           font-weight: 600;
         }
         .ml-slider {
@@ -873,7 +877,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           -webkit-appearance: none;
           height: 4px;
           border-radius: 2px;
-          background: var(--border, rgba(255,255,255,0.15));
+          background: var(--border);
           outline: none;
         }
         .ml-slider::-webkit-slider-thumb {
@@ -881,23 +885,23 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           width: 14px;
           height: 14px;
           border-radius: 50%;
-          background: #d97757;
+          background: var(--accent);
           cursor: pointer;
         }
         .ml-explain {
           font-size: 13px;
           line-height: 1.6;
-          color: #b0b8c8;
+          color: var(--muted);
           font-family: var(--font-serif, serif);
           padding: 12px;
-          background: var(--surface-2, #222230);
+          background: var(--surface-2);
           border-radius: 6px;
-          border-left: 3px solid #d97757;
+          border-left: 3px solid var(--accent);
         }
         .ml-eq {
           font-family: var(--font-mono, monospace);
           font-size: 13px;
-          color: var(--text-1, #e0e0e8);
+          color: var(--text-1);
           padding: 6px 0;
         }
         .ml-prediction {
@@ -908,10 +912,10 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
         .ml-pred-input {
           flex: 1;
           padding: 6px 8px;
-          border-radius: 4px;
-          border: 1px solid var(--border, rgba(255,255,255,0.12));
-          background: var(--surface-2, #222230);
-          color: var(--text-1, #e0e0e8);
+          border-radius: 6px;
+          border: 1px solid var(--border);
+          background: var(--surface-2);
+          color: var(--text-1);
           font-size: 12px;
         }
         .ml-ledger-item {
@@ -919,13 +923,13 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           justify-content: space-between;
           align-items: center;
           padding: 6px 8px;
-          border-radius: 4px;
+          border-radius: 6px;
           font-size: 11px;
-          color: #9ca3af;
+          color: var(--muted);
           cursor: pointer;
           transition: background 0.1s;
         }
-        .ml-ledger-item:hover { background: var(--surface-2, #222230); }
+        .ml-ledger-item:hover { background: var(--surface-2); }
         .ml-cat-badge {
           display: inline-block;
           padding: 2px 8px;
@@ -938,7 +942,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
         }
         @media (max-width: 900px) {
           .ml-container { flex-direction: column; }
-          .ml-sidebar { width: 100%; max-height: 280px; border-left: none; border-top: 1px solid var(--border, rgba(255,255,255,0.08)); }
+          .ml-sidebar { width: 100%; max-height: 280px; border-left: none; border-top: 1px solid var(--border); }
         }
       `}</style>
 
@@ -962,7 +966,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           <span
             style={{
               fontSize: 12,
-              color: '#9ca3af',
+              color: 'var(--muted)',
               fontFamily: 'var(--font-mono, monospace)',
             }}
           >
@@ -1013,7 +1017,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: 'var(--text-1, #e0e0e8)',
+              color: 'var(--text-1)',
               margin: '0 0 4px',
             }}
           >
@@ -1022,7 +1026,7 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           <p
             style={{
               fontSize: 12,
-              color: '#9ca3af',
+              color: 'var(--muted)',
               margin: '0 0 8px',
               lineHeight: 1.5,
             }}
@@ -1108,9 +1112,9 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
           return (
             <div className="ml-section">
               <p className="ml-section-title">守恒律验证</p>
-              <div className="ml-explain" style={{ borderLeftColor: '#7bc693' }}>
-                <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>{cons.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#7bc693' }}>
+              <div className="ml-explain" style={{ borderLeftColor: 'var(--ok)' }}>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>{cons.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>
                   漂移: {cons.drift}
                 </div>
               </div>

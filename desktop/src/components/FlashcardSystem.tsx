@@ -447,8 +447,8 @@ const STYLES = `
 .fs-rate-hard { border-color: rgba(229, 192, 123, 0.4); }
 .fs-rate-hard:hover { background: rgba(229, 192, 123, 0.1); border-color: var(--warn); }
 .fs-rate-hard .fs-rate-interval { color: var(--warn); }
-.fs-rate-good { border-color: rgba(198, 120, 221, 0.4); }
-.fs-rate-good:hover { background: rgba(198, 120, 221, 0.1); border-color: var(--accent); }
+.fs-rate-good { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.fs-rate-good:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: var(--accent); }
 .fs-rate-good .fs-rate-interval { color: var(--accent); }
 .fs-rate-easy { border-color: rgba(152, 195, 121, 0.4); }
 .fs-rate-easy:hover { background: rgba(152, 195, 121, 0.1); border-color: var(--ok); }

@@ -49,7 +49,7 @@ describe('InteractiveQuestion — choice', () => {
 
   it('detects a choice question and renders the badge + options', () => {
     renderQuestion({ question: CHOICE_Q })
-    expect(screen.getByText('🔘 选择题')).toBeInTheDocument()
+    expect(screen.getByText('选择题')).toBeInTheDocument()
     expect(screen.getByText('整数加法')).toBeInTheDocument()
     expect(screen.getByText('自然数加法')).toBeInTheDocument()
     expect(screen.getByText('空集')).toBeInTheDocument()
@@ -84,7 +84,7 @@ describe('InteractiveQuestion — choice', () => {
     const { handle } = renderQuestion({
       question: '① 交换律 ② 结合律 ③ 分配律 ④ 消去律',
     })
-    expect(screen.getByText('🔘 选择题')).toBeInTheDocument()
+    expect(screen.getByText('选择题')).toBeInTheDocument()
     const option = screen.getByText('结合律').closest('[role="button"]')!
     await user.click(option)
     await user.click(screen.getByRole('button', { name: '提交选择' }))
@@ -108,7 +108,7 @@ describe('InteractiveQuestion — true/false', () => {
 
   it('detects a true/false question and renders both buttons', () => {
     renderQuestion({ question: TF_Q })
-    expect(screen.getByText('⚖ 判断题')).toBeInTheDocument()
+    expect(screen.getByText('· 判断题')).toBeInTheDocument()
     expect(screen.getByText('正确')).toBeInTheDocument()
     expect(screen.getByText('错误')).toBeInTheDocument()
   })
@@ -140,7 +140,7 @@ describe('InteractiveQuestion — true/false', () => {
       question: '关于群的定义，给出你的判断。',
       recommendedAnswer: '是',
     })
-    expect(screen.getByText('⚖ 判断题')).toBeInTheDocument()
+    expect(screen.getByText('· 判断题')).toBeInTheDocument()
   })
 })
 
@@ -156,7 +156,7 @@ describe('InteractiveQuestion — matching', () => {
 
   it('renders left and right columns', () => {
     renderQuestion({ question: MATCH_Q })
-    expect(screen.getByText('🔗 匹配题')).toBeInTheDocument()
+    expect(screen.getByText('匹配题')).toBeInTheDocument()
     // Left column entries render as interactive items.
     expect(findItem('加法')).toBeInTheDocument()
     expect(findItem('乘法')).toBeInTheDocument()
@@ -200,7 +200,7 @@ describe('InteractiveQuestion — open', () => {
       question: '请解释什么叫结合律。',
     })
 
-    expect(screen.getByText('✍ 简答题')).toBeInTheDocument()
+    expect(screen.getByText('· 简答题')).toBeInTheDocument()
     const textarea = screen.getByPlaceholderText('输入你的回答...')
     const submit = screen.getByRole('button', { name: '提交回答' })
     expect(submit).toBeDisabled()
@@ -240,9 +240,9 @@ describe('InteractiveQuestion — mode toggle', () => {
     const CHOICE_Q = '群的阶是指？A. 元素个数 B. 运算次数 C. 零元素 D. 单位元'
 
     renderQuestion({ question: CHOICE_Q })
-    expect(screen.getByText('🔘 选择题')).toBeInTheDocument()
+    expect(screen.getByText('选择题')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '✍ 自由输入' }))
+    await user.click(screen.getByRole('button', { name: '· 自由输入' }))
     expect(screen.getByPlaceholderText('输入你的回答...')).toBeInTheDocument()
 
     const backBtn = screen.getByRole('button', { name: '← 返回交互模式' })

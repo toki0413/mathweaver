@@ -13,16 +13,16 @@ import type {
  *
  * 功能：
  * - 三种工具：画笔（自由绘制）、橡皮（destination-out 擦除）、文字（点击放置输入框）
- * - 五色调色板（白 / 紫 / 绿 / 黄 / 红），与应用主题一致
+ * - 五色调色板（墨 / 朱红 / 竹绿 / 赭黄 / 靛蓝），与应用水墨宣纸主题一致
  * - 笔触粗细滑块（1–8px）
  * - 清空 / 撤销 / 导出 PNG
- * - 深色画布背景（#1a1a1a），与主题一致
+ * - 宣纸画布背景（var(--bg)），与主题一致
  * - 使用 requestAnimationFrame 绘制平滑线段
  * - 使用 pointerdown / pointermove / pointerup / pointerleave 跨平台事件
  *
  * 说明：
- * - 画布位图保持透明，依靠 canvas 元素的 CSS 背景色呈现深色底，
- *   这样橡皮（destination-out）擦除笔迹后能露出深色底，视觉上才可见。
+ * - 画布位图保持透明，依靠 canvas 元素的 CSS 背景色呈现宣纸底色，
+ *   这样橡皮（destination-out）擦除笔迹后能露出宣纸底，视觉上才可见。
  * - 撤销栈以 data URL 形式保存画布快照。
  * - 样式全部内联（不修改 index.css），className 以 `wb-` 前缀标识结构。
  */
@@ -34,6 +34,8 @@ interface WhiteboardPadProps {
   width?: number
   /** 画布高度（像素），默认 280 */
   height?: number
+  /** 每次完成一笔（或清空）时回调，用于把作画行为上报为学习信号 */
+  onActivity?: (active: boolean) => void
 }
 
 interface TextEdit {
@@ -55,13 +57,13 @@ interface ToolOption {
 const DEFAULT_HEIGHT = 280
 const MAX_UNDO = 50
 
-/** 调色板：白、紫、绿、黄、红，对应主题变量 --ink/--accent/--ok/--warn/--err */
+/** 调色板：墨、朱红、竹绿、赭黄、靛蓝，对应主题变量 --ink/--accent/--ok/--warn */
 const COLORS: ColorOption[] = [
-  { name: '白', value: '#ffffff' },
-  { name: '紫', value: '#c678dd' },
-  { name: '绿', value: '#98c379' },
-  { name: '黄', value: '#e5c07b' },
-  { name: '红', value: '#e06c75' },
+  { name: '墨', value: '#1a1a1a' },
+  { name: '朱红', value: '#c4392f' },
+  { name: '竹绿', value: '#4a7c59' },
+  { name: '赭黄', value: '#b8862e' },
+  { name: '靛蓝', value: '#3D4F7A' },
 ]
 
 const TOOLS: ToolOption[] = [
@@ -79,9 +81,9 @@ function cursorForTool(tool: DrawingTool): CSSProperties['cursor'] {
 /* ----------------------------- 内联样式 ----------------------------- */
 
 const rootStyle: CSSProperties = {
-  background: '#232323',
-  border: '1px solid #3a3a3a',
-  borderRadius: '3px',
+  background: 'var(--bg2)',
+  border: '1px solid var(--border)',
+  borderRadius: '8px',
   padding: '8px',
 }
 
@@ -107,10 +109,10 @@ const toolBtnStyle = (active: boolean): CSSProperties => ({
   fontSize: '12px',
   fontFamily: 'var(--mono)',
   lineHeight: 1,
-  color: active ? '#1a1a1a' : '#e8e6e3',
-  background: active ? '#c678dd' : 'transparent',
-  border: `1px solid ${active ? '#c678dd' : '#3a3a3a'}`,
-  borderRadius: '3px',
+  color: active ? '#fff' : 'var(--ink)',
+  background: active ? 'var(--accent)' : 'transparent',
+  border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+  borderRadius: '6px',
   cursor: 'pointer',
   transition: 'background .12s ease, border-color .12s ease, color .12s ease',
 })
@@ -121,8 +123,8 @@ const colorBtnStyle = (active: boolean, color: string): CSSProperties => ({
   padding: 0,
   borderRadius: '50%',
   background: color,
-  border: `2px solid ${active ? '#e8e6e3' : '#3a3a3a'}`,
-  boxShadow: active ? '0 0 0 2px #1a1a1a, 0 0 0 4px #c678dd' : 'none',
+  border: `2px solid ${active ? 'var(--ink)' : 'var(--border)'}`,
+  boxShadow: active ? '0 0 0 2px var(--bg2), 0 0 0 4px var(--accent)' : 'none',
   cursor: 'pointer',
   transition: 'box-shadow .12s ease, border-color .12s ease',
 })
@@ -131,13 +133,13 @@ const sliderStyle: CSSProperties = {
   width: '90px',
   height: '16px',
   cursor: 'pointer',
-  accentColor: '#c678dd',
+  accentColor: 'var(--accent)',
 }
 
 const sliderLabelStyle: CSSProperties = {
   fontFamily: 'var(--mono)',
   fontSize: '11px',
-  color: '#8a8884',
+  color: 'var(--muted)',
   minWidth: '34px',
 }
 
@@ -146,10 +148,10 @@ const actionBtnStyle: CSSProperties = {
   fontSize: '12px',
   fontFamily: 'var(--mono)',
   lineHeight: 1,
-  color: '#e8e6e3',
-  background: '#2e2e2e',
-  border: '1px solid #3a3a3a',
-  borderRadius: '3px',
+  color: 'var(--ink)',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: '6px',
   cursor: 'pointer',
   transition: 'background .12s ease, border-color .12s ease',
 }
@@ -158,7 +160,7 @@ const statusDotStyle = (active: boolean): CSSProperties => ({
   width: '8px',
   height: '8px',
   borderRadius: '50%',
-  background: active ? '#98c379' : '#3a3a3a',
+  background: active ? 'var(--ok)' : 'var(--border)',
   display: 'inline-block',
   transition: 'background .12s ease',
 })
@@ -166,15 +168,15 @@ const statusDotStyle = (active: boolean): CSSProperties => ({
 const statusLabelStyle: CSSProperties = {
   fontFamily: 'var(--mono)',
   fontSize: '11px',
-  color: '#8a8884',
+  color: 'var(--muted)',
 }
 
 const canvasContainerStyle: CSSProperties = {
   position: 'relative',
   width: '100%',
-  background: '#1a1a1a',
-  border: '1px solid #3a3a3a',
-  borderRadius: '3px',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: '6px',
   overflow: 'hidden',
 }
 
@@ -182,8 +184,8 @@ const textInputStyle = (x: number, y: number, fontSize: number, color: string): 
   position: 'absolute',
   left: `${x}px`,
   top: `${y}px`,
-  background: 'rgba(26,26,26,0.55)',
-  border: '1px dashed #c678dd',
+  background: 'rgba(255,255,255,0.85)',
+  border: '1px dashed var(--accent)',
   color,
   fontFamily: 'var(--mono)',
   fontSize: `${fontSize}px`,
@@ -197,12 +199,12 @@ const textInputStyle = (x: number, y: number, fontSize: number, color: string): 
 
 /* ----------------------------- 组件实现 ----------------------------- */
 
-function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
+function WhiteboardPadBase({ width, height, onActivity }: WhiteboardPadProps) {
   const displayHeight = height ?? DEFAULT_HEIGHT
 
   // React state
   const [currentTool, setCurrentTool] = useState<DrawingTool>('pen')
-  const [currentColor, setCurrentColor] = useState<string>('#ffffff')
+  const [currentColor, setCurrentColor] = useState<string>('#1a1a1a')
   const [strokeWidth, setStrokeWidth] = useState<number>(3)
   const [isDrawing, setIsDrawing] = useState<boolean>(false)
 
@@ -349,6 +351,9 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
   const endStroke = useCallback(
     (e: ReactPointerEvent<HTMLCanvasElement>) => {
       const canvas = canvasRef.current
+      // Only report a stroke that actually drew something (pointerup/leave both
+      // call this, but only the first sees drawingRef true)
+      const wasDrawing = drawingRef.current
       if (canvas && e.pointerId !== undefined) {
         try {
           canvas.releasePointerCapture(e.pointerId)
@@ -367,8 +372,9 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
       drawingRef.current = false
       setIsDrawing(false)
       pointRef.current = null
+      if (wasDrawing) onActivity?.(true)
     },
-    [drawSegment],
+    [drawSegment, onActivity],
   )
 
   /* -------- 文字工具：将输入框内容绘制到画布 -------- */
@@ -386,7 +392,8 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
     }
     setTextEditing(null)
     setTextValue('')
-  }, [textEditing, textValue, currentColor, textFontSize, pushUndo])
+    if (textEditing && textValue.trim()) onActivity?.(true)
+  }, [textEditing, textValue, currentColor, textFontSize, pushUndo, onActivity])
 
   /* -------- 指针事件 -------- */
   const handlePointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -464,7 +471,8 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.restore()
-  }, [pushUndo])
+    onActivity?.(true)
+  }, [pushUndo, onActivity])
 
   /* -------- 撤销 -------- */
   const handleUndo = useCallback(() => {
@@ -613,7 +621,7 @@ function WhiteboardPadBase({ width, height }: WhiteboardPadProps) {
           className="wb-canvas"
           style={{
             display: 'block',
-            background: '#1a1a1a',
+            background: 'var(--bg)',
             touchAction: 'none',
             cursor: cursorForTool(currentTool),
           }}
