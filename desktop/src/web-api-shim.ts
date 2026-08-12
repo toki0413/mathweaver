@@ -178,6 +178,49 @@ async function callLLM(userInput: string, ageLevel?: string): Promise<string> {
 // Mock API implementation
 // ---------------------------------------------------------------------------
 
+/** Read a selected File into a data URL so it can be passed to uploadFileData. */
+function readFileForWeb(file: File): Promise<UploadedFileResult | null> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '')
+      // Reuse the same classification logic as uploadFileData.
+      const name = file.name
+      const lower = name.toLowerCase()
+      const isImage = /\.(png|jpe?g|webp|gif|bmp)$/.test(lower) || file.type.startsWith('image/')
+      const isPdf = /\.pdf$/.test(lower) || file.type === 'application/pdf'
+      const isText = /\.(txt|md|markdown|csv|json)$/.test(lower) || file.type.startsWith('text/')
+      if (isImage) {
+        resolve({ name, kind: 'image', mime: file.type || 'image/png', size: file.size, dataUrl })
+      } else if (isPdf) {
+        resolve({ name, kind: 'pdf', mime: 'application/pdf', size: file.size })
+      } else if (isText) {
+        const comma = dataUrl.indexOf(',')
+        const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
+        let text = ''
+        try {
+          text = decodeURIComponent(
+            Array.prototype.map
+              .call(atob(b64), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(''),
+          )
+        } catch {
+          try {
+            text = atob(b64)
+          } catch {
+            text = ''
+          }
+        }
+        resolve({ name, kind: 'text', mime: file.type || 'text/plain', size: file.size, text: text.slice(0, 200_000) })
+      } else {
+        resolve({ name, kind: 'unknown', mime: file.type, size: file.size, dataUrl })
+      }
+    }
+    reader.onerror = () => reject(reader.error || new Error('读取文件失败'))
+    reader.readAsDataURL(file)
+  })
+}
+
 const mockApi = {
   invoke: async (channel: string, ...args: unknown[]): Promise<unknown> => {
     // Simulate network delay
@@ -793,6 +836,86 @@ const mockApi = {
   setSetting: async (_key: string, _value: unknown) => true,
   isOnboardingComplete: async () => true,
   setOnboardingComplete: async (_value: boolean) => true,
+
+  // Multimodal: file upload + image understanding (web demo)
+  uploadFile: async () => {
+    return new Promise(resolve => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/png,image/jpeg,image/webp,image/gif,application/pdf,text/plain,text/markdown,.txt,.md,.csv,.json'
+      input.onchange = () => {
+        const file = input.files?.[0]
+        if (!file) {
+          resolve(null)
+          return
+        }
+        readFileForWeb(file).then(resolve).catch(() => resolve(null))
+      }
+      input.click()
+    })
+  },
+
+  uploadFileData: async (payload: { name: string; mime?: string; dataUrl: string }) => {
+    const { name, mime = 'application/octet-stream', dataUrl } = payload
+    const lower = name.toLowerCase()
+    const isImage = /\.(png|jpe?g|webp|gif|bmp)$/.test(lower) || mime.startsWith('image/')
+    const isPdf = /\.pdf$/.test(lower) || mime === 'application/pdf'
+    const isText = /\.(txt|md|markdown|csv|json)$/.test(lower) || mime.startsWith('text/')
+
+    if (isImage) {
+      return { name, kind: 'image' as const, mime, size: 0, dataUrl }
+    }
+    if (isPdf) {
+      // Web demo has no local PDF parser; return with no text so the UI
+      // offers the image path instead.
+      return { name, kind: 'pdf' as const, mime: 'application/pdf', size: 0 }
+    }
+    if (isText) {
+      const comma = dataUrl.indexOf(',')
+      const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
+      let text = ''
+      try {
+        text = decodeURIComponent(Array.prototype.map
+          .call(atob(b64), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(''))
+      } catch {
+        try {
+          text = atob(b64)
+        } catch {
+          text = ''
+        }
+      }
+      return { name, kind: 'text' as const, mime, size: 0, text: text.slice(0, 200_000) }
+    }
+    return { name, kind: 'unknown' as const, mime, size: 0, dataUrl }
+  },
+
+  understandImage: async (req: { imageDataUrl: string; prompt?: string; ageLevel?: string }) => {
+    const config = getActiveConfig()
+    if (isRealLLM(config)) {
+      try {
+        const age = req.ageLevel || 'kids'
+        const messages: LLMMessage[] = [
+          { role: 'system', content: getSystemPrompt(age) },
+          {
+            role: 'user',
+            content: `请理解这张图片中的数学内容（题目、算式、图形、手写推导），并用适合${age}学生的语言讲解。\n（图片以 data URL 提供，长度为 ${req.imageDataUrl.length} 字符）`,
+          },
+        ]
+        const resp = await chatCompletion(config, messages)
+        return { ok: true, source: 'vision_model', content: resp.content, generatedAt: new Date().toISOString() }
+      } catch (e) {
+        console.error('[MathWeaver] Web visual understanding failed:', e)
+      }
+    }
+    return {
+      ok: true,
+      source: 'fallback_no_vision',
+      content:
+        '（Web 演示模式：已收到图片，但未启用带视觉能力的模型。）可以将题目文字直接打出来，或为本机配置支持视觉的 LLM 后重试。',
+      generatedAt: new Date().toISOString(),
+    }
+  },
 
   // File operations — use browser download instead
   saveSession: async (data: string) => {

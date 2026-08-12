@@ -27,6 +27,7 @@ const INVOKE_CHANNELS = [
   'api:grill-start',
   'api:grill-answer',
   'api:generate-content',
+  'api:understand-image',
   // Settings
   'settings:get',
   'settings:set',
@@ -40,6 +41,8 @@ const INVOKE_CHANNELS = [
   'file:save-session',
   'file:load-session',
   'file:export-table',
+  'file:upload',
+  'file:upload-data',
 ] as const
 
 const ON_CHANNELS = [
@@ -131,6 +134,13 @@ const api = {
   // Dynamic Content Generation
   generateContent: (req: Record<string, unknown>) => safeInvoke('api:generate-content', req),
 
+  // Multimodal: image understanding (vision model + OCR fallback)
+  understandImage: (req: {
+    imageDataUrl: string
+    prompt?: string
+    ageLevel?: 'kids' | 'tweens' | 'teens'
+  }) => safeInvoke('api:understand-image', req),
+
   // Settings
   getLLMConfig: () => safeInvoke('settings:get-llm-config'),
   setLLMConfig: (config: Record<string, unknown>) => safeInvoke('settings:set-llm-config', config),
@@ -145,6 +155,11 @@ const api = {
   saveSession: (data: string) => safeInvoke('file:save-session', data),
   loadSession: () => safeInvoke('file:load-session'),
   exportTable: (data: string) => safeInvoke('file:export-table', data),
+  uploadFile: (options?: {
+    filters?: { name: string; extensions: string[] }[]
+  }) => safeInvoke('file:upload', options),
+  uploadFileData: (payload: { name: string; mime?: string; dataUrl: string }) =>
+    safeInvoke('file:upload-data', payload),
 
   // App
   getAppInfo: () => safeInvoke('app:get-info'),

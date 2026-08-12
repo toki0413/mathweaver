@@ -535,6 +535,14 @@ export const useStore = create<SessionState>()(
             decision: (data.decision as { action: string; reason: string }) || null,
             visualData: (data.visual_data as VisualData) || null,
             loading: false,
+            // Reset the whiteboard stroke counter for the round so the next
+            // turn's "did the student draw before answering?" signal is
+            // measured per-round, not cumulative across the whole session.
+            whiteboardActivity: {
+              strokeCount: 0,
+              active: false,
+              lastActivityAt: 0,
+            },
           }))
 
           // Update grill state if grill data is present

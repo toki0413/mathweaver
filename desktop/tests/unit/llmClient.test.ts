@@ -709,6 +709,53 @@ describe('OpenAICompatibleClient', () => {
     await expect(client.chat('sys', 'msg')).rejects.toThrow(LLMError)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
+
+  it('chatVision sends a multimodal payload and parses the response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: '这是图里的题目 [DELIVER]' } }],
+      }),
+      text: async () => '',
+    } as Response)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const client = new OpenAICompatibleClient(baseConfig)
+    const resp = await client.chatVision(
+      'sys',
+      '请讲解',
+      [{ dataUrl: 'data:image/png;base64,AAAA' }],
+      0.7,
+    )
+
+    expect(resp.content).toContain('这是图里的题目')
+    expect(resp.next_action).toBe('deliver')
+
+    // Verify the request body carried the multimodal content array.
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, { body: string }]
+    const payload = JSON.parse(init.body) as {
+      messages: Array<{ role: string; content: unknown }>
+    }
+    const userContent = payload.messages[1].content as Array<Record<string, unknown>>
+    expect(userContent[0]).toMatchObject({ type: 'text', text: '请讲解' })
+    expect(userContent[1]).toMatchObject({
+      type: 'image_url',
+      image_url: { url: 'data:image/png;base64,AAAA' },
+    })
+  })
+
+  it('chatVision with no images delegates to plain chat', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockChatResponse,
+      text: async () => '',
+    } as Response)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const client = new OpenAICompatibleClient(baseConfig)
+    const resp = await client.chatVision('sys', 'msg', [])
+    expect(resp.content).toContain('Hello from LLM')
+  })
 })
 
 // ---------------------------------------------------------------------------

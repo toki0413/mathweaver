@@ -375,6 +375,80 @@ class Backend {
   }
 
   // -------------------------------------------------------------------------
+  // Multimodal: image understanding (vision model + OCR fallback)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Understand an uploaded image (math problem, handwritten work, diagram).
+   *
+   * Strategy (per product decision — "本地 OCR + 视觉模型并存"):
+   *   1. Try the configured LLM's vision capability first (chatVision). The
+   *      model can not only OCR but *understand* the image (explain the problem,
+   *      read a diagram, catch a conceptual error).
+   *   2. If the provider lacks vision or the call fails, fall back to a
+   *      text-only interpretation so the teaching loop stays responsive.
+   *
+   * The renderer still runs local Tesseract OCR for instant text insertion;
+   * this endpoint is for deeper *understanding* (讲题/看图).
+   */
+  async understandImage(req: {
+    imageDataUrl: string
+    prompt?: string
+    ageLevel?: 'kids' | 'tweens' | 'teens'
+  }): Promise<Record<string, unknown>> {
+    const { imageDataUrl, prompt, ageLevel } = req
+    if (!imageDataUrl) {
+      return { ok: false, message: '缺少图片数据' }
+    }
+
+    const ageLabel = AGE_LEVEL_LABELS[ageLevel || 'kids'] || ageLevel || '少儿'
+    const systemPrompt =
+      '你是 MathWeaver 的数学视觉导师。请仔细看图，理解其中的数学内容（题目、算式、图形、' +
+      '手写推导等）。' +
+      `目标学生为 ${ageLabel}，请用符合其认知水平的语言作答。` +
+      '若图片是题目，请讲清题意与思路；若图片是学生的解答，请指出对错并给引导性反馈。' +
+      '不要直接替学生做完，用苏格拉底式引导。'
+
+    const userPrompt = prompt || '请描述这张图片中的数学内容，并给出引导性的讲解。'
+
+    // --- Vision-capable model path ---
+    if (this.llmClient && this.llmClient.isConfigured && this.llmClient.provider !== 'mock') {
+      try {
+        const resp = await this.llmClient.chatVision(
+          systemPrompt,
+          userPrompt,
+          [{ dataUrl: imageDataUrl }],
+          0.7,
+        )
+        return {
+          ok: true,
+          source: 'vision_model',
+          content: resp.content.trim(),
+          generatedAt: new Date().toISOString(),
+        }
+      } catch (err) {
+        logger.warn('chatVision failed — falling back to text-only interpretation', {
+          module: 'Backend',
+          error: err instanceof Error ? err.message : String(err),
+        })
+        // Fall through to text-only interpretation
+      }
+    }
+
+    // --- Text-only fallback (model unavailable / no vision support) ---
+    const fallbackContent =
+      '（当前模型未启用视觉理解。）我收到了这张图片，但无法直接"看"清内容。' +
+      '你可以：① 用上方的「拍照/图片识别」通过本地 OCR 提取文字；② 或把题目用文字打出来，' +
+      '我马上帮你讲解。'
+    return {
+      ok: true,
+      source: 'fallback_no_vision',
+      content: fallbackContent,
+      generatedAt: new Date().toISOString(),
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
 

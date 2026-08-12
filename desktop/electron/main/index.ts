@@ -20,8 +20,9 @@ import {
   Tray,
   crashReporter,
 } from 'electron'
-import { join } from 'path'
+import { join, extname } from 'path'
 import { writeFileSync, readFileSync } from 'fs'
+import { PDFParse } from 'pdf-parse'
 import { randomBytes } from 'crypto'
 import Store from 'electron-store'
 import { autoUpdater } from 'electron-updater'
@@ -537,6 +538,11 @@ safeIpcHandle('api:generate-content', async (_event, req) => {
   return backend.generateDynamicContent(req)
 })
 
+// --- Multimodal: image understanding ---
+safeIpcHandle('api:understand-image', async (_event, req) => {
+  return backend.understandImage(req)
+})
+
 // --- Student ID ---
 safeIpcHandleSync('student:get-id', () => {
   let studentId = store.get('settings.studentId') as string
@@ -682,6 +688,183 @@ safeIpcHandle('file:export-table', async (_event, data: string) => {
   if (result.canceled || !result.filePath) return null
   writeFileSync(result.filePath, data, 'utf-8')
   return result.filePath
+})
+
+// ---------------------------------------------------------------------------
+// File upload (multimodal input) — images / PDF / text documents
+// ---------------------------------------------------------------------------
+
+export type UploadedFileKind = 'image' | 'pdf' | 'text' | 'unknown'
+
+export interface UploadedFileResult {
+  name: string
+  kind: UploadedFileKind
+  mime: string
+  size: number
+  /** For images: base64 data URL (used by the vision model / OCR). */
+  dataUrl?: string
+  /** For text/PDF: extracted plain text. */
+  text?: string
+}
+
+const IMAGE_EXT: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.bmp': 'image/bmp',
+}
+
+const TEXT_EXT: Record<string, string> = {
+  '.txt': 'text/plain',
+  '.md': 'text/markdown',
+  '.markdown': 'text/markdown',
+  '.csv': 'text/csv',
+  '.json': 'application/json',
+}
+
+/** Hard cap on extracted text / base64 payload delivered to the renderer. */
+const MAX_PAYLOAD = 200_000
+
+/**
+ * Classify raw bytes by extension and produce a structured UploadedFileResult.
+ * Shared by the native dialog path (file:upload) and the data-buffer path
+ * (file:upload-data) used by drag & drop and clipboard paste.
+ */
+async function classifyBuffer(
+  name: string,
+  ext: string,
+  buffer: Buffer,
+): Promise<UploadedFileResult> {
+  const out: UploadedFileResult = {
+    name,
+    mime: 'application/octet-stream',
+    size: buffer.length,
+    kind: 'unknown',
+  }
+
+  if (IMAGE_EXT[ext]) {
+    out.kind = 'image'
+    out.mime = IMAGE_EXT[ext]
+    out.dataUrl = `data:${out.mime};base64,${buffer.toString('base64')}`
+    return out
+  }
+
+  if (ext === '.pdf') {
+    out.kind = 'pdf'
+    out.mime = 'application/pdf'
+    try {
+      const parser = new PDFParse({ data: buffer })
+      const result = await parser.getText()
+      const text = (result?.text ?? '').trim()
+      if (text) out.text = text.slice(0, MAX_PAYLOAD)
+      await parser.destroy()
+    } catch (err) {
+      // Scan-only / encrypted / malformed PDFs fall back gracefully: we still
+      // return the file so the renderer can recognize it, but note extraction
+      // failed so the UI can offer the OCR / image path instead.
+      logger.warn('PDF text extraction failed', {
+        module: 'FileUpload',
+        name,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+    return out
+  }
+
+  if (TEXT_EXT[ext]) {
+    out.kind = 'text'
+    out.mime = TEXT_EXT[ext]
+    out.text = buffer.toString('utf-8').slice(0, MAX_PAYLOAD)
+    return out
+  }
+
+  // Unknown binary: send as base64 so a vision/multimodal model can attempt it.
+  out.kind = 'unknown'
+  out.dataUrl = `data:${out.mime};base64,${buffer.toString('base64')}`
+  return out
+}
+
+/**
+ * Open a native file dialog and read the selected file into a structured
+ * result the renderer can use for multimodal understanding. Returns null
+ * when the user cancels.
+ */
+safeIpcHandle('file:upload', async (_event, options?: { filters?: Electron.FileFilter[] }) => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    title: '选择要上传的文件',
+    properties: ['openFile'],
+    filters: options?.filters?.length
+      ? options.filters
+      : [
+          { name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'] },
+          { name: 'PDF 文档', extensions: ['pdf'] },
+          { name: '文本 / Markdown', extensions: ['txt', 'md', 'markdown', 'csv', 'json'] },
+          { name: '所有文件', extensions: ['*'] },
+        ],
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+
+  const filePath = result.filePaths[0]
+  const name = filePath.split(/[\\/]/).pop() ?? filePath
+  const ext = extname(filePath).toLowerCase()
+  let buffer: Buffer
+  try {
+    buffer = readFileSync(filePath)
+  } catch (err) {
+    logger.error('Failed to read uploaded file', {
+      module: 'FileUpload',
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return { error: '无法读取所选文件', _ipcError: true }
+  }
+
+  return classifyBuffer(name, ext, buffer)
+})
+
+/**
+ * Structured result for a renderer-supplied data buffer (drag & drop,
+ * clipboard paste, camera capture). The renderer sends { name, mime, dataUrl }
+ * and the main process reuses classifyBuffer so all upload paths behave the
+ * same (PDF extraction, vision-ready base64, text extraction).
+ */
+export interface UploadedDataPayload {
+  name: string
+  mime?: string
+  dataUrl: string
+}
+
+safeIpcHandle('file:upload-data', async (_event, payload?: UploadedDataPayload) => {
+  if (!payload || typeof payload !== 'object' || typeof payload.dataUrl !== 'string') return null
+  const { name = '上传文件', mime = 'application/octet-stream', dataUrl } = payload
+  if (!dataUrl) return null
+
+  // dataUrl is "data:<mime>;base64,<b64>" — strip the prefix if present.
+  const comma = dataUrl.indexOf(',')
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
+  let buffer: Buffer
+  try {
+    buffer = Buffer.from(b64, 'base64')
+  } catch (err) {
+    logger.error('Failed to decode uploaded data buffer', {
+      module: 'FileUpload',
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return { error: '无法解析上传数据', _ipcError: true }
+  }
+  if (buffer.length === 0) return { error: '上传内容为空', _ipcError: true }
+
+  const ext = extname(name).toLowerCase()
+  const result = await classifyBuffer(name, ext, buffer)
+  // Preserve the mime the renderer observed (e.g. image/png from the clipboard).
+  if (mime && mime !== 'application/octet-stream') {
+    result.mime = mime
+    if (result.kind === 'image' && result.dataUrl) {
+      result.dataUrl = `data:${mime};base64,${buffer.toString('base64')}`
+    }
+  }
+  return result
 })
 
 // ---------------------------------------------------------------------------

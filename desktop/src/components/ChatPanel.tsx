@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useStore, type ChatMessage } from '../stores/sessionStore'
 import { MathText } from './MathText'
+import { ttsSystem } from '../utils/tts'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,7 @@ const SCOPED_CSS = `
 }
 .cw-action-btn:hover { color: var(--ink); border-color: var(--muted); }
 .cw-action-btn.copied { color: var(--ok); border-color: var(--ok); }
+.cw-action-btn.speaking { color: var(--accent); border-color: var(--accent); }
 
 .cw-expand-btn {
   display: inline-block;
@@ -169,6 +171,10 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
   // Copy feedback (index of the message currently showing "已复制")
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const copyTimerRef = useRef<number | null>(null)
+
+  // TTS speaking state (index of the message currently being read aloud)
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null)
+  const ageLevel = useStore(s => s.ageLevel)
 
   // Long-message expansion (keyed by stable chat index)
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
@@ -326,6 +332,28 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
   }
 
   // -------------------------------------------------------------------------
+  // TTS: read a system message aloud (导师回复朗读)
+  // -------------------------------------------------------------------------
+  const handleSpeak = useCallback(
+    (i: number, content: string) => {
+      if (!ttsSystem.supported) return
+      if (speakingIndex === i) {
+        setSpeakingIndex(null)
+        ttsSystem.stop()
+        return
+      }
+      // 年龄适配：kids 语速稍慢，便于理解
+      const rate = ageLevel === 'kids' ? 0.9 : 1
+      const ok = ttsSystem.speak(content, { language: 'zh-CN', rate, interrupt: true })
+      if (!ok) return
+      setSpeakingIndex(i)
+      const timer = window.setTimeout(() => setSpeakingIndex(prev => (prev === i ? null : prev)), 60_000)
+      window.setTimeout(() => window.clearTimeout(timer), 61_000)
+    },
+    [ageLevel, speakingIndex],
+  )
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -390,6 +418,16 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
                 >
                   引用
                 </button>
+                {msg.role === 'system' && (
+                  <button
+                    type="button"
+                    className={`cw-action-btn${speakingIndex === i ? ' speaking' : ''}`}
+                    onClick={() => handleSpeak(i, msg.content)}
+                    title={speakingIndex === i ? '停止朗读' : '朗读'}
+                  >
+                    {speakingIndex === i ? '停止' : '朗读'}
+                  </button>
+                )}
               </div>
 
               <div className="role">

@@ -202,6 +202,18 @@ export interface LLMClient {
     temperature?: number,
   ): Promise<LLMResponse>
 
+  /**
+   * Multimodal chat (vision). Sends a text prompt plus one or more images
+   * (base64 data URIs) to a vision-capable model. Providers that lack vision
+   * support should throw so the caller can fall back to local OCR.
+   */
+  chatVision(
+    systemPrompt: string,
+    userMessage: string,
+    images: { dataUrl: string }[],
+    temperature?: number,
+  ): Promise<LLMResponse>
+
   readonly provider: string
   readonly isConfigured: boolean
 }
@@ -324,6 +336,27 @@ export class MockLLMClient implements LLMClient {
 
   private static sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  /**
+   * Mock vision: acknowledges the image count and returns a deterministic
+   * placeholder. In mock mode there is no real image understanding, so the
+   * caller should fall back to local OCR when higher fidelity is needed.
+   */
+  async chatVision(
+    systemPrompt: string,
+    userMessage: string,
+    images: { dataUrl: string }[],
+    _temperature?: number,
+  ): Promise<LLMResponse> {
+    this.callHistory.push({
+      system: systemPrompt.slice(0, 200),
+      user: `[vision ${images.length} image(s)] ${userMessage.slice(0, 200)}`,
+    })
+    return mkResponse(
+      `（演示模式）已收到 ${images.length} 张图片，但未配置视觉模型，请在本机 OCR 或配置多模态模型后查看实际内容。`,
+      'deliver',
+    )
   }
 }
 
@@ -778,6 +811,96 @@ export class OpenAICompatibleClient implements LLMClient {
       }
       return err.retryable
     })
+  }
+
+  // -------------------------------------------------------------------------
+  // Multimodal (vision) chat
+  // -------------------------------------------------------------------------
+
+  /**
+   * Send a text prompt plus images to a vision-capable model. Builds the
+   * OpenAI-style multimodal payload:
+   *
+   *   messages: [{ role:'user', content: [
+   *     { type:'text', text: ... },
+   *     { type:'image_url', image_url: { url: '<dataUrl>' } },
+   *   ]}]
+   *
+   * Providers that do not support vision (e.g. pure text models) will return
+   * a 4xx error; the caller should catch it and fall back to local OCR.
+   */
+  async chatVision(
+    systemPrompt: string,
+    userMessage: string,
+    images: { dataUrl: string }[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    if (images.length === 0) {
+      return this.chat(systemPrompt, userMessage, undefined, temperature)
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    if (this.provider !== 'ollama') {
+      headers['Authorization'] = `Bearer ${this.apiKey}`
+    }
+
+    const content: Array<Record<string, unknown>> = [{ type: 'text', text: userMessage }]
+    for (const img of images) {
+      content.push({ type: 'image_url', image_url: { url: img.dataUrl } })
+    }
+
+    const payload: Record<string, unknown> = {
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content },
+      ],
+      temperature: temperature ?? 0.7,
+    }
+
+    const url = `${this.baseUrl}/chat/completions`
+
+    const doFetch = async (): Promise<LLMResponse> => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60_000)
+      let resp: Response
+      try {
+        resp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        })
+      } catch (err) {
+        clearTimeout(timeout)
+        throw err instanceof LLMError ? err : classifyFetchError(err)
+      }
+      clearTimeout(timeout)
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '')
+        throw classifyHttpError(resp.status, errText)
+      }
+
+      const body = (await resp.json()) as {
+        choices?: Array<{ message?: { content?: unknown } }>
+      }
+      const message = body.choices?.[0]?.message ?? {}
+      const contentStr = (message.content as string) || ''
+      const { next_action, next_agent } = this.parseNextAction(contentStr)
+      return {
+        content: contentStr,
+        tool_calls: null,
+        next_action,
+        next_agent,
+        finish_reason: 'stop',
+        usage: null,
+      }
+    }
+
+    return this.retryWithBackoff(doFetch, 'chatVision')
   }
 }
 

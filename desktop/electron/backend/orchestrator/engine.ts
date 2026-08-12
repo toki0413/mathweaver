@@ -43,8 +43,9 @@ import {
   shouldFadeScaffold,
   isInteractionStruggling,
   snapshotFourField,
+  createAgentMessage,
 } from '../types'
-import type { LLMClient } from '../llm/client'
+import type { LLMClient, LLMResponse } from '../llm/client'
 import { MockLLMClient } from '../llm/client'
 import { CounterExampleForge } from '../forge/forge'
 import { type BaseAgent } from '../agents/base'
@@ -65,6 +66,52 @@ import { createModuleLogger } from '../utils/logger'
 import { StateStore } from '../persistence/store'
 
 const log = createModuleLogger('Orchestrator')
+
+// ---------------------------------------------------------------------------
+// Turn latency budget
+// ---------------------------------------------------------------------------
+// A single student turn fans out into several sequential LLM calls (task
+// decomposition + one chat per agent iteration). These constants cap the total
+// wall-clock time a turn may spend before the orchestrator falls back to a
+// deterministic response, so the student always gets a timely reply even when
+// the LLM is slow or unresponsive.
+
+/** Hard ceiling for the whole turn (decomposition + all agent iterations). */
+const TURN_TIMEOUT_MS = 15000
+
+/** Per-LLM-call ceiling inside the agent loop (gives the loop a chance to exit). */
+const LLM_CALL_TIMEOUT_MS = 6000
+
+/** Deterministic fallback LLM response used when a call times out. */
+const TIMEOUT_LLM_RESPONSE: LLMResponse = {
+  content: '',
+  tool_calls: null,
+  next_action: 'deliver',
+  next_agent: null,
+  finish_reason: 'timeout',
+  usage: null,
+}
+
+/**
+ * Resolve with `fallback` if `promise` does not settle within `ms`.
+ * The underlying promise keeps running in the background but its result is
+ * discarded; we never reject so the caller can always proceed.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>(resolve => {
+    const timer = setTimeout(() => resolve(fallback), ms)
+    promise.then(
+      value => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      () => {
+        clearTimeout(timer)
+        resolve(fallback)
+      },
+    )
+  })
+}
 
 // ---------------------------------------------------------------------------
 // Minimal Concept DAG (replaces dag/concept_dag.py)
@@ -1171,6 +1218,19 @@ export class Orchestrator {
     }
   }
 
+  /**
+   * Deterministic fallback reply used when the collaboration agent times out.
+   * Keeps the response pedagogically sensible (acknowledges + asks a follow-up)
+   * without requiring another LLM round-trip.
+   */
+  private fallbackResponse(decision: TeachingDecision): string {
+    const hintLine =
+      decision.hint_level > 0
+        ? `需要的话，我可以先给你一个提示（难度档 ${decision.hint_level}）。`
+        : `你可以尝试用自己的话复述一遍，或换个角度想一想。`
+    return `我还在整理这个问题的回答。先确认一下：你已经理解了刚才这一步吗？${hintLine}`
+  }
+
   // -- Teaching Loop --
 
   async processStudentInput(
@@ -1326,14 +1386,32 @@ export class Orchestrator {
     // Pre-compute a default decision in case the loop exits early
     let decision = this.makeDecision()
 
+    // Register the turn's start so the loop can enforce the total latency budget.
+    const turnStartMs = Date.now()
+    const remainingBudget = () => {
+      const left = TURN_TIMEOUT_MS - (Date.now() - turnStartMs)
+      return Math.max(1, Math.min(left, LLM_CALL_TIMEOUT_MS))
+    }
+
     // 2.1: LLM generates task decomposition
-    const decomposition = await this.decomposeTask(llm, studentInput)
+    const decomposition = await withTimeout(
+      this.decomposeTask(llm, studentInput),
+      remainingBudget(),
+      { steps: [], student_input: studentInput },
+    )
     fullTrace.push({ phase: 'decompose', decomposition })
 
     let lastAgent = 'orchestrator'
     let delivered = false
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
+      // Enforce the turn latency budget: once exhausted, stop calling the LLM
+      // and force a deliver so the loop exits deterministically.
+      if (Date.now() - turnStartMs > TURN_TIMEOUT_MS) {
+        log.warn('Turn exceeded latency budget, forcing deliver')
+        break
+      }
+
       // Build agent descriptions, filtered by topology + called set
       let agentDescriptions: Record<string, unknown> = {}
       for (const [name, agent] of Object.entries(this.agents)) {
@@ -1363,7 +1441,11 @@ export class Orchestrator {
         calledAgents,
         agentDescriptions,
       )
-      const llmResp = await llm.chat(this.systemPrompt(), llmInput)
+      const llmResp = await withTimeout(
+        llm.chat(this.systemPrompt(), llmInput),
+        remainingBudget(),
+        TIMEOUT_LLM_RESPONSE,
+      )
 
       // LLM decides to deliver
       if (llmResp.next_action === 'deliver' || iteration === maxIterations - 1) {
@@ -1418,7 +1500,14 @@ export class Orchestrator {
 
         log.debug('Context message orchestrator -> exit agent', { exitAgent: exitName, sessionId })
 
-        const msg = await this.agents[exitName].run(ctx)
+        const msg = await withTimeout(
+          this.agents[exitName].run(ctx),
+          remainingBudget(),
+          createAgentMessage(this.agents[exitName].role, this.fallbackResponse(decision), {
+            confidence: 0.5,
+            metadata: { timed_out: true, pedagogical_action: decision.action },
+          }),
+        )
         this.messageHistory.push(msg)
         priorResults[exitName] = {
           content: msg.content,
@@ -1480,7 +1569,14 @@ export class Orchestrator {
       }
 
       // Run the agent
-      const msg = await agent.run(ctx)
+      const msg = await withTimeout(
+        agent.run(ctx),
+        remainingBudget(),
+        createAgentMessage(agent.role, '(中间步骤生成超时，跳过)', {
+          confidence: 0.3,
+          metadata: { timed_out: true },
+        }),
+      )
       this.messageHistory.push(msg)
 
       // Apply field updates (single-writer: orchestrator applies, not agent)
@@ -1529,7 +1625,14 @@ export class Orchestrator {
           proof_result: proofResultData,
         },
       }
-      const msg = await this.agents[exitName].run(ctx)
+      const msg = await withTimeout(
+        this.agents[exitName].run(ctx),
+        remainingBudget(),
+        createAgentMessage(this.agents[exitName].role, this.fallbackResponse(decision), {
+          confidence: 0.5,
+          metadata: { timed_out: true, pedagogical_action: decision.action },
+        }),
+      )
       this.messageHistory.push(msg)
       priorResults[exitName] = { content: msg.content, metadata: msg.metadata }
       phaseTrace.push('collaborate')

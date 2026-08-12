@@ -79,6 +79,9 @@ const FormulaLiveEditor = lazy(() =>
 const ImageInput = lazy(() =>
   import('./components/ImageInput').then(m => ({ default: m.ImageInput })),
 )
+const FileUploadPanel = lazy(() =>
+  import('./components/FileUploadPanel').then(m => ({ default: m.FileUploadPanel })),
+)
 const VisualStepSolver = lazy(() =>
   import('./components/VisualStepSolver').then(m => ({ default: m.VisualStepSolver })),
 )
@@ -991,6 +994,27 @@ export default function App() {
                           duration: 3000,
                         })
                       }}
+                    />
+                  </CollapsibleSection>
+                )}
+                {!isKidsMode && (
+                  <CollapsibleSection
+                    title="上传文件 / 多模态理解"
+                    hint="图片 · PDF · 文本"
+                    defaultOpen={false}
+                  >
+                    <FileUploadPanel
+                      onInsert={text => {
+                        setTextInput(prev => prev + (prev ? '\n' : '') + text)
+                        setInputStartTime(Date.now())
+                        addToast({
+                          type: 'info',
+                          title: '已处理',
+                          message: '内容已插入到输入框',
+                          duration: 3000,
+                        })
+                      }}
+                      disabled={loading || !backendReady}
                     />
                   </CollapsibleSection>
                 )}

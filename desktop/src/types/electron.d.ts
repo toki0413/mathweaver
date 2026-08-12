@@ -62,6 +62,13 @@ interface MathWeaverAPI {
   // Dynamic Content Generation
   generateContent(req: Record<string, unknown>): Promise<Record<string, unknown> | null>
 
+  // Multimodal: image understanding
+  understandImage(req: {
+    imageDataUrl: string
+    prompt?: string
+    ageLevel?: 'kids' | 'tweens' | 'teens'
+  }): Promise<Record<string, unknown> | null>
+
   // Settings
   getLLMConfig(): Promise<Record<string, unknown> | null>
   setLLMConfig(
@@ -78,6 +85,14 @@ interface MathWeaverAPI {
   saveSession(data: string): Promise<string | null>
   loadSession(): Promise<string | null>
   exportTable(data: string): Promise<string | null>
+  uploadFile(options?: {
+    filters?: { name: string; extensions: string[] }[]
+  }): Promise<UploadedFileResult | null>
+  uploadFileData(payload: {
+    name: string
+    mime?: string
+    dataUrl: string
+  }): Promise<UploadedFileResult | null>
 
   // Raw IPC bridge
   send(channel: string, ...args: unknown[]): void
@@ -87,4 +102,14 @@ interface MathWeaverAPI {
 
 interface Window {
   api: MathWeaverAPI
+}
+
+/** Result of a native file upload (kind + base64 / text payload). */
+interface UploadedFileResult {
+  name: string
+  kind: 'image' | 'pdf' | 'text' | 'unknown'
+  mime: string
+  size: number
+  dataUrl?: string
+  text?: string
 }
