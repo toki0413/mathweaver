@@ -211,7 +211,13 @@ function readFileForWeb(file: File): Promise<UploadedFileResult | null> {
             text = ''
           }
         }
-        resolve({ name, kind: 'text', mime: file.type || 'text/plain', size: file.size, text: text.slice(0, 200_000) })
+        resolve({
+          name,
+          kind: 'text',
+          mime: file.type || 'text/plain',
+          size: file.size,
+          text: text.slice(0, 200_000),
+        })
       } else {
         resolve({ name, kind: 'unknown', mime: file.type, size: file.size, dataUrl })
       }
@@ -842,14 +848,17 @@ const mockApi = {
     return new Promise(resolve => {
       const input = document.createElement('input')
       input.type = 'file'
-      input.accept = 'image/png,image/jpeg,image/webp,image/gif,application/pdf,text/plain,text/markdown,.txt,.md,.csv,.json'
+      input.accept =
+        'image/png,image/jpeg,image/webp,image/gif,application/pdf,text/plain,text/markdown,.txt,.md,.csv,.json'
       input.onchange = () => {
         const file = input.files?.[0]
         if (!file) {
           resolve(null)
           return
         }
-        readFileForWeb(file).then(resolve).catch(() => resolve(null))
+        readFileForWeb(file)
+          .then(resolve)
+          .catch(() => resolve(null))
       }
       input.click()
     })
@@ -875,9 +884,11 @@ const mockApi = {
       const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
       let text = ''
       try {
-        text = decodeURIComponent(Array.prototype.map
-          .call(atob(b64), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(''))
+        text = decodeURIComponent(
+          Array.prototype.map
+            .call(atob(b64), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join(''),
+        )
       } catch {
         try {
           text = atob(b64)
@@ -903,7 +914,12 @@ const mockApi = {
           },
         ]
         const resp = await chatCompletion(config, messages)
-        return { ok: true, source: 'vision_model', content: resp.content, generatedAt: new Date().toISOString() }
+        return {
+          ok: true,
+          source: 'vision_model',
+          content: resp.content,
+          generatedAt: new Date().toISOString(),
+        }
       } catch (e) {
         console.error('[MathWeaver] Web visual understanding failed:', e)
       }

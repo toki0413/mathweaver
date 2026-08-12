@@ -155,9 +155,8 @@ const api = {
   saveSession: (data: string) => safeInvoke('file:save-session', data),
   loadSession: () => safeInvoke('file:load-session'),
   exportTable: (data: string) => safeInvoke('file:export-table', data),
-  uploadFile: (options?: {
-    filters?: { name: string; extensions: string[] }[]
-  }) => safeInvoke('file:upload', options),
+  uploadFile: (options?: { filters?: { name: string; extensions: string[] }[] }) =>
+    safeInvoke('file:upload', options),
   uploadFileData: (payload: { name: string; mime?: string; dataUrl: string }) =>
     safeInvoke('file:upload-data', payload),
 

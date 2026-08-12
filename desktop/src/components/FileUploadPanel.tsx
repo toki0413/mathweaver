@@ -1,4 +1,12 @@
-import { memo, useCallback, useEffect, useRef, useState, type DragEvent, type ClipboardEvent } from 'react'
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type ClipboardEvent,
+} from 'react'
 import { useStore } from '../stores/sessionStore'
 
 /**
@@ -140,9 +148,11 @@ function FileUploadPanelImpl({ onInsert, disabled = false }: FileUploadPanelProp
       const api = getAPI()
       if (!api.uploadFileData) throw new Error('上传功能不可用')
       const { dataUrl, mime } = await fileToDataUrl(file)
-      const result = (await api.uploadFileData({ name: file.name || mime || 'image', mime, dataUrl })) as
-        | UploadedFileResult
-        | null
+      const result = (await api.uploadFileData({
+        name: file.name || mime || 'image',
+        mime,
+        dataUrl,
+      })) as UploadedFileResult | null
       if (!result) return
       await processResult(result)
     },
@@ -216,7 +226,10 @@ function FileUploadPanelImpl({ onInsert, disabled = false }: FileUploadPanelProp
       if (!items) return
       let imageFile: File | null = null
       for (const item of Array.from(items)) {
-        if (item.kind === 'file' && (item.type.startsWith('image/') || item.type === 'application/pdf')) {
+        if (
+          item.kind === 'file' &&
+          (item.type.startsWith('image/') || item.type === 'application/pdf')
+        ) {
           const f = item.getAsFile()
           if (f) {
             imageFile = f

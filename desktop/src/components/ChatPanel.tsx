@@ -347,7 +347,10 @@ function ChatPanelBase({ onQuote }: ChatPanelProps) {
       const ok = ttsSystem.speak(content, { language: 'zh-CN', rate, interrupt: true })
       if (!ok) return
       setSpeakingIndex(i)
-      const timer = window.setTimeout(() => setSpeakingIndex(prev => (prev === i ? null : prev)), 60_000)
+      const timer = window.setTimeout(
+        () => setSpeakingIndex(prev => (prev === i ? null : prev)),
+        60_000,
+      )
       window.setTimeout(() => window.clearTimeout(timer), 61_000)
     },
     [ageLevel, speakingIndex],
