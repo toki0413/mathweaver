@@ -748,7 +748,9 @@ export const SymmetryGroup3D: React.FC<Props> = ({ groupType = 'S4', className }
                 padding: '2px 6px',
                 borderRadius: '4px',
                 background:
-                  target !== src ? 'color-mix(in srgb, var(--warn) 18%, transparent)' : 'transparent',
+                  target !== src
+                    ? 'color-mix(in srgb, var(--warn) 18%, transparent)'
+                    : 'transparent',
                 color: target !== src ? 'var(--warn)' : 'var(--muted)',
               }}
             >

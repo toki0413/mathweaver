@@ -957,10 +957,10 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
             {running ? '⏸ 暂停' : '▶ 播放'}
           </button>
           <button className="ml-btn" onClick={handleReset} aria-label="重置">
-             重置
+            重置
           </button>
           <button className="ml-btn" onClick={handleSnapshot} aria-label="保存快照">
-             快照
+            快照
           </button>
           <span style={{ flex: 1 }} />
           <span
@@ -1113,7 +1113,9 @@ function ModelingLabInner({ ageLevel: _ageLevel = 'tweens' }: Props) {
             <div className="ml-section">
               <p className="ml-section-title">守恒律验证</p>
               <div className="ml-explain" style={{ borderLeftColor: 'var(--ok)' }}>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>{cons.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+                  {cons.label}
+                </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>
                   漂移: {cons.drift}
                 </div>

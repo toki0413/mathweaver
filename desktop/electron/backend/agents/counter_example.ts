@@ -139,7 +139,14 @@ export class CounterExampleAgent extends BaseAgent {
 
       const isAbelian = isGroup && commResult !== null && !commResult.success
 
-      const content = this.formatResult(axiomsResult, assocResult, commResult, isGroup, isAbelian, this.ageOf(ctx))
+      const content = this.formatResult(
+        axiomsResult,
+        assocResult,
+        commResult,
+        isGroup,
+        isAbelian,
+        this.ageOf(ctx),
+      )
 
       // Propose field updates based on verification
       const fieldUpdates: Record<string, Record<string, unknown>> = {}

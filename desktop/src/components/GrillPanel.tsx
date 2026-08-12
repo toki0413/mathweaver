@@ -325,7 +325,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 animation: 'streakPop 0.3s ease-out',
               }}
             >
-               {streak} 连对！
+              {streak} 连对！
             </div>
           )}
 
@@ -401,7 +401,7 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                 color: 'var(--danger, #e06c75)',
               }}
             >
-               还有 {wrongQuestions.length} 道错题将在结束时重新出现
+              还有 {wrongQuestions.length} 道错题将在结束时重新出现
             </div>
           )}
 
@@ -491,14 +491,14 @@ export function GrillPanel({ onCorrect, onWrong, onActivity }: GrillPanelProps) 
                         style={L1_STYLE}
                         onClick={() => setHintLevel(1)}
                       >
-                         方向提示
+                        方向提示
                       </button>
                       <button
                         className="btn btn-hint-l2"
                         style={L2_STYLE}
                         onClick={() => setHintLevel(2)}
                       >
-                         详细提示
+                        详细提示
                       </button>
                       <button
                         className="btn btn-hint-answer"

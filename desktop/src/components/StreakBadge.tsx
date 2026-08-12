@@ -424,7 +424,13 @@ export function StreakBadge({ compact = false }: StreakBadgeProps) {
               animation: 'streakCelebrateText 3.6s ease-out forwards',
             }}
           >
-            <div style={{ lineHeight: 1, color: 'var(--warn)', filter: 'drop-shadow(0 0 18px var(--warn))' }}>
+            <div
+              style={{
+                lineHeight: 1,
+                color: 'var(--warn)',
+                filter: 'drop-shadow(0 0 18px var(--warn))',
+              }}
+            >
               <FlameIcon size={54} />
             </div>
             <div

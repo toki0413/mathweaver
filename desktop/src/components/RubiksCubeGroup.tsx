@@ -453,10 +453,10 @@ export function RubiksCubeGroup({ ageLevel }: Props) {
               </div>
               <div className="rcg-seq-buttons">
                 <button onClick={handleUndo} disabled={sequence.length === 0}>
-                   撤销
+                  撤销
                 </button>
                 <button onClick={handleResetSeq} disabled={sequence.length === 0}>
-                   清空
+                  清空
                 </button>
               </div>
               <div className="rcg-seq-result">
