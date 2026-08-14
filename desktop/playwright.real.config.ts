@@ -46,7 +46,10 @@ export default defineConfig({
         'cd ../backend && rm -f /tmp/mathweaver_e2e.db && ' +
         `MATHWEAVER_LLM_PROVIDER=mock MATHWEAVER_LLM_API_KEY= ` +
         `MATHWEAVER_DB_PATH=/tmp/mathweaver_e2e.db MATHWEAVER_PORT=${BACKEND_PORT} ` +
-        'python -m uvicorn mathweaver.api.app:app --host 127.0.0.1 ' +
+        // Boot the backend with the project venv so the real-backend suite
+        // works without a system-wide Python install. Requires the venv at
+        // backend/.venv (create with: python -m venv .venv && pip install -e .).
+        '.venv/bin/python -m uvicorn mathweaver.api.app:app --host 127.0.0.1 ' +
         `--port ${BACKEND_PORT} --log-level warning`,
       url: `${backendURL}/api/health`,
       reuseExistingServer: !process.env.CI,
