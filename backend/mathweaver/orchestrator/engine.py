@@ -137,6 +137,10 @@ class Orchestrator:
         from ..grill.session import GrillSession
         self.grill_session: GrillSession | None = None
 
+        # Long-horizon teaching memory: cross-turn summary + token budget + pruning
+        from .teaching_memory import TeachingMemory
+        self.teaching_memory = TeachingMemory()
+
         # Initialize independent agents (1.1: each agent is a self-contained class)
         from ..agents import (
             AbstractionAgent,
@@ -190,6 +194,7 @@ class Orchestrator:
         self.message_history = []
         self.evidence_chain = EvidenceChain(session_id=student_id)
         self.context_messages = []
+        self.teaching_memory.reset()
 
         # 7.2: Initialize trace collector for this session
         self.trace_collector = TraceCollector(session_id=student_id)
@@ -714,6 +719,30 @@ class Orchestrator:
 
         llm = self.llm_client or MockLLMClient()
 
+        # Preventive compaction (Codex: compact before the window fills, not
+        # after overflow). When the verbatim window is at budget and a real LLM
+        # is available, fold the oldest turns into a structured handoff summary
+        # so a successor request resumes naturally. Non-fatal: failures fall
+        # back to the naive truncation inside TeachingMemory.
+        if (
+            self.llm_client is not None
+            and not isinstance(self.llm_client, MockLLMClient)
+            and self.teaching_memory.should_compact()
+        ):
+            try:
+                async def _summarize(prompt, turns):
+                    body = "\n---\n".join(
+                        f"学生: {t.student}\n教师: {t.teacher}\n动作: {t.action}" for t in turns
+                    )
+                    resp = await self.llm_client.chat(
+                        system_prompt=prompt, user_message=body, temperature=0.2
+                    )
+                    return getattr(resp, "content", "") or ""
+
+                await self.teaching_memory.compact_with_llm(_summarize)
+            except Exception:
+                pass
+
         prior_results: dict[str, Any] = {}
         phase_trace: list[str] = []
         full_trace: list[dict[str, Any]] = []
@@ -829,6 +858,7 @@ class Orchestrator:
                         },
                         "grill_session": grill_data,
                         "proof_result": proof_result_data,
+                        "teaching_memory": self.teaching_memory.to_context_block(),
                     },
                 )
 
@@ -1547,6 +1577,10 @@ class Orchestrator:
         """Build the input message for the LLM to decide next action."""
         parts = [f"学生写下了：{student_input[:500]}"]
         parts.append(f"已经听过：{', '.join(sorted(called_agents)) or '还没有人发言'}")
+
+        memory_block = self.teaching_memory.to_context_block()
+        if memory_block:
+            parts.append(f"[教学记忆]\n{memory_block}")
 
         # Summarize prior results
         for name, result in prior_results.items():

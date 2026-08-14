@@ -229,8 +229,12 @@ export class CollaborationAgent extends BaseAgent {
         action,
         hintLevel,
       )
+      const teachingMemory = (ctx.metadata['teaching_memory'] as string) ?? ''
+      const llmInput = teachingMemory
+        ? `[教学记忆]\n${teachingMemory}\n\n${contextSummary}`
+        : contextSummary
       const socraticPrompt = this.socraticSystemPrompt(action, hintLevel, ageLevel)
-      const resp = await this.llmClient.chat(socraticPrompt, contextSummary)
+      const resp = await this.llmClient.chat(socraticPrompt, llmInput)
       const content = resp.content.replace('[DELIVER]', '').trim()
       return createAgentMessage(this.role, content, {
         confidence: 0.8,

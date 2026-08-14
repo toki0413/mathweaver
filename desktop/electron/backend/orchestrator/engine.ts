@@ -64,6 +64,7 @@ import type { ConceptDAG } from '../dag/concept_dag'
 import { getDag } from '../dag/concept_dag'
 import { createModuleLogger } from '../utils/logger'
 import { StateStore } from '../persistence/store'
+import { TeachingMemory, type TeachingTurn } from './teachingMemory'
 
 const log = createModuleLogger('Orchestrator')
 
@@ -880,6 +881,8 @@ export class Orchestrator {
   agents: Record<string, BaseAgent>
   /** 教学决策效果追踪器，为 meta-agent 提供真实反馈数据 */
   private effectivenessTracker = new DecisionEffectivenessTracker()
+  /** 长程教学记忆：跨轮摘要 + token 累计 + 历史裁剪 */
+  teachingMemory: TeachingMemory
   private sessionStart: Date | null = null
   private store: StateStore | null
   /** 串行化锁，防止并发 processStudentInput 竞态 */
@@ -906,6 +909,7 @@ export class Orchestrator {
     this.knowledgeBase = buildDefaultKB()
     this.paramLearner = new ParameterLearner()
     this.grillSession = null
+    this.teachingMemory = new TeachingMemory()
 
     // Initialize persistence store
     if (opts.dbPath) {
@@ -949,6 +953,7 @@ export class Orchestrator {
     this.messageHistory = []
     this.grillSession = null
     this.effectivenessTracker.reset()
+    this.teachingMemory.reset()
     this.sessionStart = new Date()
 
     // Set initial knowledge field
@@ -1376,12 +1381,38 @@ export class Orchestrator {
     // LLM-driven agent loop (1.2: LLM controls flow, not hardcoded pipeline)
     const llm = this.llmClient ?? new MockLLMClient()
 
+    // Preventive compaction (Codex: compact before the window fills, not after
+    // overflow). When the verbatim window is at budget and a real LLM is
+    // available, fold the oldest turns into a structured handoff summary so a
+    // successor request resumes naturally. Non-fatal: failures fall back to the
+    // naive truncation inside TeachingMemory.
+    if (
+      this.llmClient &&
+      this.llmClient.isConfigured &&
+      this.llmClient.provider !== 'mock' &&
+      this.teachingMemory.shouldCompact()
+    ) {
+      try {
+        const summarizer = async (prompt: string, turns: ReadonlyArray<TeachingTurn>) => {
+          const body = turns
+            .map((t) => `学生: ${t.student}\n教师: ${t.teacher}\n动作: ${t.action}`)
+            .join('\n---\n')
+          const resp = await this.llmClient!.chat(prompt, body, undefined, 0.2)
+          return (resp as { content?: string }).content ?? ''
+        }
+        await this.teachingMemory.compactWithLlm(summarizer)
+      } catch {
+        // ignore: naive truncation is the fallback
+      }
+    }
+
     const priorResults: Record<string, Record<string, unknown>> = {}
     const phaseTrace: string[] = []
     const fullTrace: Record<string, unknown>[] = []
     const maxIterations = this.topology.maxIterations
     const calledAgents = new Set<string>()
     const sessionId = this.profile ? this.profile.student_id : 'unknown'
+    let turnTokensUsed = 0
 
     // Pre-compute a default decision in case the loop exits early
     let decision = this.makeDecision()
@@ -1446,6 +1477,10 @@ export class Orchestrator {
         remainingBudget(),
         TIMEOUT_LLM_RESPONSE,
       )
+      // Accumulate token usage for this turn's session budget.
+      if (llmResp.usage) {
+        turnTokensUsed += llmResp.usage.total_tokens ?? 0
+      }
 
       // LLM decides to deliver
       if (llmResp.next_action === 'deliver' || iteration === maxIterations - 1) {
@@ -1495,6 +1530,7 @@ export class Orchestrator {
             },
             grill_session: grillData,
             proof_result: proofResultData,
+            teaching_memory: this.teachingMemory.toContextBlock(),
           },
         }
 
@@ -1623,6 +1659,7 @@ export class Orchestrator {
           },
           grill_session: null,
           proof_result: proofResultData,
+          teaching_memory: this.teachingMemory.toContextBlock(),
         },
       }
       const msg = await withTimeout(
@@ -1650,6 +1687,22 @@ export class Orchestrator {
     // Get final response
     const finalResponse = (priorResults['collaboration'] ?? {}) as Record<string, unknown>
     const responseContent = (finalResponse['content'] as string) ?? '未能生成回应。'
+
+    // Record this turn into the long-horizon teaching memory so the next turn
+    // can recall what was covered (Codex-style handoff / Harness persistence).
+    const currentNode = this.state.knowledge.current_node_id
+      ? this.dag.getNode(this.state.knowledge.current_node_id)
+      : null
+    this.teachingMemory.recordTurn(
+      {
+        student: studentInput,
+        teacher: responseContent,
+        action: decision.action,
+        hintLevel: decision.hint_level,
+        concept: currentNode ? currentNode.name : undefined,
+      },
+      turnTokensUsed,
+    )
 
     this.phase = SessionPhase.DELIVER
 
@@ -2021,6 +2074,11 @@ export class Orchestrator {
     const calledStr = [...calledAgents].sort().join(',') || '无'
     parts.push(`已执行: ${calledStr}`)
 
+    const memoryBlock = this.teachingMemory.toContextBlock()
+    if (memoryBlock) {
+      parts.push(`[教学记忆]\n${memoryBlock}`)
+    }
+
     for (const [name, result] of Object.entries(priorResults)) {
       const content = ((result['content'] as string) ?? '').slice(0, 200)
       parts.push(`[${name}]: ${content}`)
@@ -2060,6 +2118,15 @@ export class Orchestrator {
       session_start: this.sessionStart?.toISOString() ?? null,
       session_duration_ms: sessionDurationMs,
       total_messages: this.messageHistory.length,
+      token_usage: {
+        total_tokens_used: this.teachingMemory.tokensUsed,
+        over_budget: this.teachingMemory.overBudget,
+      },
+      teaching_memory: {
+        covered_concepts: this.teachingMemory.concepts,
+        verbatim_turns: this.teachingMemory.verbatimTurnCount,
+        current_hint_level: this.teachingMemory.currentHintLevel,
+      },
       agent_call_counts: agentCallCounts,
       current_phase: this.phase,
       curriculum_level: this.curriculumLevel,
