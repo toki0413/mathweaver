@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-14
+
+### Added — 会话沉淀与分享
+- **导出学习快照**：`exportSnapshot` 将整段会话渲染为自包含 HTML（内联 CSS、零外部依赖），经 `file:export-html` IPC 保存到本地，可离线阅读。新增 `src/utils/exportSnapshot.ts` 与单测
+- **一键分享链接**：`shareLink` 把会话数据编码为 `mathweaver://share/` 深链，一键复制随时展开。新增 `src/utils/shareLink.ts`、store `getShareUrl` action 与单测
+- **主题课程生成**：`courseGenerator` 输入任意数学主题，经 LLM 产出带先修关系的概念 DAG，校验后合并进课程图谱。新增 `electron/backend/generator/courseGenerator.ts`、`api:generate-course` IPC 与单测
+- 新增 E2E 测试 `gap-fill-features.spec.ts` 覆盖以上三条链路
+
 ## [0.4.5] - 2026-08-11
 
 ### Fixed — 产业级发布差距修复

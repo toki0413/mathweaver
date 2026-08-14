@@ -27,6 +27,7 @@ const INVOKE_CHANNELS = [
   'api:grill-start',
   'api:grill-answer',
   'api:generate-content',
+  'api:generate-course',
   'api:understand-image',
   // Settings
   'settings:get',
@@ -41,6 +42,7 @@ const INVOKE_CHANNELS = [
   'file:save-session',
   'file:load-session',
   'file:export-table',
+  'file:export-html',
   'file:upload',
   'file:upload-data',
 ] as const
@@ -134,6 +136,9 @@ const api = {
   // Dynamic Content Generation
   generateContent: (req: Record<string, unknown>) => safeInvoke('api:generate-content', req),
 
+  // Course generation (LLM topic → DAG nodes)
+  generateCourse: (topic: string) => safeInvoke('api:generate-course', { topic }),
+
   // Multimodal: image understanding (vision model + OCR fallback)
   understandImage: (req: {
     imageDataUrl: string
@@ -155,6 +160,7 @@ const api = {
   saveSession: (data: string) => safeInvoke('file:save-session', data),
   loadSession: () => safeInvoke('file:load-session'),
   exportTable: (data: string) => safeInvoke('file:export-table', data),
+  exportSnapshot: (html: string) => safeInvoke('file:export-html', html),
   uploadFile: (options?: { filters?: { name: string; extensions: string[] }[] }) =>
     safeInvoke('file:upload', options),
   uploadFileData: (payload: { name: string; mime?: string; dataUrl: string }) =>

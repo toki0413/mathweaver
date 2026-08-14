@@ -62,6 +62,11 @@ interface MathWeaverAPI {
   // Dynamic Content Generation
   generateContent(req: Record<string, unknown>): Promise<Record<string, unknown> | null>
 
+  // Course generation (LLM topic → DAG nodes)
+  generateCourse(
+    topic: string,
+  ): Promise<{ ok: boolean; nodes: unknown[]; count: number }>
+
   // Multimodal: image understanding
   understandImage(req: {
     imageDataUrl: string
@@ -85,6 +90,7 @@ interface MathWeaverAPI {
   saveSession(data: string): Promise<string | null>
   loadSession(): Promise<string | null>
   exportTable(data: string): Promise<string | null>
+  exportSnapshot(html: string): Promise<string | null>
   uploadFile(options?: {
     filters?: { name: string; extensions: string[] }[]
   }): Promise<UploadedFileResult | null>

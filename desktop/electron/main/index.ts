@@ -28,6 +28,8 @@ import Store from 'electron-store'
 import { autoUpdater } from 'electron-updater'
 import { backend, LLM_PRESETS } from '../backend'
 import type { LLMConfig } from '../backend/types'
+import { defaultLLMConfig } from '../backend/types'
+import { generateCourse } from '../backend/generator/courseGenerator'
 import logger from '../backend/utils/logger'
 import { encrypt, decrypt, decryptSafe } from '../backend/utils/crypto'
 import { getLLMConfigFromEnv, hasEnvLLMConfig } from '../backend/utils/config'
@@ -538,6 +540,21 @@ safeIpcHandle('api:generate-content', async (_event, req) => {
   return backend.generateDynamicContent(req)
 })
 
+// --- Course generation (LLM topic → DAG nodes) ---
+safeIpcHandle('api:generate-course', async (_event, req: { topic: string }) => {
+  const config = backend.getLLMConfig() ?? defaultLLMConfig()
+  try {
+    const nodes = await generateCourse(req.topic, config)
+    return { ok: true, nodes, count: nodes.length }
+  } catch (e) {
+    logger.error("api:generate-course failed", {
+      module: 'IPC',
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return { ok: false, error: String(e), nodes: [] }
+  }
+})
+
 // --- Multimodal: image understanding ---
 safeIpcHandle('api:understand-image', async (_event, req) => {
   return backend.understandImage(req)
@@ -684,6 +701,17 @@ safeIpcHandle('file:export-table', async (_event, data: string) => {
     title: '导出运算表',
     defaultPath: join(app.getPath('documents'), 'cayley-table.txt'),
     filters: [{ name: '文本文件', extensions: ['txt'] }],
+  })
+  if (result.canceled || !result.filePath) return null
+  writeFileSync(result.filePath, data, 'utf-8')
+  return result.filePath
+})
+
+safeIpcHandle('file:export-html', async (_event, data: string) => {
+  const result = await dialog.showSaveDialog(mainWindow!, {
+    title: '导出学习快照',
+    defaultPath: join(app.getPath('documents'), 'mathweaver-snapshot.html'),
+    filters: [{ name: 'HTML 文件', extensions: ['html'] }],
   })
   if (result.canceled || !result.filePath) return null
   writeFileSync(result.filePath, data, 'utf-8')

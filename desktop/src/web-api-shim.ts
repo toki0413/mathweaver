@@ -227,6 +227,46 @@ function readFileForWeb(file: File): Promise<UploadedFileResult | null> {
   })
 }
 
+/**
+ * Lightweight sanitizer for LLM-produced course nodes (web build). Mirrors the
+ * Electron backend's `sanitizeCourseNodes` without pulling in its node deps.
+ */
+function sanitizeWebCourseNodes(raw: unknown[]): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = []
+  raw.forEach((item, i) => {
+    const n = item as Record<string, unknown> | null
+    if (!n || typeof n !== 'object' || !n.name) return
+    const id =
+      typeof n.id === 'string' && /^[a-z0-9_]+$/.test(n.id)
+        ? n.id
+        : `generated_${i}_${Date.now().toString(36)}`
+    out.push({
+      id,
+      name: String(n.name),
+      description: String(n.description ?? ''),
+      prerequisites: Array.isArray(n.prerequisites) ? n.prerequisites.map(String) : [],
+      abstraction_level: Number(n.abstraction_level ?? 1),
+      domain: String(n.domain ?? 'generated'),
+      difficulty: Number(n.difficulty ?? 0.5),
+      is_milestone: Boolean(n.is_milestone),
+      learning_objectives: Array.isArray(n.learning_objectives)
+        ? n.learning_objectives.map(String)
+        : [],
+      examples: Array.isArray(n.examples) ? n.examples.map(String) : [],
+      assessment_criteria: Array.isArray(n.assessment_criteria)
+        ? n.assessment_criteria.map(String)
+        : [],
+      estimated_minutes: Number(n.estimated_minutes ?? 30),
+      historical_context: String(n.historical_context ?? ''),
+      related_theorems: Array.isArray(n.related_theorems) ? n.related_theorems.map(String) : [],
+      common_misconceptions: Array.isArray(n.common_misconceptions)
+        ? n.common_misconceptions.map(String)
+        : [],
+    })
+  })
+  return out
+}
+
 const mockApi = {
   invoke: async (channel: string, ...args: unknown[]): Promise<unknown> => {
     // Simulate network delay
@@ -807,6 +847,54 @@ const mockApi = {
     }
   },
 
+  // Course generation (LLM topic → DAG nodes)
+  generateCourse: async (topic: string) => {
+    const config = getActiveConfig()
+    if (isRealLLM(config)) {
+      try {
+        const messages: LLMMessage[] = [
+          {
+            role: 'system',
+            content:
+              '你是数学课程设计专家，只输出符合要求的 JSON。请为数学主题生成概念 DAG 节点，严格输出 JSON（不要输出任何其他文字）：{"nodes":[{"id":"英文小写蛇形命名","name":"中文概念名","description":"一句话说明","prerequisites":["前置节点id"],"abstraction_level":1,"domain":"自定义域","difficulty":0.5,"is_milestone":false,"learning_objectives":["目标1"],"examples":["例子1"],"assessment_criteria":["评价标准1"],"estimated_minutes":30,"historical_context":"历史背景","related_theorems":["相关定理"],"common_misconceptions":["常见误区"]}]}',
+          },
+          { role: 'user', content: `主题：${topic}\n请生成 4-8 个有先修关系的概念节点。` },
+        ]
+        const resp = await chatCompletion(config, messages)
+        const match = resp.content.match(/\{[\s\S]*\}/)
+        if (match) {
+          const parsed = JSON.parse(match[0])
+          const nodes = sanitizeWebCourseNodes(parsed.nodes ?? [])
+          if (nodes.length > 0) {
+            return { ok: true, nodes, count: nodes.length }
+          }
+        }
+      } catch (e) {
+        console.error('[MathWeaver] LLM generateCourse failed, using mock:', e)
+      }
+    }
+
+    // --- Mock fallback ---
+    const node = {
+      id: 'gen_' + topic.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+      name: `${topic} · 入门`,
+      description: `关于「${topic}」的入门概念（演示数据）`,
+      prerequisites: [],
+      abstraction_level: 1,
+      domain: 'generated',
+      difficulty: 0.4,
+      is_milestone: true,
+      learning_objectives: [],
+      examples: [],
+      assessment_criteria: [],
+      estimated_minutes: 30,
+      historical_context: '',
+      related_theorems: [],
+      common_misconceptions: [],
+    }
+    return { ok: true, nodes: [node], count: 1 }
+  },
+
   // Settings — LLM config persisted in localStorage
   getLLMConfig: async () => {
     const config = getActiveConfig()
@@ -973,6 +1061,17 @@ const mockApi = {
     a.click()
     URL.revokeObjectURL(url)
     return 'cayley-table.txt'
+  },
+
+  exportSnapshot: async (html: string) => {
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'mathweaver-snapshot.html'
+    a.click()
+    URL.revokeObjectURL(url)
+    return 'mathweaver-snapshot.html'
   },
 
   // App

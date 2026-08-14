@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { buildSessionSnapshotHtml } from '../utils/exportSnapshot'
+import { buildShareUrl } from '../utils/shareLink'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -283,6 +285,9 @@ interface SessionState {
   fetchDagNodes: () => Promise<void>
   saveSession: () => Promise<string | null>
   loadSession: () => Promise<boolean>
+  exportSession: () => Promise<string | null>
+  getShareUrl: () => string | null
+  generateCourse: (topic: string) => Promise<{ ok: boolean; nodes: unknown[]; count: number }>
 
   // Epistemic / cognitive state capture (from eye tracking + table edits)
   setEpistemicState: (load: number) => void
@@ -714,6 +719,69 @@ export const useStore = create<SessionState>()(
             },
           })
           return false
+        }
+      },
+
+      // -------------------------------------------------------------------------
+      // Export / Share / Course generation
+      // -------------------------------------------------------------------------
+
+      exportSession: async () => {
+        const state = get()
+        const html = buildSessionSnapshotHtml({
+          studentId: state.sessionId || '',
+          targetNode: state.targetNode || '',
+          chat: state.chat,
+          fourFields: state.fourFields,
+          phaseTrace: state.phaseTrace,
+          savedAt: new Date().toISOString(),
+          visualData: state.visualData,
+        })
+        const api = getAPI()
+        if (!api) return null
+        try {
+          return (await api.exportSnapshot(html)) as string | null
+        } catch (e) {
+          set({
+            error: {
+              message: 'Failed to export session',
+              headline: '导出会话失败',
+              detail: String(e),
+              recovery: '请重试',
+              timestamp: Date.now(),
+            },
+          })
+          return null
+        }
+      },
+
+      getShareUrl: () => {
+        const state = get()
+        if (!state.sessionId) return null
+        return buildShareUrl({
+          targetNode: state.targetNode || '',
+          chat: state.chat.map(m => ({ role: m.role, content: m.content })),
+          visualData: state.visualData,
+          savedAt: new Date().toISOString(),
+        })
+      },
+
+      generateCourse: async (topic: string) => {
+        const api = getAPI()
+        if (!api) return { ok: false, nodes: [], count: 0 }
+        try {
+          return (await api.generateCourse(topic)) as { ok: boolean; nodes: unknown[]; count: number }
+        } catch (e) {
+          set({
+            error: {
+              message: 'Generated course failed',
+              headline: '课程生成失败',
+              detail: String(e),
+              recovery: '请检查 LLM 配置',
+              timestamp: Date.now(),
+            },
+          })
+          return { ok: false, nodes: [], count: 0 }
         }
       },
 

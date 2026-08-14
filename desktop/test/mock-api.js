@@ -536,6 +536,70 @@
     'file:save-session': (data) => '/tmp/mathweaver-session.json',
     'file:load-session': () => null,
     'file:export-table': (data) => '/tmp/mathweaver-table.csv',
+    'file:export-html': (data) => '/tmp/mathweaver-snapshot.html',
+
+    // --- Course generation (LLM) ---
+    'api:generate-course': (req) => {
+      const topic = (req && req.topic) || '线性代数基础'
+      const base = topic.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '').slice(0, 12)
+      return {
+        ok: true,
+        count: 3,
+        nodes: [
+          {
+            id: 'gen_' + base + '_1',
+            name: `${topic} · 入门`,
+            description: `关于「${topic}」的入门概念（演示数据）`,
+            prerequisites: [],
+            abstraction_level: 1,
+            domain: 'generated',
+            difficulty: 0.4,
+            is_milestone: true,
+            learning_objectives: [],
+            examples: [],
+            assessment_criteria: [],
+            estimated_minutes: 30,
+            historical_context: '',
+            related_theorems: [],
+            common_misconceptions: [],
+          },
+          {
+            id: 'gen_' + base + '_2',
+            name: `${topic} · 进阶`,
+            description: `关于「${topic}」的进阶概念（演示数据）`,
+            prerequisites: ['gen_' + base + '_1'],
+            abstraction_level: 2,
+            domain: 'generated',
+            difficulty: 0.6,
+            is_milestone: false,
+            learning_objectives: [],
+            examples: [],
+            assessment_criteria: [],
+            estimated_minutes: 45,
+            historical_context: '',
+            related_theorems: [],
+            common_misconceptions: [],
+          },
+          {
+            id: 'gen_' + base + '_3',
+            name: `${topic} · 综合`,
+            description: `关于「${topic}」的综合应用（演示数据）`,
+            prerequisites: ['gen_' + base + '_2'],
+            abstraction_level: 3,
+            domain: 'generated',
+            difficulty: 0.8,
+            is_milestone: true,
+            learning_objectives: [],
+            examples: [],
+            assessment_criteria: [],
+            estimated_minutes: 60,
+            historical_context: '',
+            related_theorems: [],
+            common_misconceptions: [],
+          },
+        ],
+      }
+    },
 
     // --- Conjecture (not in whitelist but used via api.invoke) ---
     'conjecture:test': (req) => {
@@ -668,6 +732,8 @@
     saveSession: (data) => mockApi.invoke('file:save-session', data),
     loadSession: () => mockApi.invoke('file:load-session'),
     exportTable: (data) => mockApi.invoke('file:export-table', data),
+    exportSnapshot: (html) => mockApi.invoke('file:export-html', html),
+    generateCourse: (topic) => mockApi.invoke('api:generate-course', { topic }),
     getAppInfo: () => mockApi.invoke('app:get-info'),
     getBackendUrl: () => mockApi.invoke('app:get-backend-url'),
   }

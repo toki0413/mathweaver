@@ -195,6 +195,9 @@ export default function App() {
   const storeError = useStore(s => s.error)
   const saveSession = useStore(s => s.saveSession)
   const loadSession = useStore(s => s.loadSession)
+  const exportSession = useStore(s => s.exportSession)
+  const getShareUrl = useStore(s => s.getShareUrl)
+  const generateCourse = useStore(s => s.generateCourse)
   const checkOnboarding = useStore(s => s.checkOnboarding)
   const onboardingCompleted = useStore(s => s.onboardingCompleted)
   const chat = useStore(s => s.chat)
@@ -746,6 +749,75 @@ export default function App() {
         action: () => useStore.getState().clearChat(),
       },
       {
+        id: 'act-export-session',
+        label: '导出学习快照',
+        icon: 'DownloadIcon',
+        keywords: ['export', '导出', '快照', 'html', 'snapshot'],
+        section: 'action',
+        action: async () => {
+          const path = await exportSession()
+          addToast({
+            type: path ? 'achievement' : 'error',
+            title: path ? '快照已导出' : '导出失败',
+            message: path ? `已保存到：${path}` : '请检查存储空间后重试',
+            duration: 5000,
+          })
+        },
+      },
+      {
+        id: 'act-share-session',
+        label: '复制分享链接',
+        icon: 'LinkIcon',
+        keywords: ['share', '分享', '链接', 'link'],
+        section: 'action',
+        action: async () => {
+          const url = getShareUrl()
+          if (!url) {
+            addToast({ type: 'info', title: '暂无会话', message: '请先开始学习会话', duration: 4000 })
+            return
+          }
+          try {
+            await navigator.clipboard.writeText(url)
+            addToast({ type: 'achievement', title: '已复制', message: '分享链接已复制到剪贴板', duration: 4000 })
+          } catch {
+            addToast({ type: 'info', title: '分享链接', message: url, duration: 8000 })
+          }
+        },
+      },
+      {
+        id: 'act-generate-course',
+        label: '生成主题课程',
+        icon: 'SparklesIcon',
+        keywords: ['course', '课程', '生成', '主题', 'generate'],
+        section: 'action',
+        action: async () => {
+          const topic = window.prompt('请输入要生成课程的数学主题', '线性代数基础')
+          if (!topic || !topic.trim()) return
+          addToast({ type: 'info', title: '生成中', message: `正在为「${topic}」生成课程…`, duration: 3000 })
+          const result = await generateCourse(topic.trim())
+          if (result.ok && result.count > 0) {
+            const names = (result.nodes as Array<{ name?: string }>)
+              .map(n => n?.name)
+              .filter(Boolean)
+              .slice(0, 6)
+              .join('、')
+            addToast({
+              type: 'achievement',
+              title: `已生成 ${result.count} 个概念`,
+              message: names ? `包含：${names}` : '课程节点已生成',
+              duration: 6000,
+            })
+          } else {
+            addToast({
+              type: 'error',
+              title: '生成失败',
+              message: '请检查 LLM 配置后重试',
+              duration: 5000,
+            })
+          }
+        },
+      },
+      {
         id: 'help-shortcuts',
         label: '键盘快捷键',
         icon: 'KeyboardIcon',
@@ -767,7 +839,7 @@ export default function App() {
           }),
       },
     ],
-    [setMode, setSettingsOpen, setOnboardingOpen, handleSendTable, addToast, appVersion],
+    [setMode, setSettingsOpen, setOnboardingOpen, handleSendTable, addToast, appVersion, exportSession, generateCourse, getShareUrl],
   )
 
   const handleNodeSelect = useCallback(
