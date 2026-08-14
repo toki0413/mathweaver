@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { useStore, initBackendUrl } from '@/stores/sessionStore'
+import { decodeSharePayload } from '@/utils/shareLink'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -68,6 +69,8 @@ type MockApi = {
   isOnboardingComplete: ReturnType<typeof vi.fn>
   setOnboardingComplete: ReturnType<typeof vi.fn>
   generateContent: ReturnType<typeof vi.fn>
+  generateCourse: ReturnType<typeof vi.fn>
+  exportSnapshot: ReturnType<typeof vi.fn>
 }
 
 /**
@@ -95,6 +98,8 @@ function setupMockApi(overrides: Partial<MockApi> = {}): MockApi {
     isOnboardingComplete: vi.fn(),
     setOnboardingComplete: vi.fn(),
     generateContent: vi.fn(),
+    generateCourse: vi.fn(),
+    exportSnapshot: vi.fn(),
     ...overrides,
   }
   ;(window as unknown as { api: MockApi }).api = api
@@ -1405,6 +1410,107 @@ describe('sessionStore', () => {
       }
 
       await expect(initBackendUrl()).resolves.toBeUndefined()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // getShareUrl
+  // -------------------------------------------------------------------------
+
+  describe('getShareUrl', () => {
+    it('builds a share URL when a session is active', () => {
+      useStore.setState({
+        sessionId: 'sess-1',
+        targetNode: 'group_definition',
+        chat: [{ id: '1', role: 'assistant', content: '你好' }],
+        visualData: null,
+      })
+
+      const url = useStore.getState().getShareUrl()
+
+      expect(url).toMatch(/^mathweaver:\/\/share\//)
+      const payload = decodeSharePayload(url!)
+      expect(payload?.targetNode).toBe('group_definition')
+      expect(payload?.chat[0].content).toBe('你好')
+    })
+
+    it('returns null when no session is active', () => {
+      useStore.setState({ sessionId: null })
+
+      expect(useStore.getState().getShareUrl()).toBeNull()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // exportSession
+  // -------------------------------------------------------------------------
+
+  describe('exportSession', () => {
+    it('returns the saved file path on success', async () => {
+      useStore.setState({
+        sessionId: 'sess-1',
+        targetNode: 'group_definition',
+        chat: [{ id: '1', role: 'assistant', content: '你好' }],
+      })
+      api.exportSnapshot.mockResolvedValue('/tmp/mathweaver-snap.html')
+
+      const result = await useStore.getState().exportSession()
+
+      expect(result).toBe('/tmp/mathweaver-snap.html')
+      expect(api.exportSnapshot).toHaveBeenCalledTimes(1)
+      const htmlArg = api.exportSnapshot.mock.calls[0][0] as string
+      expect(htmlArg).toContain('<!DOCTYPE html>')
+    })
+
+    it('returns null when the bridge is unavailable', async () => {
+      ;(window as unknown as { api: unknown }).api = undefined
+
+      const result = await useStore.getState().exportSession()
+
+      expect(result).toBeNull()
+    })
+
+    it('sets an error and returns null when the API throws', async () => {
+      api.exportSnapshot.mockRejectedValue(new Error('export fail'))
+
+      const result = await useStore.getState().exportSession()
+
+      expect(result).toBeNull()
+      expect(useStore.getState().error?.headline).toBe('导出会话失败')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // generateCourse
+  // -------------------------------------------------------------------------
+
+  describe('generateCourse', () => {
+    it('returns the generated course nodes on success', async () => {
+      api.generateCourse.mockResolvedValue({ ok: true, nodes: [{ id: 'n1' }], count: 1 })
+
+      const result = await useStore.getState().generateCourse('群论')
+
+      expect(result.ok).toBe(true)
+      expect(result.nodes).toHaveLength(1)
+      expect(result.count).toBe(1)
+      expect(api.generateCourse).toHaveBeenCalledWith('群论')
+    })
+
+    it('returns an empty failure when the bridge is unavailable', async () => {
+      ;(window as unknown as { api: unknown }).api = undefined
+
+      const result = await useStore.getState().generateCourse('群论')
+
+      expect(result).toEqual({ ok: false, nodes: [], count: 0 })
+    })
+
+    it('sets an error and returns an empty failure when the API throws', async () => {
+      api.generateCourse.mockRejectedValue(new Error('gen course fail'))
+
+      const result = await useStore.getState().generateCourse('群论')
+
+      expect(result).toEqual({ ok: false, nodes: [], count: 0 })
+      expect(useStore.getState().error?.headline).toBe('课程生成失败')
     })
   })
 })
