@@ -33,9 +33,7 @@ describe('courseGenerator', () => {
   })
 
   it('normalizes all expected ConceptNode fields', () => {
-    const out = sanitizeCourseNodes([
-      { name: 'n', prerequisites: ['a'], estimated_minutes: 45 },
-    ])
+    const out = sanitizeCourseNodes([{ name: 'n', prerequisites: ['a'], estimated_minutes: 45 }])
     expect(out[0].prerequisites).toEqual(['a'])
     expect(out[0].estimated_minutes).toBe(45)
     expect(out[0].is_milestone).toBe(false)

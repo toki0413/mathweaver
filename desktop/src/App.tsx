@@ -773,12 +773,22 @@ export default function App() {
         action: async () => {
           const url = getShareUrl()
           if (!url) {
-            addToast({ type: 'info', title: '暂无会话', message: '请先开始学习会话', duration: 4000 })
+            addToast({
+              type: 'info',
+              title: '暂无会话',
+              message: '请先开始学习会话',
+              duration: 4000,
+            })
             return
           }
           try {
             await navigator.clipboard.writeText(url)
-            addToast({ type: 'achievement', title: '已复制', message: '分享链接已复制到剪贴板', duration: 4000 })
+            addToast({
+              type: 'achievement',
+              title: '已复制',
+              message: '分享链接已复制到剪贴板',
+              duration: 4000,
+            })
           } catch {
             addToast({ type: 'info', title: '分享链接', message: url, duration: 8000 })
           }
@@ -793,7 +803,12 @@ export default function App() {
         action: async () => {
           const topic = window.prompt('请输入要生成课程的数学主题', '线性代数基础')
           if (!topic || !topic.trim()) return
-          addToast({ type: 'info', title: '生成中', message: `正在为「${topic}」生成课程…`, duration: 3000 })
+          addToast({
+            type: 'info',
+            title: '生成中',
+            message: `正在为「${topic}」生成课程…`,
+            duration: 3000,
+          })
           const result = await generateCourse(topic.trim())
           if (result.ok && result.count > 0) {
             const names = (result.nodes as Array<{ name?: string }>)
@@ -839,7 +854,17 @@ export default function App() {
           }),
       },
     ],
-    [setMode, setSettingsOpen, setOnboardingOpen, handleSendTable, addToast, appVersion, exportSession, generateCourse, getShareUrl],
+    [
+      setMode,
+      setSettingsOpen,
+      setOnboardingOpen,
+      handleSendTable,
+      addToast,
+      appVersion,
+      exportSession,
+      generateCourse,
+      getShareUrl,
+    ],
   )
 
   const handleNodeSelect = useCallback(

@@ -547,7 +547,7 @@ safeIpcHandle('api:generate-course', async (_event, req: { topic: string }) => {
     const nodes = await generateCourse(req.topic, config)
     return { ok: true, nodes, count: nodes.length }
   } catch (e) {
-    logger.error("api:generate-course failed", {
+    logger.error('api:generate-course failed', {
       module: 'IPC',
       error: e instanceof Error ? e.message : String(e),
     })

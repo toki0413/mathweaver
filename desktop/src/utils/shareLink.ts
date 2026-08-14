@@ -29,7 +29,7 @@ export function encodeSharePayload(payload: SharePayload): string {
 export function decodeSharePayload(urlOrEncoded: string): SharePayload | null {
   try {
     const raw = urlOrEncoded.includes('://')
-      ? urlOrEncoded.split('share/')[1] ?? ''
+      ? (urlOrEncoded.split('share/')[1] ?? '')
       : urlOrEncoded
     const json = fromBase64Url(raw)
     return JSON.parse(json) as SharePayload

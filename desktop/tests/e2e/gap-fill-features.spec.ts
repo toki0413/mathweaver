@@ -46,8 +46,14 @@ test.describe('Gap-fill: 导出学习快照', () => {
 
   test('command exports a self-contained HTML snapshot', async ({ page }) => {
     // Start a session so there is content to export.
-    await page.getByPlaceholder(/输入|提问|message/i).first().fill('所有群都是交换群吗？')
-    await page.getByPlaceholder(/输入|提问|message/i).first().press('Enter')
+    await page
+      .getByPlaceholder(/输入|提问|message/i)
+      .first()
+      .fill('所有群都是交换群吗？')
+    await page
+      .getByPlaceholder(/输入|提问|message/i)
+      .first()
+      .press('Enter')
 
     await openCommand(page, '导出学习快照')
 
@@ -65,7 +71,10 @@ test.describe('Gap-fill: 复制分享链接', () => {
       .getByPlaceholder(/输入|提问|message/i)
       .first()
       .fill('群的定义是什么？')
-    await page.getByPlaceholder(/输入|提问|message/i).first().press('Enter')
+    await page
+      .getByPlaceholder(/输入|提问|message/i)
+      .first()
+      .press('Enter')
     await page.waitForTimeout(400)
 
     // Grant clipboard permissions so navigator.clipboard.writeText works.

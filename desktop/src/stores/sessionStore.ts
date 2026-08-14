@@ -770,7 +770,11 @@ export const useStore = create<SessionState>()(
         const api = getAPI()
         if (!api) return { ok: false, nodes: [], count: 0 }
         try {
-          return (await api.generateCourse(topic)) as { ok: boolean; nodes: unknown[]; count: number }
+          return (await api.generateCourse(topic)) as {
+            ok: boolean
+            nodes: unknown[]
+            count: number
+          }
         } catch (e) {
           set({
             error: {
