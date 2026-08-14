@@ -178,6 +178,84 @@ export function classifyHttpError(status: number, body: string): LLMError {
 }
 
 // ---------------------------------------------------------------------------
+// Shared retry helper (used by OpenAI-compatible, Anthropic and Gemini clients)
+// ---------------------------------------------------------------------------
+
+/** Sleep helper for backoff. */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Retry an async operation with exponential backoff.
+ *
+ * - Max retries: 3 (so up to 4 total attempts including the first).
+ * - Backoff schedule: 1s, 2s, 4s.
+ * - Only retries 5xx server errors, rate-limit (429) and network/timeout
+ *   errors (as flagged by {@link LLMError.retryable}). 4xx client/auth
+ *   errors are NOT retried.
+ * - Logs every retry attempt.
+ *
+ * The optional `canRetry` callback lets callers veto a retry — e.g. a
+ * streaming caller that has already emitted tokens cannot safely re-run
+ * the request, because a retry would duplicate already-delivered output.
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  context: string,
+  canRetry?: (error: LLMError, attempt: number) => boolean,
+): Promise<T> {
+  const overallDeadline = 120000 // 2 minutes total max
+  const startTime = Date.now()
+  const maxRetries = 3
+  const backoffMs = [1000, 2000, 4000]
+  let lastError: unknown = new Error('No attempts made')
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = backoffMs[attempt - 1]
+        log.info('Retrying after backoff', {
+          context,
+          attempt: attempt + 1,
+          maxAttempts: maxRetries + 1,
+          delayMs: delay,
+        })
+        await sleep(delay)
+        // Check overall deadline before retrying
+        const elapsed = Date.now() - startTime
+        if (elapsed >= overallDeadline) {
+          log.warn('Overall deadline exceeded, giving up', {
+            context,
+            elapsedMs: elapsed,
+            deadlineMs: overallDeadline,
+          })
+          throw lastError instanceof LLMError ? lastError : classifyFetchError(lastError)
+        }
+      }
+      return await fn()
+    } catch (err) {
+      lastError = err
+      const llmErr = err instanceof LLMError ? err : classifyFetchError(err)
+      const retryable = canRetry ? canRetry(llmErr, attempt) : llmErr.retryable
+      if (!retryable || attempt === maxRetries) {
+        throw llmErr
+      }
+      log.warn('Request failed', {
+        context,
+        attempt: attempt + 1,
+        maxAttempts: maxRetries + 1,
+        errorKind: llmErr.kind,
+        errorMessage: llmErr.message,
+      })
+    }
+  }
+
+  // Unreachable in practice, but keeps the type-checker satisfied.
+  throw lastError
+}
+
+// ---------------------------------------------------------------------------
 // LLM Client Interface
 // ---------------------------------------------------------------------------
 
@@ -482,77 +560,13 @@ export class OpenAICompatibleClient implements LLMClient {
   // Retry with exponential backoff (Task 1a)
   // -------------------------------------------------------------------------
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
-
-  /**
-   * Retry an async operation with exponential backoff.
-   *
-   * - Max retries: 3 (so up to 4 total attempts including the first).
-   * - Backoff schedule: 1s, 2s, 4s.
-   * - Only retries 5xx server errors, rate-limit (429) and network/timeout
-   *   errors (as flagged by {@link LLMError.retryable}). 4xx client/auth
-   *   errors are NOT retried.
-   * - Logs every retry attempt.
-   *
-   * The optional `canRetry` callback lets callers veto a retry — e.g. a
-   * streaming caller that has already emitted tokens cannot safely re-run
-   * the request, because a retry would duplicate already-delivered output.
-   */
-  private async retryWithBackoff<T>(
+  /** Delegates to the shared {@link retryWithBackoff} helper. */
+  private retryWithBackoff<T>(
     fn: () => Promise<T>,
     context: string,
     canRetry?: (error: LLMError, attempt: number) => boolean,
   ): Promise<T> {
-    const overallDeadline = 120000 // 2 minutes total max
-    const startTime = Date.now()
-    const maxRetries = 3
-    const backoffMs = [1000, 2000, 4000]
-    let lastError: unknown = new Error('No attempts made')
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        if (attempt > 0) {
-          const delay = backoffMs[attempt - 1]
-          log.info('Retrying after backoff', {
-            context,
-            attempt: attempt + 1,
-            maxAttempts: maxRetries + 1,
-            delayMs: delay,
-          })
-          await this.sleep(delay)
-          // Check overall deadline before retrying
-          const elapsed = Date.now() - startTime
-          if (elapsed >= overallDeadline) {
-            log.warn('Overall deadline exceeded, giving up', {
-              context,
-              elapsedMs: elapsed,
-              deadlineMs: overallDeadline,
-            })
-            throw lastError instanceof LLMError ? lastError : classifyFetchError(lastError)
-          }
-        }
-        return await fn()
-      } catch (err) {
-        lastError = err
-        const llmErr = err instanceof LLMError ? err : classifyFetchError(err)
-        const retryable = canRetry ? canRetry(llmErr, attempt) : llmErr.retryable
-        if (!retryable || attempt === maxRetries) {
-          throw llmErr
-        }
-        log.warn('Request failed', {
-          context,
-          attempt: attempt + 1,
-          maxAttempts: maxRetries + 1,
-          errorKind: llmErr.kind,
-          errorMessage: llmErr.message,
-        })
-      }
-    }
-
-    // Unreachable in practice, but keeps the type-checker satisfied.
-    throw lastError
+    return retryWithBackoff(fn, context, canRetry)
   }
 
   // -------------------------------------------------------------------------
@@ -905,6 +919,273 @@ export class OpenAICompatibleClient implements LLMClient {
 }
 
 // ---------------------------------------------------------------------------
+// Anthropic Claude Client
+// ---------------------------------------------------------------------------
+
+/**
+ * Anthropic Claude client (Messages API).
+ *
+ * Uses the `anthropic-version: 2023-06-01` header and `x-api-key` auth.
+ * The system prompt is passed via the `system` field; conversation turns
+ * are sent as `messages`. Tool definitions use Anthropic's `input_schema`.
+ */
+export class AnthropicClient implements LLMClient {
+  readonly provider: string
+  readonly isConfigured: boolean
+  private apiKey: string
+  private baseUrl: string
+  private model: string
+
+  constructor(config: LLMConfig) {
+    this.apiKey = config.apiKey
+    this.baseUrl = config.baseUrl.replace(/\/$/, '')
+    this.model = config.model
+    this.provider = config.provider
+    this.isConfigured = !!config.apiKey
+  }
+
+  private parseNextAction(content: string): {
+    next_action: LLMResponse['next_action']
+    next_agent: string | null
+  } {
+    if (content.includes('[DELIVER]')) {
+      return { next_action: 'deliver', next_agent: null }
+    }
+    if (content.includes('[CALL:')) {
+      const match = content.match(/\[CALL:(\w+)\]/)
+      if (match) {
+        return { next_action: 'call_agent', next_agent: match[1] }
+      }
+    }
+    return { next_action: null, next_agent: null }
+  }
+
+  async chat(
+    systemPrompt: string,
+    userMessage: string,
+    tools?: Record<string, unknown>[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    const url = `${this.baseUrl}/messages`
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-api-key': this.apiKey,
+      'anthropic-version': '2023-06-01',
+    }
+
+    const payload: Record<string, unknown> = {
+      model: this.model,
+      max_tokens: 2048,
+      temperature: temperature ?? 0.7,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+    }
+    if (tools && tools.length > 0) {
+      payload.tools = tools.map(t => ({
+        name: t.name ?? 'tool',
+        description: t.description ?? '',
+        input_schema:
+          (t.parameters as Record<string, unknown>) ?? { type: 'object', properties: {} },
+      }))
+    }
+
+    const doFetch = async (): Promise<LLMResponse> => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60000)
+      try {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        })
+        if (!resp.ok) {
+          const errorText = await resp.text()
+          throw classifyHttpError(resp.status, errorText)
+        }
+        const data = (await resp.json()) as Record<string, unknown>
+        const contentBlock = (data.content as Array<Record<string, unknown>>)?.[0]
+        const content = (contentBlock?.text as string) || ''
+        const { next_action, next_agent } = this.parseNextAction(content)
+        const usage = (data.usage as Record<string, number>) ?? {}
+        return {
+          content,
+          tool_calls: null,
+          next_action,
+          next_agent,
+          finish_reason: (data.stop_reason as string) ?? 'stop',
+          usage: {
+            prompt_tokens: usage.input_tokens ?? 0,
+            completion_tokens: usage.output_tokens ?? 0,
+            total_tokens: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
+          },
+        }
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
+
+    return retryWithBackoff(doFetch, 'anthropic.chat')
+  }
+
+  async chatStream(
+    systemPrompt: string,
+    userMessage: string,
+    onToken: (token: string) => void,
+    tools?: Record<string, unknown>[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    const result = await this.chat(systemPrompt, userMessage, tools, temperature)
+    if (result.content) onToken(result.content)
+    return result
+  }
+
+  async chatVision(
+    systemPrompt: string,
+    userMessage: string,
+    images: { dataUrl: string }[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    if (images.length === 0) {
+      return this.chat(systemPrompt, userMessage, undefined, temperature)
+    }
+    throw new LLMError('当前 provider 不支持图片输入，请改用支持视觉的模型或本机 OCR', {
+      kind: 'client',
+      retryable: false,
+    })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Google Gemini Client
+// ---------------------------------------------------------------------------
+
+/**
+ * Google Gemini client (generateContent API).
+ *
+ * Uses the API key as a query parameter and the native `contents` /
+ * `systemInstruction` payload shape. Usage is reported via `usageMetadata`.
+ */
+export class GeminiClient implements LLMClient {
+  readonly provider: string
+  readonly isConfigured: boolean
+  private apiKey: string
+  private baseUrl: string
+  private model: string
+
+  constructor(config: LLMConfig) {
+    this.apiKey = config.apiKey
+    this.baseUrl = config.baseUrl.replace(/\/$/, '')
+    this.model = config.model
+    this.provider = config.provider
+    this.isConfigured = !!config.apiKey
+  }
+
+  private parseNextAction(content: string): {
+    next_action: LLMResponse['next_action']
+    next_agent: string | null
+  } {
+    if (content.includes('[DELIVER]')) {
+      return { next_action: 'deliver', next_agent: null }
+    }
+    if (content.includes('[CALL:')) {
+      const match = content.match(/\[CALL:(\w+)\]/)
+      if (match) {
+        return { next_action: 'call_agent', next_agent: match[1] }
+      }
+    }
+    return { next_action: null, next_agent: null }
+  }
+
+  async chat(
+    systemPrompt: string,
+    userMessage: string,
+    _tools?: Record<string, unknown>[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`
+    const payload: Record<string, unknown> = {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+      generationConfig: {
+        temperature: temperature ?? 0.7,
+        maxOutputTokens: 2048,
+      },
+    }
+
+    const doFetch = async (): Promise<LLMResponse> => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60000)
+      try {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        })
+        if (!resp.ok) {
+          const errorText = await resp.text()
+          throw classifyHttpError(resp.status, errorText)
+        }
+        const data = (await resp.json()) as Record<string, unknown>
+        const contentBlock = (data.candidates as Array<Record<string, unknown>>)?.[0]
+          ?.content as Record<string, unknown> | undefined
+        const parts = (contentBlock?.parts as Array<Record<string, unknown>> | undefined) ?? []
+        const content = (parts as Array<Record<string, unknown>>)
+          .map(p => (p.text as string) ?? '')
+          .join('')
+        const { next_action, next_agent } = this.parseNextAction(content)
+        const usage = (data.usageMetadata as Record<string, number>) ?? {}
+        return {
+          content,
+          tool_calls: null,
+          next_action,
+          next_agent,
+          finish_reason: (data.candidates as Array<Record<string, unknown>>)?.[0]
+            ?.finishReason as string,
+          usage: {
+            prompt_tokens: usage.promptTokenCount ?? 0,
+            completion_tokens: usage.candidatesTokenCount ?? 0,
+            total_tokens: usage.totalTokenCount ?? 0,
+          },
+        }
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
+
+    return retryWithBackoff(doFetch, 'gemini.chat')
+  }
+
+  async chatStream(
+    systemPrompt: string,
+    userMessage: string,
+    onToken: (token: string) => void,
+    tools?: Record<string, unknown>[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    const result = await this.chat(systemPrompt, userMessage, tools, temperature)
+    if (result.content) onToken(result.content)
+    return result
+  }
+
+  async chatVision(
+    systemPrompt: string,
+    userMessage: string,
+    images: { dataUrl: string }[],
+    temperature?: number,
+  ): Promise<LLMResponse> {
+    if (images.length === 0) {
+      return this.chat(systemPrompt, userMessage, undefined, temperature)
+    }
+    throw new LLMError('当前 provider 不支持图片输入，请改用支持视觉的模型或本机 OCR', {
+      kind: 'client',
+      retryable: false,
+    })
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Factory: create LLM client from config
 // ---------------------------------------------------------------------------
 
@@ -925,6 +1206,14 @@ export function createLLMClient(config: LLMConfig): LLMClient {
     return new OpenAICompatibleClient(ollamaConfig)
   }
 
+  if (config.provider === 'anthropic' || config.providerType === 'anthropic') {
+    return new AnthropicClient(config)
+  }
+
+  if (config.provider === 'gemini' || config.providerType === 'gemini') {
+    return new GeminiClient(config)
+  }
+
   // openai_compatible — cloud API
   return new OpenAICompatibleClient(config)
 }
@@ -936,7 +1225,7 @@ export function createLLMClient(config: LLMConfig): LLMClient {
 export interface LLMPreset {
   id: string
   label: string
-  provider: LLMConfig['provider']
+  provider: string
   providerType: string
   baseUrl: string
   defaultModel: string
@@ -966,10 +1255,10 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4o',
+    defaultModel: 'gpt-5.4',
     requiresApiKey: true,
     helpUrl: 'https://platform.openai.com/api-keys',
-    description: 'GPT-4o / GPT-4o-mini · 全面能力',
+    description: 'GPT-5.4 / GPT-5.x · 全面能力',
     local: false,
   },
   {
@@ -978,7 +1267,7 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://api.moonshot.cn/v1',
-    defaultModel: 'moonshot-v1-8k',
+    defaultModel: 'kimi-k3',
     requiresApiKey: true,
     helpUrl: 'https://platform.moonshot.cn/console/api-keys',
     description: '长上下文窗口 · 中文友好',
@@ -990,7 +1279,7 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    defaultModel: 'glm-4-flash',
+    defaultModel: 'glm-4.7-flash',
     requiresApiKey: true,
     helpUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
     description: 'GLM-4 系列 · 国产自研',
@@ -1002,7 +1291,7 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://openrouter.ai/api/v1',
-    defaultModel: 'anthropic/claude-3.5-sonnet',
+    defaultModel: 'anthropic/claude-sonnet-5',
     requiresApiKey: true,
     helpUrl: 'https://openrouter.ai/keys',
     description: '聚合 100+ 模型 · 统一接口',
@@ -1014,10 +1303,38 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://api.groq.com/openai/v1',
-    defaultModel: 'llama-3.3-70b-versatile',
+    defaultModel: 'openai/gpt-oss-120b',
     requiresApiKey: true,
     helpUrl: 'https://console.groq.com/keys',
-    description: '超快推理 · Llama 系列',
+    description: '超快推理 · 开源模型',
+    local: false,
+  },
+
+  // --- 云端：Anthropic ---
+  {
+    id: 'anthropic',
+    label: 'Anthropic Claude',
+    provider: 'anthropic',
+    providerType: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    defaultModel: 'claude-sonnet-5',
+    requiresApiKey: true,
+    helpUrl: 'https://console.anthropic.com/settings/keys',
+    description: 'Claude Sonnet 5 · 强推理',
+    local: false,
+  },
+
+  // --- 云端：Google Gemini ---
+  {
+    id: 'gemini',
+    label: 'Google Gemini',
+    provider: 'gemini',
+    providerType: 'gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    defaultModel: 'gemini-3.6-flash',
+    requiresApiKey: true,
+    helpUrl: 'https://aistudio.google.com/app/apikey',
+    description: 'Gemini 3.6 · Google 出品',
     local: false,
   },
 
@@ -1028,7 +1345,7 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'ollama',
     providerType: 'ollama',
     baseUrl: 'http://localhost:11434/v1',
-    defaultModel: 'qwen2.5:7b',
+    defaultModel: 'qwen3:8b',
     requiresApiKey: false,
     helpUrl: 'https://ollama.com/download',
     description: '本地运行 · 隐私优先 · 免费',

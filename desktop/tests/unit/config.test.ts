@@ -225,8 +225,8 @@ describe('config — LLM accessors', () => {
   })
 
   describe('getLLMModel', () => {
-    it('defaults to gpt-4o-mini', () => {
-      expect(getLLMModel()).toBe('gpt-4o-mini')
+    it('defaults to gpt-5.6-sol', () => {
+      expect(getLLMModel()).toBe('gpt-5.6-sol')
     })
 
     it('returns configured model', () => {
@@ -364,7 +364,7 @@ describe('config — getLLMConfigFromEnv', () => {
     expect(config).not.toBeNull()
     expect(config!.apiKey).toBe('sk-minimal')
     expect(config!.baseUrl).toBe('https://api.openai.com/v1')
-    expect(config!.model).toBe('gpt-4o-mini')
+    expect(config!.model).toBe('gpt-5.6-sol')
     expect(config!.temperature).toBe(0.7)
     expect(config!.maxTokens).toBe(2048)
   })

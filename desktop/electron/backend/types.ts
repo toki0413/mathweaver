@@ -309,15 +309,15 @@ export interface TeachingDecision {
 // ---------------------------------------------------------------------------
 
 export interface LLMConfig {
-  /** Provider type: 'mock' | 'openai_compatible' | 'ollama' */
-  provider: 'mock' | 'openai_compatible' | 'ollama'
+  /** Provider type: 'mock' | 'openai_compatible' | 'ollama' | 'anthropic' | 'gemini' */
+  provider: 'mock' | 'openai_compatible' | 'ollama' | 'anthropic' | 'gemini'
   /** Frontend provider type for adapter routing (web mode) */
   providerType?: string
   /** API key for cloud providers */
   apiKey: string
-  /** Base URL for API calls (e.g. https://api.deepseek.com/v1) */
+  /** Base URL for API calls (e.g. https://api.openai.com/v1) */
   baseUrl: string
-  /** Model name (e.g. deepseek-chat, gpt-4o, qwen2.5:7b) */
+  /** Model name (e.g. deepseek-v4-flash, gpt-5.6-sol, claude-sonnet-5) */
   model: string
   /** Temperature for response generation */
   temperature: number
@@ -327,10 +327,10 @@ export interface LLMConfig {
 
 export function defaultLLMConfig(): LLMConfig {
   return {
-    provider: 'mock',
+    provider: 'openai_compatible',
     apiKey: '',
-    baseUrl: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.6-sol',
     temperature: 0.7,
     maxTokens: 2048,
   }

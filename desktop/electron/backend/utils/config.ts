@@ -125,7 +125,7 @@ export function isDevelopment(): boolean {
 // LLM-specific accessors
 // ---------------------------------------------------------------------------
 
-export type LLMProvider = 'mock' | 'openai_compatible' | 'ollama'
+export type LLMProvider = 'mock' | 'openai_compatible' | 'ollama' | 'anthropic' | 'gemini'
 
 /**
  * Read an LLM env var with dual-prefix support.
@@ -161,15 +161,21 @@ export function getLLMBaseUrl(): string {
   return getLLMEnv('LLM_BASE_URL', 'https://api.openai.com/v1')
 }
 
-/** Model name, e.g. `gpt-4o-mini`, `deepseek-chat`, `qwen2.5:7b`. */
+/** Model name, e.g. `gpt-5.6-sol`, `deepseek-v4-flash`, `claude-sonnet-5`. */
 export function getLLMModel(): string {
-  return getLLMEnv('LLM_MODEL', 'gpt-4o-mini')
+  return getLLMEnv('LLM_MODEL', 'gpt-5.6-sol')
 }
 
 /** Provider type. Defaults to `mock` for safe offline behavior. */
 export function getLLMProvider(): LLMProvider {
   const raw = getLLMEnv('LLM_PROVIDER', 'mock')
-  if (raw === 'openai_compatible' || raw === 'ollama' || raw === 'mock') {
+  if (
+    raw === 'openai_compatible' ||
+    raw === 'ollama' ||
+    raw === 'anthropic' ||
+    raw === 'gemini' ||
+    raw === 'mock'
+  ) {
     return raw
   }
   return 'mock'
