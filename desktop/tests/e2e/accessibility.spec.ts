@@ -204,18 +204,13 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
   // -------------------------------------------------------------------------
 
   test('all buttons have accessible names', async ({ page }) => {
-    // Query all visible buttons and verify each has an accessible name.
-    const buttons = page.locator('button:visible')
-    const count = await buttons.count()
-
-    expect(count).toBeGreaterThan(0)
-
-    for (let i = 0; i < count; i++) {
-      const btn = buttons.nth(i)
-      const accessibleName = await btn.evaluate((el: Element) => {
-        const htmlEl = el as HTMLElement
+    // Collect every visible button's accessible name in a SINGLE evaluate call.
+    // Doing one CDP round-trip per button (the previous loop) could exceed the
+    // test timeout on large pages under parallel load, so batch the scan.
+    const accessibleNames = await page.evaluate(() => {
+      const computeName = (htmlEl: HTMLElement): string => {
         // Check aria-label, aria-labelledby, text content, or title
-        if (htmlEl.getAttribute('aria-label')) return htmlEl.getAttribute('aria-label')
+        if (htmlEl.getAttribute('aria-label')) return htmlEl.getAttribute('aria-label')!
         if (htmlEl.getAttribute('aria-labelledby')) {
           const labelledBy = htmlEl.getAttribute('aria-labelledby')!
           const labelEl = document.getElementById(labelledBy)
@@ -223,12 +218,25 @@ test.describe('Accessibility (WCAG 2.1 AA)', () => {
         }
         if (htmlEl.getAttribute('title')) return htmlEl.getAttribute('title')!
         return htmlEl.textContent?.trim() || ''
-      })
+      }
+      // `:visible` is a Playwright/jQuery pseudo-class, not a native CSS
+      // selector, so query all buttons and filter visibility in JS.
+      const isVisible = (el: HTMLElement): boolean => {
+        const rect = el.getBoundingClientRect()
+        return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden'
+      }
+      return Array.from(document.querySelectorAll('button'))
+        .filter(el => isVisible(el as HTMLElement))
+        .map(computeName)
+    })
 
-      // Each button must have a non-empty accessible name.
-      expect(accessibleName, `Button #${i} has no accessible name`).toBeTruthy()
-      expect(accessibleName!.length, `Button #${i} has empty accessible name`).toBeGreaterThan(0)
-    }
+    expect(accessibleNames.length).toBeGreaterThan(0)
+
+    // Each button must have a non-empty accessible name.
+    accessibleNames.forEach((name, i) => {
+      expect(name, `Button #${i} has no accessible name`).toBeTruthy()
+      expect(name.length, `Button #${i} has empty accessible name`).toBeGreaterThan(0)
+    })
   })
 
   test('all links have accessible names', async ({ page }) => {
