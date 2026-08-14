@@ -1037,7 +1037,7 @@ export const LLM_PRESETS: LLMPreset[] = [
   {
     id: 'lmstudio',
     label: 'LM Studio (本地)',
-    provider: 'ollama',
+    provider: 'lmstudio',
     providerType: 'openai-compatible',
     baseUrl: 'http://localhost:1234/v1',
     defaultModel: 'local-model',
