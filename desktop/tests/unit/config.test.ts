@@ -208,8 +208,8 @@ describe('config — LLM accessors', () => {
   })
 
   describe('getLLMBaseUrl', () => {
-    it('defaults to DeepSeek endpoint', () => {
-      expect(getLLMBaseUrl()).toBe('https://api.deepseek.com/v1')
+    it('defaults to OpenAI-compatible endpoint', () => {
+      expect(getLLMBaseUrl()).toBe('https://api.openai.com/v1')
     })
 
     it('returns configured value', () => {
@@ -225,8 +225,8 @@ describe('config — LLM accessors', () => {
   })
 
   describe('getLLMModel', () => {
-    it('defaults to deepseek-chat', () => {
-      expect(getLLMModel()).toBe('deepseek-chat')
+    it('defaults to gpt-4o-mini', () => {
+      expect(getLLMModel()).toBe('gpt-4o-mini')
     })
 
     it('returns configured model', () => {
@@ -363,8 +363,8 @@ describe('config — getLLMConfigFromEnv', () => {
     const config = getLLMConfigFromEnv()
     expect(config).not.toBeNull()
     expect(config!.apiKey).toBe('sk-minimal')
-    expect(config!.baseUrl).toBe('https://api.deepseek.com/v1')
-    expect(config!.model).toBe('deepseek-chat')
+    expect(config!.baseUrl).toBe('https://api.openai.com/v1')
+    expect(config!.model).toBe('gpt-4o-mini')
     expect(config!.temperature).toBe(0.7)
     expect(config!.maxTokens).toBe(2048)
   })

@@ -153,15 +153,17 @@ export function getLLMApiKey(): string {
 
 /**
  * OpenAI-compatible base URL.
- * Defaults to the DeepSeek endpoint.
+ * Neutral OpenAI-compatible default so users can bring any provider
+ * (OpenAI, DeepSeek, GLM, Qwen, Ollama, ...) by overriding the env vars or
+ * choosing a preset in the settings panel.
  */
 export function getLLMBaseUrl(): string {
-  return getLLMEnv('LLM_BASE_URL', 'https://api.deepseek.com/v1')
+  return getLLMEnv('LLM_BASE_URL', 'https://api.openai.com/v1')
 }
 
-/** Model name, e.g. `deepseek-chat`, `gpt-4o`, `qwen2.5:7b`. */
+/** Model name, e.g. `gpt-4o-mini`, `deepseek-chat`, `qwen2.5:7b`. */
 export function getLLMModel(): string {
-  return getLLMEnv('LLM_MODEL', 'deepseek-chat')
+  return getLLMEnv('LLM_MODEL', 'gpt-4o-mini')
 }
 
 /** Provider type. Defaults to `mock` for safe offline behavior. */

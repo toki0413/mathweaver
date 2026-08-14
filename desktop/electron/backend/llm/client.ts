@@ -954,7 +954,7 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai_compatible',
     providerType: 'openai-compatible',
     baseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-chat',
+    defaultModel: 'deepseek-v4-flash',
     requiresApiKey: true,
     helpUrl: 'https://platform.deepseek.com/api_keys',
     description: '深度求索 · 高性价比 · 中文优秀',

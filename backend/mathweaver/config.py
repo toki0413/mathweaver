@@ -72,11 +72,14 @@ def _default_llm() -> LLMConfig:
     return LLMConfig(
         provider=provider,
         api_key=api_key,
+        # Neutral OpenAI-compatible defaults so users can bring any provider
+        # (OpenAI, DeepSeek, GLM, Qwen, Ollama, ...) by overriding
+        # MATHWEAVER_LLM_BASE_URL / MATHWEAVER_LLM_MODEL / MATHWEAVER_LLM_API_KEY.
         base_url=os.environ.get(
             "MATHWEAVER_LLM_BASE_URL",
-            "https://api.deepseek.com/v1",
+            "https://api.openai.com/v1",
         ),
-        model=os.environ.get("MATHWEAVER_LLM_MODEL", "deepseek-chat"),
+        model=os.environ.get("MATHWEAVER_LLM_MODEL", "gpt-4o-mini"),
         temperature=float(os.environ.get("MATHWEAVER_LLM_TEMPERATURE", "0.7")),
     )
 
