@@ -82,10 +82,10 @@ export const LLM_PRESETS: LLMPreset[] = [
     provider: 'openai',
     providerType: 'openai-compatible',
     baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-5.4',
+    defaultModel: 'gpt-5.6-sol',
     requiresApiKey: true,
     helpUrl: 'https://platform.openai.com/api-keys',
-    description: 'GPT-5.4 / GPT-5.x · 全面能力',
+    description: 'GPT-5.6 Sol · 旗舰推理',
     local: false,
   },
   {
