@@ -64,7 +64,7 @@ import type { ConceptDAG } from '../dag/concept_dag'
 import { getDag } from '../dag/concept_dag'
 import { createModuleLogger } from '../utils/logger'
 import { StateStore } from '../persistence/store'
-import { TeachingMemory, type TeachingTurn } from './teachingMemory'
+import { TeachingMemory, type TeachingTurn, type TeachingMemorySnapshot } from './teachingMemory'
 
 const log = createModuleLogger('Orchestrator')
 
@@ -883,6 +883,10 @@ export class Orchestrator {
   private effectivenessTracker = new DecisionEffectivenessTracker()
   /** 长程教学记忆：跨轮摘要 + token 累计 + 历史裁剪 */
   teachingMemory: TeachingMemory
+  /** 调度计数：已处理的教学轮次数（跨会话累计，用于续接/进度展示）。 */
+  private schedulingTurnCount = 0
+  /** 调度计数：累计的 agent 循环 step 数。 */
+  private schedulingStepCount = 0
   private sessionStart: Date | null = null
   private store: StateStore | null
   /** 串行化锁，防止并发 processStudentInput 竞态 */
@@ -953,7 +957,39 @@ export class Orchestrator {
     this.messageHistory = []
     this.grillSession = null
     this.effectivenessTracker.reset()
-    this.teachingMemory.reset()
+
+    // 跨会话恢复教学记忆：若该学生已有持久化的长程记忆（含调度计数），则
+    // 续接而非重置，使长周期教学任务无缝衔接（Harness "模型可见即已记录"）。
+    let restored = false
+    if (this.store) {
+      try {
+        const loaded = this.store.loadTeachingMemory(studentId)
+        if (loaded && typeof loaded.memory === 'object' && loaded.memory !== null) {
+          this.teachingMemory = TeachingMemory.fromJSON(
+            loaded.memory as Partial<TeachingMemorySnapshot>,
+          )
+          const sched = (loaded.scheduling ?? {}) as { turnCount?: number; stepCount?: number }
+          this.schedulingTurnCount = typeof sched.turnCount === 'number' ? sched.turnCount : 0
+          this.schedulingStepCount = typeof sched.stepCount === 'number' ? sched.stepCount : 0
+          restored = true
+          log.info('Restored teaching memory for session resume', {
+            studentId,
+            turns: this.teachingMemory.totalTurnCount,
+            turnCount: this.schedulingTurnCount,
+          })
+        }
+      } catch (err) {
+        log.warn('Failed to restore teaching memory', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+    if (!restored) {
+      this.teachingMemory.reset()
+      this.schedulingTurnCount = 0
+      this.schedulingStepCount = 0
+    }
+
     this.sessionStart = new Date()
 
     // Set initial knowledge field
@@ -1255,6 +1291,11 @@ export class Orchestrator {
     const metadata = inputMetadata ?? {}
     const rtMs = (metadata['response_time_ms'] as number) ?? 5000
 
+    // 调度：每处理一次学生输入计一轮教学（跨会话累计，供续接/进度展示）。
+    this.schedulingTurnCount += 1
+    // 本次会话是否从持久化教学记忆续接（供返回块标记 restored）。
+    const restoredFlag = this.teachingMemory.totalTurnCount > 0
+
     // Update cognitive field from response time
     if ('response_time_ms' in metadata) {
       this.state.cognitive.response_time_ms = rtMs
@@ -1436,6 +1477,8 @@ export class Orchestrator {
     let delivered = false
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
+      // 调度：累计 agent 循环 step 数（turn/step 检查点，Harness 风格）。
+      this.schedulingStepCount += 1
       // Enforce the turn latency budget: once exhausted, stop calling the LLM
       // and force a deliver so the loop exits deterministically.
       if (Date.now() - turnStartMs > TURN_TIMEOUT_MS) {
@@ -1704,6 +1747,24 @@ export class Orchestrator {
       turnTokensUsed,
     )
 
+    // 调度 + 记忆持久化：轮次结束即把教学记忆与 turn/step 检查点写入 StateStore，
+    // 使长周期教学任务可在后续会话中断点续接（Harness "模型可见即已记录"）。
+    if (this.store) {
+      try {
+        this.store.saveTeachingMemory(sessionId, {
+          memory: this.teachingMemory.toJSON(),
+          scheduling: {
+            turnCount: this.schedulingTurnCount,
+            stepCount: this.schedulingStepCount,
+          },
+        })
+      } catch (err) {
+        log.warn('Failed to persist teaching memory', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
     this.phase = SessionPhase.DELIVER
 
     // S3: Run meta-evolution agent (during post-processing)
@@ -1775,6 +1836,15 @@ export class Orchestrator {
       curriculum_level: this.curriculumLevel,
       meta: metaResult,
       visual: this.buildVisualData(rtMs),
+      // 调度检查点指标：本轮+累计轮次/step 数、累计 token，供上层展示与续接。
+      scheduling: {
+        turn_count: this.schedulingTurnCount,
+        step_count: this.schedulingStepCount,
+        session_tokens: this.teachingMemory.tokensUsed,
+        over_token_budget: this.teachingMemory.overBudget,
+        memory_turns: this.teachingMemory.totalTurnCount,
+        restored: restoredFlag,
+      },
     }
   }
 

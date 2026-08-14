@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at   TEXT,
     updated_at   TEXT,
     state_json   TEXT,
-    profile_json TEXT
+    profile_json TEXT,
+    teaching_memory_json TEXT
 );
 
 CREATE TABLE IF NOT EXISTS four_field_states (
@@ -222,6 +223,11 @@ export class StateStore {
   initSchema(): void {
     if (!this._db) throw new Error('Database is closed')
     this._db.exec(_SCHEMA_SQL)
+    // 迁移：为早期版本创建的 sessions 表补上 teaching_memory_json 列。
+    const cols = this._db.prepare('PRAGMA table_info(sessions)').all() as { name: string }[]
+    if (!cols.some((c) => c.name === 'teaching_memory_json')) {
+      this._db.exec('ALTER TABLE sessions ADD COLUMN teaching_memory_json TEXT')
+    }
   }
 
   // -- sessions -----------------------------------------------------------
@@ -319,6 +325,41 @@ export class StateStore {
       state: row.state_json ? safeJsonParse(row.state_json) : null,
       profile: row.profile_json ? safeJsonParse(row.profile_json) : null,
     }
+  }
+
+  /**
+   * 持久化会话的长程教学记忆（跨会话恢复）。
+   *
+   * 教学记忆是滚动摘要 + 追加式轮次日志 + token 指标的序列化快照，单独存于
+   * sessions 行的 teaching_memory_json 列，与 FourFieldState/档案解耦，使
+   * 长周期教学任务可在后续会话中无缝续接（对应 Harness "模型可见即已记录"）。
+   *
+   * @param sessionId  会话 ID（运行时即 studentId）。
+   * @param data       教学记忆快照（TeachingMemory.toJSON() 的输出）。
+   */
+  saveTeachingMemory(sessionId: string, data: Record<string, unknown>): void {
+    if (!this._db) throw new Error('Database is closed')
+    this._db
+      .prepare(
+        `UPDATE sessions
+         SET teaching_memory_json = ?, updated_at = ?
+         WHERE session_id = ?`,
+      )
+      .run(JSON.stringify(data), _utcnowIso(), sessionId)
+  }
+
+  /**
+   * 加载会话的长程教学记忆，用于跨会话恢复。
+   *
+   * @returns 教学记忆快照对象，会话不存在或从未保存教学记忆时返回 null。
+   */
+  loadTeachingMemory(sessionId: string): Record<string, unknown> | null {
+    if (!this._db) throw new Error('Database is closed')
+    const row = this._db
+      .prepare('SELECT teaching_memory_json FROM sessions WHERE session_id = ?')
+      .get(sessionId) as { teaching_memory_json: string | null } | undefined
+    if (!row?.teaching_memory_json) return null
+    return safeJsonParse(row.teaching_memory_json)
   }
 
   /**

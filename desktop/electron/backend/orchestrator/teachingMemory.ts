@@ -251,4 +251,48 @@ export class TeachingMemory {
     }
     return render()
   }
+
+  /**
+   * 序列化为可持久化的普通对象（跨会话恢复）。
+   *
+   * 输出包含追加式轮次日志 allTurns 与滚动摘要，写入 StateStore 后可在新的
+   * 会话中重建，实现长周期教学任务的续接（对应 Harness "模型可见即已记录"
+   * —— 原始历史不因压缩而丢失）。
+   */
+  toJSON(): TeachingMemorySnapshot {
+    return {
+      recentTurns: this.recentTurns,
+      allTurns: this.allTurns,
+      rollingSummary: this.rollingSummary,
+      coveredConcepts: this.coveredConcepts,
+      hintLevel: this.hintLevel,
+      totalTokensUsed: this.totalTokensUsed,
+    }
+  }
+
+  /**
+   * 从持久化快照重建教学记忆（配合 {@link toJSON}）。
+   *
+   * 对缺失/畸形字段做防御性兜底，即使旧版本数据也能安全恢复，不会抛错。
+   */
+  static fromJSON(data: Partial<TeachingMemorySnapshot>, opts: TeachingMemoryOptions = {}): TeachingMemory {
+    const m = new TeachingMemory(opts)
+    m.recentTurns = Array.isArray(data.recentTurns) ? data.recentTurns : []
+    m.allTurns = Array.isArray(data.allTurns) ? data.allTurns : []
+    m.rollingSummary = typeof data.rollingSummary === 'string' ? data.rollingSummary : ''
+    m.coveredConcepts = Array.isArray(data.coveredConcepts) ? data.coveredConcepts : []
+    m.hintLevel = typeof data.hintLevel === 'number' ? data.hintLevel : 0
+    m.totalTokensUsed = typeof data.totalTokensUsed === 'number' ? data.totalTokensUsed : 0
+    return m
+  }
+}
+
+/** TeachingMemory 的可序列化快照（用于跨会话持久化）。 */
+export interface TeachingMemorySnapshot {
+  recentTurns: TeachingTurn[]
+  allTurns: TeachingTurn[]
+  rollingSummary: string
+  coveredConcepts: string[]
+  hintLevel: number
+  totalTokensUsed: number
 }
