@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — 长程教学记忆与调度控制
+- **长程教学记忆（TeachingMemory）**：新增 `electron/backend/orchestrator/teachingMemory.ts`，实现跨轮滚动摘要、累计 token 用量与预算控制、历史裁剪（近轮保留原文、早期折入摘要），并注入 LLM 上下文以支撑长周期教学任务
+- **跨会话持久化**：`persistence/store.ts` 在 `sessions` 表新增 `teaching_memory_json` 列，提供 `saveTeachingMemory` / `loadTeachingMemory`（含旧表迁移），`Orchestrator` 在 `startSession` 恢复记忆、`processStudentInput` 持久化
+- **调度检查点**：引擎跟踪教学轮次（turn）与 agent 步数（step），前端 `sessionStore` 新增 `SchedulingState`，头部进度胶囊展示轮次 / token / 预算告警，会话续接时弹出「已续接上次教学」toast + 续接徽标
+- 新增单测 `teachingMemory.test.ts` / `teachingMemoryPersistence.test.ts` 与 E2E `scheduling-metrics.spec.ts`
+
+### Changed — LLM 能力与接入
+- **LLM 自由接入**：默认端点去 DeepSeek 化，改为中性 OpenAI 兼容设置，用户可通过环境变量或设置面板接入任意厂商
+- **Anthropic / Gemini 协议**：新增 `AnthropicClient`（`x-api-key` + `anthropic-version` 头）与 `GeminiClient`（查询参数 Key + `systemInstruction`），统一错误分类与指数退避重试
+- **预设模型更新**：前端 `llmAdapter.ts` 与 Electron 端预设对齐，更新为当前有效模型（`deepseek-v4-flash`、`gpt-5.6-sol`、`anthropic/claude-sonnet-5`、`gemini-3.6-flash`）
+
+### Changed — 依赖与工程质量
+- **webgazer 升级**：`2.0.1` → `3.5.3`，消除依赖链高危 `node-fetch` 漏洞；`electron-builder.yml` 同步打包 mediapipe 资源
+- **E2E 基础设施**：`playwright.config.ts` 支持 `PLAYWRIGHT_CHROMIUM_EXECUTABLE` 复用已有 Chrome；`eslint.config.js` 忽略 `playwright-report/` 产物
+
 ## [0.5.1] - 2026-08-14
 
 ### Added — 会话沉淀与分享

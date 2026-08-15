@@ -64,9 +64,7 @@ test.describe('Eye tracking (webgazer)', () => {
     await expect(page.locator('.eye-tracking-error')).toContainText('无法加载 webgazer.js')
   })
 
-  test('tracking and calibration buttons are disabled in the error state', async ({
-    page,
-  }) => {
+  test('tracking and calibration buttons are disabled in the error state', async ({ page }) => {
     await expect(page.getByRole('button', { name: '开始追踪' })).toBeDisabled()
     await expect(page.getByRole('button', { name: '校准' })).toBeDisabled()
   })

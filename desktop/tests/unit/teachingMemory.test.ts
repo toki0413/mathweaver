@@ -22,7 +22,7 @@ describe('TeachingMemory TLS teaching memory', () => {
     for (let i = 1; i <= 5; i++) m.recordTurn(turn(i))
     expect(m.verbatimTurnCount).toBe(3)
     // Newest turns survive; oldest folded into the summary.
-    expect(m.log.some((t) => t.student === '学生问题 1')).toBe(true) // append-only log keeps them
+    expect(m.log.some(t => t.student === '学生问题 1')).toBe(true) // append-only log keeps them
     const block = m.toContextBlock()
     expect(block).toContain('学生问题 5')
     expect(block).toContain('较早对话摘要')
@@ -33,7 +33,7 @@ describe('TeachingMemory TLS teaching memory', () => {
     for (let i = 1; i <= 10; i++) m.recordTurn(turn(i))
     expect(m.verbatimTurnCount).toBe(2)
     expect(m.totalTurnCount).toBe(10)
-    expect(m.log.map((t) => t.student)).toEqual([
+    expect(m.log.map(t => t.student)).toEqual([
       '学生问题 1',
       '学生问题 2',
       '学生问题 3',

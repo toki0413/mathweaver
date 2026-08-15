@@ -984,8 +984,10 @@ export class AnthropicClient implements LLMClient {
       payload.tools = tools.map(t => ({
         name: t.name ?? 'tool',
         description: t.description ?? '',
-        input_schema:
-          (t.parameters as Record<string, unknown>) ?? { type: 'object', properties: {} },
+        input_schema: (t.parameters as Record<string, unknown>) ?? {
+          type: 'object',
+          properties: {},
+        },
       }))
     }
 
@@ -1128,8 +1130,8 @@ export class GeminiClient implements LLMClient {
           throw classifyHttpError(resp.status, errorText)
         }
         const data = (await resp.json()) as Record<string, unknown>
-        const contentBlock = (data.candidates as Array<Record<string, unknown>>)?.[0]
-          ?.content as Record<string, unknown> | undefined
+        const contentBlock = (data.candidates as Array<Record<string, unknown>>)?.[0]?.content as
+          Record<string, unknown> | undefined
         const parts = (contentBlock?.parts as Array<Record<string, unknown>> | undefined) ?? []
         const content = (parts as Array<Record<string, unknown>>)
           .map(p => (p.text as string) ?? '')

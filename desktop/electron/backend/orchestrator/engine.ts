@@ -1436,7 +1436,7 @@ export class Orchestrator {
       try {
         const summarizer = async (prompt: string, turns: ReadonlyArray<TeachingTurn>) => {
           const body = turns
-            .map((t) => `学生: ${t.student}\n教师: ${t.teacher}\n动作: ${t.action}`)
+            .map(t => `学生: ${t.student}\n教师: ${t.teacher}\n动作: ${t.action}`)
             .join('\n---\n')
           const resp = await this.llmClient!.chat(prompt, body, undefined, 0.2)
           return (resp as { content?: string }).content ?? ''

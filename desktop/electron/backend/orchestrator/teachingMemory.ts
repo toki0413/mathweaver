@@ -171,9 +171,7 @@ export class TeachingMemory {
       folded = ''
     }
     if (folded) {
-      this.rollingSummary = this.rollingSummary
-        ? `${this.rollingSummary}\n---\n${folded}`
-        : folded
+      this.rollingSummary = this.rollingSummary ? `${this.rollingSummary}\n---\n${folded}` : folded
     } else {
       // Fallback: naive fold of the evicted turns.
       for (const t of turns) {
@@ -190,9 +188,7 @@ export class TeachingMemory {
     while (this.recentTurns.length > this.maxVerbatimTurns) {
       const oldest = this.recentTurns.shift()!
       const line = `学生: ${oldest.student}\n教师: ${oldest.teacher}（${oldest.action}）`
-      this.rollingSummary = this.rollingSummary
-        ? `${this.rollingSummary}\n---\n${line}`
-        : line
+      this.rollingSummary = this.rollingSummary ? `${this.rollingSummary}\n---\n${line}` : line
     }
     this.trimSummary()
   }
@@ -275,7 +271,10 @@ export class TeachingMemory {
    *
    * 对缺失/畸形字段做防御性兜底，即使旧版本数据也能安全恢复，不会抛错。
    */
-  static fromJSON(data: Partial<TeachingMemorySnapshot>, opts: TeachingMemoryOptions = {}): TeachingMemory {
+  static fromJSON(
+    data: Partial<TeachingMemorySnapshot>,
+    opts: TeachingMemoryOptions = {},
+  ): TeachingMemory {
     const m = new TeachingMemory(opts)
     m.recentTurns = Array.isArray(data.recentTurns) ? data.recentTurns : []
     m.allTurns = Array.isArray(data.allTurns) ? data.allTurns : []

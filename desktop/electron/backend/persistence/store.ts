@@ -225,7 +225,7 @@ export class StateStore {
     this._db.exec(_SCHEMA_SQL)
     // 迁移：为早期版本创建的 sessions 表补上 teaching_memory_json 列。
     const cols = this._db.prepare('PRAGMA table_info(sessions)').all() as { name: string }[]
-    if (!cols.some((c) => c.name === 'teaching_memory_json')) {
+    if (!cols.some(c => c.name === 'teaching_memory_json')) {
       this._db.exec('ALTER TABLE sessions ADD COLUMN teaching_memory_json TEXT')
     }
   }
