@@ -12,6 +12,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // Use a fork pool (separate processes) instead of worker threads. This
+    // avoids spurious "Worker exited unexpectedly" crashes under CI's
+    // constrained executors, which intermittently failed the unit-test gate.
+    pool: 'forks',
+    poolOptions: {
+      forks: { singleFork: true },
+    },
     // Only run unit tests through vitest; E2E specs live under tests/e2e and
     // are executed by Playwright (`npm run test:e2e`).
     include: ['tests/unit/**/*.test.{ts,tsx}'],
