@@ -22,6 +22,7 @@ export default tseslint.config(
       'node_modules/',
       'coverage/',
       'test-results/',
+      'playwright-report/',
       'release/',
       '**/*.config.{ts,js}',
       'electron/preload/index.d.ts',

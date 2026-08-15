@@ -227,7 +227,7 @@ export class TeachingMemory {
     head.push(`当前提示等级: ${this.hintLevel}`)
 
     let summary = this.rollingSummary
-    let recent = [...this.recentTurns]
+    const recent = [...this.recentTurns]
 
     const render = (): string => {
       const parts = [...head]
