@@ -5,6 +5,9 @@
   "main": "./out/main/index.js",
   "author": "MathWeaver Team",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "dev:web": "vite --config vite.web.config.ts --port 5175",
