@@ -141,6 +141,19 @@
   let grillStreakCorrect = 0
   let grillStreakWrong = 0
   let grillQuestionsAsked = 0
+  // Long-horizon scheduling / memory checkpoint counters.
+  // Supports query param `?mockSchedulingResumed=1` to emulate a resumed
+  // teaching session (restored=true) so the resume-toast path is testable.
+  let turnCount = 0
+  let stepCount = 0
+  let memoryTurns = 0
+  let schedulingResumed = false
+  if (typeof window !== 'undefined' && /[?&]mockSchedulingResumed=1/.test(window.location.search)) {
+    turnCount = 4
+    stepCount = 12
+    memoryTurns = 3
+    schedulingResumed = true
+  }
 
   // -------------------------------------------------------------------------
   // IPC channel handlers
@@ -231,14 +244,27 @@
       target_node: 'group_definition',
     }),
 
-    'api:session-input': (req) => ({
-      response: {
-        content:
-          '这是一个很好的问题。群是配备二元运算的集合，满足四条公理：封闭性、结合律、存在幺元、每个元素有逆元。',
-        action: 'advance',
-      },
-      phase: 'dialogue',
-      four_fields: {
+    'api:session-input': (req) => {
+      turnCount++
+      stepCount += 2
+      memoryTurns = Math.min(memoryTurns + 1, turnCount)
+      const sessionTokens = 1200 + turnCount * 350
+      return {
+        response: {
+          content:
+            '这是一个很好的问题。群是配备二元运算的集合，满足四条公理：封闭性、结合律、存在幺元、每个元素有逆元。',
+          action: 'advance',
+        },
+        phase: 'dialogue',
+        scheduling: {
+          turn_count: turnCount,
+          step_count: stepCount,
+          session_tokens: sessionTokens,
+          over_token_budget: sessionTokens > 5000,
+          memory_turns: memoryTurns,
+          restored: schedulingResumed,
+        },
+        four_fields: {
         knowledge: {
           current_node_id: 'group_definition',
           mastery_estimate: 0.45,
@@ -310,7 +336,8 @@
           accuracy_rate: 0.65,
         },
       },
-    }),
+    }
+    },
 
     'api:verify-group': (table) => ({
       is_closed: true,

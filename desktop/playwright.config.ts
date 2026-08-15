@@ -32,6 +32,9 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
+          // Allow pointing at an existing Chrome binary (e.g. one cached by
+          // puppeteer) to avoid re-downloading Chromium in constrained sandboxes.
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         },
       },
