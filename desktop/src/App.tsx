@@ -188,6 +188,7 @@ export default function App() {
   const decision = useStore(s => s.decision)
   const phaseTrace = useStore(s => s.phaseTrace)
   const visualData = useStore(s => s.visualData)
+  const scheduling = useStore(s => s.scheduling)
   const backendReady = useStore(s => s.backendReady)
   const checkBackend = useStore(s => s.checkBackend)
   const fetchDagNodes = useStore(s => s.fetchDagNodes)
@@ -641,6 +642,23 @@ export default function App() {
     prevStreak.current = streak
   }, [grillState.summary, addToast])
 
+  // --- Toast trigger: 长程教学记忆跨会话续接 ---
+  const resumedNotified = useRef(false)
+  useEffect(() => {
+    if (scheduling?.restored && !resumedNotified.current) {
+      resumedNotified.current = true
+      addToast({
+        type: 'info',
+        title: '已续接上次教学',
+        message: `记忆已恢复 · 已进行 ${scheduling.turn_count} 轮 / ${scheduling.memory_turns} 次对话`,
+        icon: 'SparkleIcon',
+        duration: 6000,
+      })
+    } else if (!scheduling?.restored) {
+      resumedNotified.current = false
+    }
+  }, [scheduling?.restored, scheduling?.turn_count, scheduling?.memory_turns, addToast])
+
   const handleSendTable = useCallback(() => {
     const rt = Date.now() - inputStartTime
     sendInput(JSON.stringify(table), rt)
@@ -951,6 +969,17 @@ export default function App() {
               {soundEnabled ? <SoundOnIcon size={14} /> : <SoundOffIcon size={14} />}
             </span>
           </button>
+          {scheduling && (
+            <div
+              className={`session-progress ${scheduling.over_token_budget ? 'over-budget' : ''}`}
+              title={`累计轮次 ${scheduling.turn_count} · agent 步 ${scheduling.step_count} · 记忆对话 ${scheduling.memory_turns} · 已用 token ${scheduling.session_tokens}${scheduling.over_token_budget ? '（超出预算）' : ''}`}
+            >
+              {scheduling.restored && <span className="resume-badge">续接</span>}
+              <span className="sp-item">#{scheduling.turn_count}</span>
+              <span className="sp-tokens">{scheduling.session_tokens} tok</span>
+              {scheduling.over_token_budget && <span className="sp-warn">预算</span>}
+            </div>
+          )}
           <div className={`backend-status ${backendReady ? 'connected' : 'disconnected'}`}>
             <span className="status-dot" />
             {backendReady ? '就绪' : '正在初始化'}

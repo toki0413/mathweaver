@@ -240,6 +240,22 @@ function getAPI(): MathWeaverAPI {
 // Session Store
 // ---------------------------------------------------------------------------
 
+/** 长程教学调度/记忆检查点指标（来自引擎 processInput 返回的 scheduling 块）。 */
+export interface SchedulingState {
+  /** 累计已处理教学轮次（跨会话续接累计）。 */
+  turn_count: number
+  /** 累计 agent 循环 step 数。 */
+  step_count: number
+  /** 会话累计消耗的 token 数。 */
+  session_tokens: number
+  /** 是否超出本会话 token 软预算。 */
+  over_token_budget: boolean
+  /** 教学记忆累计的轮次数。 */
+  memory_turns: number
+  /** 本次会话是否从持久化教学记忆续接。 */
+  restored: boolean
+}
+
 interface SessionState {
   // Session core
   sessionId: string | null
@@ -251,6 +267,8 @@ interface SessionState {
   phaseTrace: string[]
   decision: { action: string; reason: string } | null
   visualData: VisualData | null
+  /** 调度检查点指标：跨会话轮次/step 计数、token 用量、记忆续接标记。 */
+  scheduling: SchedulingState | null
   backendReady: boolean
   dagNodes: DagNodeInfo[]
   ageLevel: 'kids' | 'tweens' | 'teens'
@@ -364,6 +382,7 @@ export const useStore = create<SessionState>()(
       phaseTrace: [],
       decision: null,
       visualData: null,
+      scheduling: null,
       backendReady: false,
       dagNodes: [],
       ageLevel: 'kids',
@@ -539,6 +558,7 @@ export const useStore = create<SessionState>()(
             phaseTrace: (data.phase_trace as string[]) || [],
             decision: (data.decision as { action: string; reason: string }) || null,
             visualData: (data.visual_data as VisualData) || null,
+            scheduling: (data.scheduling as SchedulingState) || null,
             loading: false,
             // Reset the whiteboard stroke counter for the round so the next
             // turn's "did the student draw before answering?" signal is
